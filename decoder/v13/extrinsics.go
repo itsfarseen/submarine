@@ -2,7 +2,7 @@ package v13
 
 import (
 	"fmt"
-	. "submarine/decoder"
+	. "submarine/decoder/models"
 	. "submarine/scale"
 	"submarine/scale/v13"
 )

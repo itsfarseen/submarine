@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-	. "submarine/decoder"
+	. "submarine/decoder/models"
 	. "submarine/scale"
 	"submarine/scale/v14"
 )

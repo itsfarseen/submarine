@@ -1,4 +1,4 @@
-package decoder
+package models
 
 import (
 	. "submarine/scale"
@@ -48,4 +48,3 @@ type DecodedPalletVariant struct {
 	VariantName string
 	Args        []DecodedArg
 }
-

@@ -2,7 +2,7 @@ package v13
 
 import (
 	"fmt"
-	. "submarine/decoder"
+	. "submarine/decoder/models"
 	. "submarine/scale"
 	"submarine/scale/v13"
 )
@@ -116,11 +116,11 @@ func DecodePalletEvent(metadata *v13.Metadata, r *Reader) (*DecodedPalletVariant
 	if !pallet.Events.HasValue {
 		return nil, fmt.Errorf("pallet '%s' has no events defined", pallet.Name)
 	}
-	
+
 	if int(variantIndex) >= len(pallet.Events.Value) {
 		return nil, fmt.Errorf("event with index %d not found in pallet '%s'", variantIndex, pallet.Name)
 	}
-	
+
 	chosenVariant := pallet.Events.Value[variantIndex]
 
 	// --- Decode Arguments ---
@@ -144,4 +144,3 @@ func DecodePalletEvent(metadata *v13.Metadata, r *Reader) (*DecodedPalletVariant
 		Args:        decodedArgs,
 	}, nil
 }
-

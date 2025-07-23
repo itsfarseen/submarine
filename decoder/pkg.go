@@ -25,9 +25,8 @@ type DecodedCall struct {
 // For this example, we focus on the Call, but a full implementation
 // would also include signature, address, etc.
 type DecodedExtrinsic struct {
-	Signature any // Placeholder for the decoded signature data
-
-	Call DecodedPalletVariant
+	Signature MultiSignature
+	Call      DecodedPalletVariant
 }
 
 // DecodeExtrinsic is the main entry point for decoding an extrinsic.
@@ -55,7 +54,7 @@ func DecodeExtrinsic(metadata *MetadataV14, extrinsicBytes []byte) (*DecodedExtr
 	log.Printf("extrinsic %d %x", n, txFormat)
 
 	isSigned := (txFormat & 0b10000000) != 0
-	var signatureData any
+	var signatureData MultiSignature
 
 	if isSigned {
 		// --- Correctly decode the extrinsic wrapper ---

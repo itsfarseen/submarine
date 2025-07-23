@@ -7,10 +7,12 @@ import (
 	"strconv"
 	"strings"
 	"submarine/decoder"
+	decoder_v13 "submarine/decoder/v13"
 	decoder_v14 "submarine/decoder/v14"
 	. "submarine/rpc"
 	"submarine/scale"
-	"submarine/scale/v14"
+	scale_v13 "submarine/scale/v13"
+	scale_v14 "submarine/scale/v14"
 )
 
 func main() {
@@ -74,7 +76,7 @@ func main() {
 
 	// Block contents
 
-	blockNumberToQuery := uint64(20_000_000)
+	blockNumberToQuery := uint64(7_000_000)
 	log.Printf("Querying block #%d...", blockNumberToQuery)
 
 	blockHashReq := client.Send("chain_getBlockHash", []any{blockNumberToQuery})
@@ -94,33 +96,65 @@ func main() {
 	metadataRaw := client.GetMetadata(blockHash)
 	log.Printf("Metadata Version: %d", metadataRaw.Version)
 
+	var exts []decoder.DecodedExtrinsic
+	var events []decoder.EventRecord
+
 	metadataReader := scale.NewReader(metadataRaw.Data)
-	metadata, err := v14.DecodeMetadata(metadataReader)
-	if err != nil {
-		log.Fatalf("Failed to decode metadata: %s", err)
-	}
 
-	exts := make([]decoder.DecodedExtrinsic, 0, 10)
-
-	for _, ext := range signedBlock.Block.Extrinsics {
-		ext = strings.TrimPrefix(ext, "0x")
-		extBytes, err := hex.DecodeString(ext)
+	switch metadataRaw.Version {
+	case 14:
+		metadata, err := scale_v14.DecodeMetadata(metadataReader)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("Failed to decode v14 metadata: %s", err)
 		}
-		ext_, err := decoder_v14.DecodeExtrinsic(&metadata, extBytes)
+
+		for _, ext := range signedBlock.Block.Extrinsics {
+			ext = strings.TrimPrefix(ext, "0x")
+			extBytes, err := hex.DecodeString(ext)
+			if err != nil {
+				log.Fatal(err)
+			}
+			ext_, err := decoder_v14.DecodeExtrinsic(&metadata, extBytes)
+			if err != nil {
+				log.Fatal(err)
+			}
+			exts = append(exts, *ext_)
+			fmt.Printf("extrinsic: %s: %s\n", ext_.Call.PalletName, ext_.Call.VariantName)
+		}
+
+		eventsBytes := client.GetEvents(blockHash)
+		events, err = decoder_v14.DecodeEvents(&metadata, eventsBytes)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("failed to decode v14 event: %s", err)
 		}
-		exts = append(exts, *ext_)
-		fmt.Printf("extrinsic: %s: %s\n", ext_.Call.PalletName, ext_.Call.VariantName)
-	}
 
-	eventsBytes := client.GetEvents(blockHash)
+	case 13:
+		metadata, err := scale_v13.DecodeMetadata(metadataReader)
+		if err != nil {
+			log.Fatalf("Failed to decode v13 metadata: %s", err)
+		}
 
-	events, err := decoder_v14.DecodeEvents(&metadata, eventsBytes)
-	if err != nil {
-		log.Fatalf("failed to decode event: %s", err)
+		for _, ext := range signedBlock.Block.Extrinsics {
+			ext = strings.TrimPrefix(ext, "0x")
+			extBytes, err := hex.DecodeString(ext)
+			if err != nil {
+				log.Fatal(err)
+			}
+			ext_, err := decoder_v13.DecodeExtrinsic(&metadata, extBytes)
+			if err != nil {
+				log.Fatal(err)
+			}
+			exts = append(exts, *ext_)
+			fmt.Printf("extrinsic: %s: %s\n", ext_.Call.PalletName, ext_.Call.VariantName)
+		}
+
+		eventsBytes := client.GetEvents(blockHash)
+		events, err = decoder_v13.DecodeEvents(&metadata, eventsBytes)
+		if err != nil {
+			log.Fatalf("failed to decode v13 event: %s", err)
+		}
+	default:
+		log.Fatalf("Unsupported metadata version: %d", metadataRaw.Version)
 	}
 
 	for _, event := range events {

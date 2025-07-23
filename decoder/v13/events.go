@@ -14,14 +14,14 @@ func DecodeEvents(metadata *v13.Metadata, eventBytes []byte) ([]EventRecord, err
 	// The event bytes are a Vec<EventRecord>. First, decode the length.
 	numEvents, err := DecodeCompact(r)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode event vector length: %w", err)
+		return nil, fmt.Errorf("events.len: %w", err)
 	}
 
 	records := make([]EventRecord, numEvents.Int64())
 	for i := int64(0); i < numEvents.Int64(); i++ {
 		record, err := DecodeEventRecord(metadata, r)
 		if err != nil {
-			return nil, fmt.Errorf("failed to decode event record #%d: %w", i, err)
+			return nil, fmt.Errorf("events[%d]: %w", i, err)
 		}
 		records[i] = record
 	}
@@ -36,14 +36,14 @@ func DecodeEventRecord(metadata *v13.Metadata, r *Reader) (EventRecord, error) {
 	// --- 1. Decode the Phase ---
 	phaseIndex, err := r.ReadByte()
 	if err != nil {
-		return record, fmt.Errorf("failed to read phase index: %w", err)
+		return record, fmt.Errorf("phase index: %w", err)
 	}
 
 	switch phaseIndex {
 	case 0: // ApplyExtrinsic
 		extrinsicIndex, err := DecodeU32(r)
 		if err != nil {
-			return record, fmt.Errorf("failed to decode extrinsic index for phase: %w", err)
+			return record, fmt.Errorf("extrinsic index for phase: %w", err)
 		}
 		record.Phase = EventPhase{
 			IsApplyExtrinsic: true,

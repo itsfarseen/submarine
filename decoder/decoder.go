@@ -15,7 +15,7 @@ func DecodeMetadata(version uint, r *scale.Reader) (any, error) {
 	case 13:
 		meta, err := scale_v13.DecodeMetadata(r)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("v13: %w", err)
 		}
 		return &meta, nil
 	case 14:

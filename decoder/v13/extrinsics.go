@@ -39,13 +39,13 @@ func DecodeExtrinsic(metadata *v13.Metadata, extrinsicBytes []byte) (*DecodedExt
 			return nil, fmt.Errorf("failed to decode signature: %w", err)
 		}
 
-		// 3. Decode the signed extensions.
-		for _, extension := range metadata.Extrinsic.SignedExtensions {
-			_, err := DecodeArgFromString(metadata, r, string(extension.Type))
-			if err != nil {
-				return nil, fmt.Errorf("failed to decode signed extension '%s': %w", extension.Identifier, err)
-			}
-		}
+		// // 3. Decode the signed extensions.
+		// for _, extension := range metadata.Extrinsic.SignedExtensions {
+		// 	_, err := DecodeArgFromString(metadata, r, string(extension.Type))
+		// 	if err != nil {
+		// 		return nil, fmt.Errorf("failed to decode signed extension '%s': %w", extension.Identifier, err)
+		// 	}
+		// }
 	}
 
 	// --- Decode the Call ---

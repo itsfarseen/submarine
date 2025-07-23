@@ -98,10 +98,6 @@ func DecodeExtrinsic(metadata *MetadataV14, extrinsicBytes []byte) (*DecodedExtr
 	}, nil
 }
 
-// ===================================================================
-// Call and Argument Decoding Logic
-// ===================================================================
-
 // DecodeCall decodes the pallet index, call index, and the corresponding arguments.
 func DecodeCall(metadata *MetadataV14, r *Reader) (*DecodedCall, error) {
 	// The call starts with the pallet index.
@@ -141,10 +137,10 @@ func DecodeCall(metadata *MetadataV14, r *Reader) (*DecodedCall, error) {
 		return nil, fmt.Errorf("call type definition for pallet '%s' not found", pallet.Name)
 	}
 
-	callTypeDef, ok := callType.Def.(Si1TypeDefVariant)
-	if !ok {
-		return nil, fmt.Errorf("expected call type to be a variant, but got %T", callType.Def)
+	if callType.Def.Kind != KindSi1TypeDefVariant {
+		return nil, fmt.Errorf("expected call type to be a variant, but got kind %v", callType.Def.Kind)
 	}
+	callTypeDef := callType.Def.Variant
 
 	var callVariant Si1Variant
 	foundCall := false
@@ -196,12 +192,12 @@ func DecodeArg(metadata *MetadataV14, r *Reader, typeID SiLookupTypeId) (any, er
 	}
 
 	// Use a switch to handle the different kinds of types.
-	switch def := typ.Def.(type) {
-	case Si1TypeDefComposite:
+	switch typ.Def.Kind {
+	case KindSi1TypeDefComposite:
 		// For a struct, decode each field recursively.
 		// We'll represent it as a map.
 		result := make(map[string]any)
-		for _, field := range def.Fields {
+		for _, field := range typ.Def.Composite.Fields {
 			fieldName := "unnamed"
 			if field.Name.HasValue {
 				fieldName = string(field.Name.Value)
@@ -214,13 +210,13 @@ func DecodeArg(metadata *MetadataV14, r *Reader, typeID SiLookupTypeId) (any, er
 		}
 		return result, nil
 
-	case Si1TypeDefVariant:
+	case KindSi1TypeDefVariant:
 		// For an enum, read the variant index and decode its fields.
 		variantIndex, err := r.ReadByte()
 		if err != nil {
 			return nil, fmt.Errorf("variant index: %w", err)
 		}
-		for _, variant := range def.Variants {
+		for _, variant := range typ.Def.Variant.Variants {
 			if variant.Index == variantIndex {
 				// Similar to a composite, decode the fields.
 				result := make(map[string]any)
@@ -241,7 +237,7 @@ func DecodeArg(metadata *MetadataV14, r *Reader, typeID SiLookupTypeId) (any, er
 		}
 		return nil, fmt.Errorf("variant with index %d not found for type %d", variantIndex, typeID)
 
-	case Si1TypeDefSequence:
+	case KindSi1TypeDefSequence:
 		// For a sequence (Vec), decode the compact length then each item.
 		length, err := DecodeCompact(r)
 		if err != nil {
@@ -250,7 +246,7 @@ func DecodeArg(metadata *MetadataV14, r *Reader, typeID SiLookupTypeId) (any, er
 		len64 := length.Int64()
 		slice := make([]any, len64)
 		for i := range len64 {
-			elem, err := DecodeArg(metadata, r, def.Type)
+			elem, err := DecodeArg(metadata, r, typ.Def.Sequence.Type)
 			if err != nil {
 				return nil, fmt.Errorf("sequence (%d): %w", i, err)
 			}
@@ -258,11 +254,11 @@ func DecodeArg(metadata *MetadataV14, r *Reader, typeID SiLookupTypeId) (any, er
 		}
 		return slice, nil
 
-	case Si1TypeDefArray:
+	case KindSi1TypeDefArray:
 		// For a fixed-size array, decode each item.
-		slice := make([]any, def.Len)
-		for i := uint32(0); i < def.Len; i++ {
-			elem, err := DecodeArg(metadata, r, def.Type)
+		slice := make([]any, typ.Def.Array.Len)
+		for i := uint32(0); i < typ.Def.Array.Len; i++ {
+			elem, err := DecodeArg(metadata, r, typ.Def.Array.Type)
 			if err != nil {
 				return nil, err
 			}
@@ -270,10 +266,10 @@ func DecodeArg(metadata *MetadataV14, r *Reader, typeID SiLookupTypeId) (any, er
 		}
 		return slice, nil
 
-	case Si1TypeDefTuple:
+	case KindSi1TypeDefTuple:
 		// For a tuple, decode each item.
-		slice := make([]any, len(def.Fields))
-		for i, fieldTypeID := range def.Fields {
+		slice := make([]any, len(typ.Def.Tuple.Fields))
+		for i, fieldTypeID := range typ.Def.Tuple.Fields {
 			elem, err := DecodeArg(metadata, r, fieldTypeID)
 			if err != nil {
 				return nil, err
@@ -282,13 +278,13 @@ func DecodeArg(metadata *MetadataV14, r *Reader, typeID SiLookupTypeId) (any, er
 		}
 		return slice, nil
 
-	case Si1TypeDefCompact:
+	case KindSi1TypeDefCompact:
 		// For a compact integer, use the primitive decoder.
 		return DecodeCompact(r)
 
-	case Si1TypeDefPrimitive:
+	case KindSi1TypeDefPrimitive:
 		// For a primitive type, use the corresponding decoder.
-		switch def {
+		switch typ.Def.Primitive {
 		case 0: // Bool
 			return DecodeBool(r)
 		case 1: // Char (decode as string of len 1)
@@ -322,10 +318,10 @@ func DecodeArg(metadata *MetadataV14, r *Reader, typeID SiLookupTypeId) (any, er
 			return new(big.Int).SetBytes(b), err
 		// Note: Signed integers (I8, I16, etc.) would follow a similar pattern.
 		default:
-			return nil, fmt.Errorf("unsupported primitive type: %d", def)
+			return nil, fmt.Errorf("unsupported primitive type: %d", typ.Def.Primitive)
 		}
 
-	case Si1TypeDefBitSequence:
+	case KindSi1TypeDefBitSequence:
 		// A bit sequence is encoded as a compact length (number of bits)
 		// followed by the packed bits.
 		numBits, err := DecodeCompact(r)

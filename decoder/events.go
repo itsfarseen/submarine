@@ -162,10 +162,10 @@ func DecodePalletVariant(metadata *MetadataV14, r *Reader, variantType string) (
 		return nil, fmt.Errorf("%s type definition for pallet '%s' not found", variantType, pallet.Name)
 	}
 
-	variantTypeDef, ok := variantTypeInfo.Def.(Si1TypeDefVariant)
-	if !ok {
+	if variantTypeInfo.Def.Kind != KindSi1TypeDefVariant {
 		return nil, fmt.Errorf("expected %s type to be a variant, but got %T", variantType, variantTypeInfo.Def)
 	}
+	variantTypeDef := variantTypeInfo.Def.Variant
 
 	var chosenVariant Si1Variant
 	foundVariant := false

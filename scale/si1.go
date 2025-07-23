@@ -18,64 +18,72 @@ type Si1TypeParameter struct {
 	Type Option[SiLookupTypeId]
 }
 
-type Si1TypeDef interface {
-	isSi1TypeDef()
+// Si1TypeDefKind enumerates the different kinds of type definitions.
+type Si1TypeDefKind byte
+
+const (
+	KindSi1TypeDefComposite Si1TypeDefKind = iota
+	KindSi1TypeDefVariant
+	KindSi1TypeDefSequence
+	KindSi1TypeDefArray
+	KindSi1TypeDefTuple
+	KindSi1TypeDefPrimitive
+	KindSi1TypeDefCompact
+	KindSi1TypeDefBitSequence
+	KindHistoricMetaCompat
+)
+
+// Si1TypeDef is a tagged union representing the structure of a type.
+type Si1TypeDef struct {
+	Kind        Si1TypeDefKind
+	Composite   Si1TypeDefComposite
+	Variant     Si1TypeDefVariant
+	Sequence    Si1TypeDefSequence
+	Array       Si1TypeDefArray
+	Tuple       Si1TypeDefTuple
+	Primitive   Si1TypeDefPrimitive
+	Compact     Si1TypeDefCompact
+	BitSequence Si1TypeDefBitSequence
+	Historic    HistoricMetaCompat
 }
 
 type Si1TypeDefComposite struct {
 	Fields []Si1Field
 }
 
-func (s Si1TypeDefComposite) isSi1TypeDef() {}
-
 type Si1TypeDefVariant struct {
 	Variants []Si1Variant
 }
 
-func (s Si1TypeDefVariant) isSi1TypeDef() {}
-
 type Si1TypeDefSequence struct {
 	Type SiLookupTypeId
 }
-
-func (s Si1TypeDefSequence) isSi1TypeDef() {}
 
 type Si1TypeDefArray struct {
 	Len  uint32
 	Type SiLookupTypeId
 }
 
-func (s Si1TypeDefArray) isSi1TypeDef() {}
-
 type Si1TypeDefTuple struct {
 	Fields []SiLookupTypeId
 }
 
-func (s Si1TypeDefTuple) isSi1TypeDef() {}
-
 // NOTE: Si0TypeDefPrimitive is a byte enum.
 type Si1TypeDefPrimitive byte
-
-func (s Si1TypeDefPrimitive) isSi1TypeDef() {}
 
 type Si1TypeDefCompact struct {
 	Type SiLookupTypeId
 }
-
-func (s Si1TypeDefCompact) isSi1TypeDef() {}
 
 type Si1TypeDefBitSequence struct {
 	BitStoreType SiLookupTypeId
 	BitOrderType SiLookupTypeId
 }
 
-func (s Si1TypeDefBitSequence) isSi1TypeDef() {}
-
+// Some old variant of Si1TypeDef
 type HistoricMetaCompat struct {
 	Type Text
 }
-
-func (s HistoricMetaCompat) isSi1TypeDef() {}
 
 type Si1Type struct {
 	Path   Si1Path
@@ -141,50 +149,76 @@ func DecodeSi1Path(r *Reader) (Si1Path, error) {
 func DecodeSi1TypeDef(r *Reader) (Si1TypeDef, error) {
 	variant, err := r.ReadByte()
 	if err != nil {
-		return nil, err
+		return Si1TypeDef{}, err
 	}
 
 	switch variant {
 	case 0: // Composite
 		fields, err := DecodeVec(r, DecodeSi1Field)
-		return Si1TypeDefComposite{Fields: fields}, err
+		if err != nil {
+			return Si1TypeDef{}, err
+		}
+		return Si1TypeDef{Kind: KindSi1TypeDefComposite, Composite: Si1TypeDefComposite{Fields: fields}}, nil
 	case 1: // Variant
-		// Note: This calls DecodeSi1Variant, which is now updated.
 		variants, err := DecodeVec(r, DecodeSi1Variant)
-		return Si1TypeDefVariant{Variants: variants}, err
+		if err != nil {
+			return Si1TypeDef{}, err
+		}
+		return Si1TypeDef{Kind: KindSi1TypeDefVariant, Variant: Si1TypeDefVariant{Variants: variants}}, nil
 	case 2: // Sequence
 		typ, err := DecodeSiLookupTypeId(r)
-		return Si1TypeDefSequence{Type: typ}, err
+		if err != nil {
+			return Si1TypeDef{}, err
+		}
+		return Si1TypeDef{Kind: KindSi1TypeDefSequence, Sequence: Si1TypeDefSequence{Type: typ}}, nil
 	case 3: // Array
 		var result Si1TypeDefArray
 		result.Len, err = DecodeU32(r)
 		if err != nil {
-			return nil, err
+			return Si1TypeDef{}, err
 		}
 		result.Type, err = DecodeSiLookupTypeId(r)
-		return result, err
+		if err != nil {
+			return Si1TypeDef{}, err
+		}
+		return Si1TypeDef{Kind: KindSi1TypeDefArray, Array: result}, nil
 	case 4: // Tuple
 		fields, err := DecodeVec(r, DecodeSiLookupTypeId)
-		return Si1TypeDefTuple{Fields: fields}, err
+		if err != nil {
+			return Si1TypeDef{}, err
+		}
+		return Si1TypeDef{Kind: KindSi1TypeDefTuple, Tuple: Si1TypeDefTuple{Fields: fields}}, nil
 	case 5: // Primitive
 		b, err := r.ReadByte()
-		return Si1TypeDefPrimitive(b), err
+		if err != nil {
+			return Si1TypeDef{}, err
+		}
+		return Si1TypeDef{Kind: KindSi1TypeDefPrimitive, Primitive: Si1TypeDefPrimitive(b)}, nil
 	case 6: // Compact
 		typ, err := DecodeSiLookupTypeId(r)
-		return Si1TypeDefCompact{Type: typ}, err
+		if err != nil {
+			return Si1TypeDef{}, err
+		}
+		return Si1TypeDef{Kind: KindSi1TypeDefCompact, Compact: Si1TypeDefCompact{Type: typ}}, nil
 	case 7: // BitSequence
 		var result Si1TypeDefBitSequence
 		result.BitStoreType, err = DecodeSiLookupTypeId(r)
 		if err != nil {
-			return nil, err
+			return Si1TypeDef{}, err
 		}
 		result.BitOrderType, err = DecodeSiLookupTypeId(r)
-		return result, err
+		if err != nil {
+			return Si1TypeDef{}, err
+		}
+		return Si1TypeDef{Kind: KindSi1TypeDefBitSequence, BitSequence: result}, nil
 	case 8: // HistoricMetaCompat
 		typ, err := DecodeText(r)
-		return HistoricMetaCompat{Type: typ}, err
+		if err != nil {
+			return Si1TypeDef{}, err
+		}
+		return Si1TypeDef{Kind: KindHistoricMetaCompat, Historic: HistoricMetaCompat{Type: typ}}, nil
 	default:
-		return nil, fmt.Errorf("unknown variant for Si1TypeDef: %d", variant)
+		return Si1TypeDef{}, fmt.Errorf("unknown variant for Si1TypeDef: %d", variant)
 	}
 }
 

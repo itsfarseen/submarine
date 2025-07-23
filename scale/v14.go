@@ -74,23 +74,29 @@ type PalletEventMetadataV14 struct {
 	Type SiLookupTypeId
 }
 
-type StorageEntryTypeV14 interface {
-	isStorageEntryTypeV14()
+type StorageEntryTypeV14Kind byte
+
+const (
+	KindPlain StorageEntryTypeV14Kind = iota
+	KindMap
+)
+
+// StorageEntryTypeV14 is a tagged union for different storage entry types.
+type StorageEntryTypeV14 struct {
+	Kind  StorageEntryTypeV14Kind
+	Plain StorageEntryTypeV14Plain
+	Map   StorageEntryTypeV14Map
 }
 
 type StorageEntryTypeV14Plain struct {
 	Value SiLookupTypeId
 }
 
-func (s StorageEntryTypeV14Plain) isStorageEntryTypeV14() {}
-
 type StorageEntryTypeV14Map struct {
 	Hashers []StorageHasherV14
 	Key     SiLookupTypeId
 	Value   SiLookupTypeId
 }
-
-func (s StorageEntryTypeV14Map) isStorageEntryTypeV14() {}
 
 type StorageEntryMetadataV14 struct {
 	Name     Text
@@ -258,27 +264,33 @@ func DecodePalletEventMetadataV14(r *Reader) (PalletEventMetadataV14, error) {
 func DecodeStorageEntryTypeV14(r *Reader) (StorageEntryTypeV14, error) {
 	variant, err := r.ReadByte()
 	if err != nil {
-		return nil, err
+		return StorageEntryTypeV14{}, err
 	}
-	switch variant {
-	case 0: // Plain
+	switch StorageEntryTypeV14Kind(variant) {
+	case KindPlain:
 		var plain StorageEntryTypeV14Plain
 		plain.Value, err = DecodeSiLookupTypeId(r)
-		return plain, err
-	case 1: // Map
+		if err != nil {
+			return StorageEntryTypeV14{}, err
+		}
+		return StorageEntryTypeV14{Kind: KindPlain, Plain: plain}, nil
+	case KindMap:
 		var m StorageEntryTypeV14Map
 		m.Hashers, err = DecodeVec(r, DecodeStorageHasherV14)
 		if err != nil {
-			return nil, err
+			return StorageEntryTypeV14{}, err
 		}
 		m.Key, err = DecodeSiLookupTypeId(r)
 		if err != nil {
-			return nil, err
+			return StorageEntryTypeV14{}, err
 		}
 		m.Value, err = DecodeSiLookupTypeId(r)
-		return m, err
+		if err != nil {
+			return StorageEntryTypeV14{}, err
+		}
+		return StorageEntryTypeV14{Kind: KindMap, Map: m}, nil
 	default:
-		return nil, fmt.Errorf("unknown variant for StorageEntryTypeV14: %d", variant)
+		return StorageEntryTypeV14{}, fmt.Errorf("unknown variant for StorageEntryTypeV14: %d", variant)
 	}
 }
 

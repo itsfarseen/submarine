@@ -1,38 +1,130 @@
 package v13
 
 import (
+	"encoding/binary"
 	"fmt"
+	"math/big"
+	"strconv"
+	"strings"
 	. "submarine/scale"
 	"submarine/scale/v13"
 )
 
-// DecodeArgFromString is a placeholder. It needs to be implemented.
-// This is the hard part. I'll need to add support for common types.
+// DecodeArgFromString recursively decodes an argument based on its type string.
 func DecodeArgFromString(metadata *v13.Metadata, r *Reader, typeName string) (any, error) {
-	// This is a simplified version. A real implementation would need a lot more types.
-	// It also needs to handle complex types like Vec<T>, Option<T>, etc.
-	// For now, I'll just implement a few primitives to get started.
+	typeName = strings.TrimSpace(typeName)
+
+	// Handle compact encoding wrapper
+	if strings.HasPrefix(typeName, "Compact<") && strings.HasSuffix(typeName, ">") {
+		return DecodeCompact(r)
+	}
+
+	// Handle vector wrapper
+	if strings.HasPrefix(typeName, "Vec<") && strings.HasSuffix(typeName, ">") {
+		innerTypeName := typeName[4 : len(typeName)-1]
+		// Optimization for Vec<u8> which is decoded as Bytes
+		if innerTypeName == "u8" {
+			return DecodeBytes(r)
+		}
+		return DecodeVec(r, func(r *Reader) (any, error) {
+			return DecodeArgFromString(metadata, r, innerTypeName)
+		})
+	}
+
+	// Handle option wrapper
+	if strings.HasPrefix(typeName, "Option<") && strings.HasSuffix(typeName, ">") {
+		innerTypeName := typeName[7 : len(typeName)-1]
+		return DecodeOption(r, func(r *Reader) (any, error) {
+			return DecodeArgFromString(metadata, r, innerTypeName)
+		})
+	}
+
+	// Handle tuple wrapper
+	if strings.HasPrefix(typeName, "(") && strings.HasSuffix(typeName, ")") {
+		innerTypesStr := typeName[1 : len(typeName)-1]
+		// This is a simplified tuple parser. It won't handle nested complex types correctly.
+		// e.g., (u32, Vec<(u8, u8)>) will fail.
+		// But it should work for simple cases like (u32, bool).
+		innerTypes := strings.Split(innerTypesStr, ",")
+		result := make([]any, len(innerTypes))
+		for i, innerType := range innerTypes {
+			val, err := DecodeArgFromString(metadata, r, strings.TrimSpace(innerType))
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode tuple element %d ('%s'): %w", i, innerType, err)
+			}
+			result[i] = val
+		}
+		return result, nil
+	}
+
+	// Handle fixed-size array
+	if strings.HasPrefix(typeName, "[") && strings.HasSuffix(typeName, "]") {
+		parts := strings.Split(strings.Trim(typeName, "[]"), ";")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid array type string: %s", typeName)
+		}
+		innerTypeName := strings.TrimSpace(parts[0])
+		sizeStr := strings.TrimSpace(parts[1])
+		size, err := strconv.Atoi(sizeStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid array size '%s': %w", sizeStr, err)
+		}
+
+		result := make([]any, size)
+		for i := 0; i < size; i++ {
+			val, err := DecodeArgFromString(metadata, r, innerTypeName)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode array element %d ('%s'): %w", i, innerTypeName, err)
+			}
+			result[i] = val
+		}
+		return result, nil
+	}
+
+	// Handle primitive and common types
 	switch typeName {
 	case "u8":
 		return DecodeU8(r)
 	case "u16":
-		return r.ReadBytes(2) // Simplified
+		b, err := r.ReadBytes(2)
+		if err != nil {
+			return nil, err
+		}
+		return binary.LittleEndian.Uint16(b), nil
 	case "u32":
 		return DecodeU32(r)
 	case "u64":
-		return r.ReadBytes(8) // Simplified
-	case "u128":
-		return r.ReadBytes(16) // Simplified
+		b, err := r.ReadBytes(8)
+		if err != nil {
+			return nil, err
+		}
+		return binary.LittleEndian.Uint64(b), nil
+	case "u128", "Balance":
+		b, err := r.ReadBytes(16)
+		if err != nil {
+			return nil, err
+		}
+		// Reverse for big.Int which expects big-endian bytes
+		for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
+			b[i], b[j] = b[j], b[i]
+		}
+		return new(big.Int).SetBytes(b), nil
 	case "bool":
 		return DecodeBool(r)
 	case "Bytes":
 		return DecodeBytes(r)
-	case "AccountId": // Assuming AccountId is 32 bytes
+	case "Text", "String":
+		return DecodeText(r)
+	case "AccountId": // Typically a 32-byte array
 		return r.ReadBytes(32)
+	case "H256", "Hash": // 32-byte hash
+		return r.ReadBytes(32)
+	case "MultiAddress":
+		return DecodeMultiAddress(r)
 	default:
-		// This is where it gets tricky. We might have `Compact<Balance>` or `Vec<u8>`.
-		// A proper implementation needs to parse these strings.
-		// For now, we'll return an error for unsupported types.
+		// This is where it gets tricky. We might have `T::AccountId` or other complex types.
+		// A proper implementation would need to look up these types in the runtime,
+		// but v13 metadata doesn't provide a comprehensive type registry like v14.
 		return nil, fmt.Errorf("unsupported type string '%s'", typeName)
 	}
 }

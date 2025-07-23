@@ -9,6 +9,7 @@ import (
 	"submarine/decoder"
 	. "submarine/rpc"
 	"submarine/scale"
+	"submarine/scale/v14"
 )
 
 func main() {
@@ -93,7 +94,7 @@ func main() {
 	log.Printf("Metadata Version: %d", metadataRaw.Version)
 
 	metadataReader := scale.NewReader(metadataRaw.Data)
-	metadata, err := scale.DecodeMetadataV14(metadataReader)
+	metadata, err := v14.DecodeMetadata(metadataReader)
 	if err != nil {
 		log.Fatalf("Failed to decode metadata: %s", err)
 	}

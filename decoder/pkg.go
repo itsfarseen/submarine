@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/big"
 	. "submarine/scale"
+	"submarine/scale/v14"
 )
 
 // DecodedArg holds the name and decoded value of a single extrinsic argument.
@@ -31,7 +32,7 @@ type DecodedExtrinsic struct {
 
 // DecodeExtrinsic is the main entry point for decoding an extrinsic.
 // It uses the pre-decoded metadata to understand the structure of the bytes.
-func DecodeExtrinsic(metadata *MetadataV14, extrinsicBytes []byte) (*DecodedExtrinsic, error) {
+func DecodeExtrinsic(metadata *v14.Metadata, extrinsicBytes []byte) (*DecodedExtrinsic, error) {
 	r := NewReader(extrinsicBytes)
 
 	// An extrinsic is length-prefixed. We must decode this first to advance
@@ -99,7 +100,7 @@ func DecodeExtrinsic(metadata *MetadataV14, extrinsicBytes []byte) (*DecodedExtr
 }
 
 // DecodeCall decodes the pallet index, call index, and the corresponding arguments.
-func DecodeCall(metadata *MetadataV14, r *Reader) (*DecodedCall, error) {
+func DecodeCall(metadata *v14.Metadata, r *Reader) (*DecodedCall, error) {
 	// The call starts with the pallet index.
 	palletIndex, err := r.ReadByte()
 	if err != nil {
@@ -113,7 +114,7 @@ func DecodeCall(metadata *MetadataV14, r *Reader) (*DecodedCall, error) {
 	}
 
 	// --- Find the Call Definition in Metadata ---
-	var pallet PalletMetadataV14
+	var pallet v14.PalletMetadata
 	foundPallet := false
 	for _, p := range metadata.Pallets {
 		if p.Index == palletIndex {
@@ -184,7 +185,7 @@ func DecodeCall(metadata *MetadataV14, r *Reader) (*DecodedCall, error) {
 
 // DecodeArg is a recursive function that decodes a value of any type
 // by looking up its definition in the metadata.
-func DecodeArg(metadata *MetadataV14, r *Reader, typeID SiLookupTypeId) (any, error) {
+func DecodeArg(metadata *v14.Metadata, r *Reader, typeID SiLookupTypeId) (any, error) {
 	// Find the type definition in the lookup table.
 	typ, ok := findType(metadata, typeID)
 	if !ok {
@@ -341,11 +342,11 @@ func DecodeArg(metadata *MetadataV14, r *Reader, typeID SiLookupTypeId) (any, er
 }
 
 // findType is a helper to safely access the type from the lookup table.
-func findType(metadata *MetadataV14, typeID SiLookupTypeId) (Si1Type, bool) {
+func findType(metadata *v14.Metadata, typeID SiLookupTypeId) (Si1Type, bool) {
 	if int(typeID) > len(metadata.Lookup.Types) {
 		return Si1Type{}, false
 	}
-	// The ID in the PortableTypeV14 struct is the actual ID. We need to find it.
+	// The ID in the PortableType struct is the actual ID. We need to find it.
 	for _, pType := range metadata.Lookup.Types {
 		if pType.Id == typeID {
 			return pType.Type, true

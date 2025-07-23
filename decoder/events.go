@@ -3,6 +3,7 @@ package decoder
 import (
 	"fmt"
 	. "submarine/scale"
+	"submarine/scale/v14"
 )
 
 type EventRecord struct {
@@ -25,7 +26,7 @@ type DecodedEvent struct {
 }
 
 // DecodeEvents is the main entry point for decoding the raw bytes from System.Events.
-func DecodeEvents(metadata *MetadataV14, eventBytes []byte) ([]EventRecord, error) {
+func DecodeEvents(metadata *v14.Metadata, eventBytes []byte) ([]EventRecord, error) {
 	r := NewReader(eventBytes)
 
 	// The event bytes are a Vec<EventRecord>. First, decode the length.
@@ -47,7 +48,7 @@ func DecodeEvents(metadata *MetadataV14, eventBytes []byte) ([]EventRecord, erro
 }
 
 // DecodeEventRecord decodes a single EventRecord from the byte stream.
-func DecodeEventRecord(metadata *MetadataV14, r *Reader) (EventRecord, error) {
+func DecodeEventRecord(metadata *v14.Metadata, r *Reader) (EventRecord, error) {
 	var record EventRecord
 
 	// --- 1. Decode the Phase ---
@@ -113,7 +114,7 @@ type DecodedPalletVariant struct {
 
 // DecodePalletVariant is a generalized function to decode a call or an event.
 // It takes a `variantType` string ("calls" or "events") to look in the correct metadata field.
-func DecodePalletVariant(metadata *MetadataV14, r *Reader, variantType string) (*DecodedPalletVariant, error) {
+func DecodePalletVariant(metadata *v14.Metadata, r *Reader, variantType string) (*DecodedPalletVariant, error) {
 	// The payload starts with the pallet index.
 	palletIndex, err := r.ReadByte()
 	if err != nil {
@@ -127,7 +128,7 @@ func DecodePalletVariant(metadata *MetadataV14, r *Reader, variantType string) (
 	}
 
 	// --- Find the Pallet Definition ---
-	var pallet PalletMetadataV14
+	var pallet v14.PalletMetadata
 	foundPallet := false
 	for _, p := range metadata.Pallets {
 		if p.Index == palletIndex {

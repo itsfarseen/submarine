@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"submarine/decoder"
+	decoder_v14 "submarine/decoder/v14"
 	. "submarine/rpc"
 	"submarine/scale"
 	"submarine/scale/v14"
@@ -107,7 +108,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		ext_, err := decoder.DecodeExtrinsic(&metadata, extBytes)
+		ext_, err := decoder_v14.DecodeExtrinsic(&metadata, extBytes)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -117,7 +118,7 @@ func main() {
 
 	eventsBytes := client.GetEvents(blockHash)
 
-	events, err := decoder.DecodeEvents(&metadata, eventsBytes)
+	events, err := decoder_v14.DecodeEvents(&metadata, eventsBytes)
 	if err != nil {
 		log.Fatalf("failed to decode event: %s", err)
 	}

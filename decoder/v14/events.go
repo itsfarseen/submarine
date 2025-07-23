@@ -1,29 +1,11 @@
-package decoder
+package v14
 
 import (
 	"fmt"
+	. "submarine/decoder"
 	. "submarine/scale"
 	"submarine/scale/v14"
 )
-
-type EventRecord struct {
-	Phase EventPhase
-	Event DecodedEvent
-	// Topics are skipped for this implementation but would be a [][]byte.
-}
-
-type EventPhase struct {
-	IsApplyExtrinsic bool
-	AsApplyExtrinsic uint32 // The index of the extrinsic
-	IsFinalization   bool
-	IsInitialization bool
-}
-
-type DecodedEvent struct {
-	PalletName string
-	EventName  string
-	Args       []DecodedArg
-}
 
 // DecodeEvents is the main entry point for decoding the raw bytes from System.Events.
 func DecodeEvents(metadata *v14.Metadata, eventBytes []byte) ([]EventRecord, error) {
@@ -103,13 +85,6 @@ func DecodeEventRecord(metadata *v14.Metadata, r *Reader) (EventRecord, error) {
 	}
 
 	return record, nil
-}
-
-// DecodedPalletVariant is a generic representation of a decoded call or event.
-type DecodedPalletVariant struct {
-	PalletName  string
-	VariantName string
-	Args        []DecodedArg
 }
 
 // DecodePalletVariant is a generalized function to decode a call or an event.

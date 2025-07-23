@@ -1,34 +1,14 @@
-package decoder
+package v14
 
 import (
 	"encoding/binary"
 	"fmt"
 	"log"
 	"math/big"
+	. "submarine/decoder"
 	. "submarine/scale"
 	"submarine/scale/v14"
 )
-
-// DecodedArg holds the name and decoded value of a single extrinsic argument.
-type DecodedArg struct {
-	Name  string
-	Value any // Using `any` to hold various decoded types.
-}
-
-// DecodedCall represents the action part of an extrinsic.
-type DecodedCall struct {
-	PalletName string
-	CallName   string
-	Args       []DecodedArg
-}
-
-// DecodedExtrinsic represents the full decoded extrinsic.
-// For this example, we focus on the Call, but a full implementation
-// would also include signature, address, etc.
-type DecodedExtrinsic struct {
-	Signature MultiSignature
-	Call      DecodedPalletVariant
-}
 
 // DecodeExtrinsic is the main entry point for decoding an extrinsic.
 // It uses the pre-decoded metadata to understand the structure of the bytes.
@@ -339,19 +319,4 @@ func DecodeArg(metadata *v14.Metadata, r *Reader, typeID SiLookupTypeId) (any, e
 	default:
 		return nil, fmt.Errorf("unsupported type definition %T for type ID %d", typ.Def, typeID)
 	}
-}
-
-// findType is a helper to safely access the type from the lookup table.
-func findType(metadata *v14.Metadata, typeID SiLookupTypeId) (Si1Type, bool) {
-	if int(typeID) > len(metadata.Lookup.Types) {
-		return Si1Type{}, false
-	}
-	// The ID in the PortableType struct is the actual ID. We need to find it.
-	for _, pType := range metadata.Lookup.Types {
-		if pType.Id == typeID {
-			return pType.Type, true
-		}
-	}
-
-	return Si1Type{}, false
 }

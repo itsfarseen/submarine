@@ -7,9 +7,10 @@ import (
 	"log"
 	"os"
 	"strings"
-	"submarine/decoder"
 	"submarine/scale"
 )
+
+const SYSTEM_EVENT_KEY = "0x26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7"
 
 func (client *RPC) GetMetadata(blockHash string) scale.MetadataV14 {
 	log.Println("Querying runtime metadata...")
@@ -58,7 +59,7 @@ func (client *RPC) GetMetadata(blockHash string) scale.MetadataV14 {
 }
 
 func (client *RPC) GetEvents(blockHash string) []byte {
-	resp := client.Send("state_getStorage", []any{decoder.SYSTEM_EVENT_KEY, blockHash})
+	resp := client.Send("state_getStorage", []any{SYSTEM_EVENT_KEY, blockHash})
 	eventsHex, err := resp.AsString()
 	if err != nil {
 		log.Fatalf("Failed to get events: %s", err)

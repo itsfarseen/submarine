@@ -2,22 +2,11 @@ package decoder
 
 import (
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"math/big"
 	. "submarine/scale"
 )
-
-const SYSTEM_EVENT_KEY = "0x26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7"
-
-func SystemEventKey() []byte {
-	bytes, err := hex.DecodeString(SYSTEM_EVENT_KEY[2:])
-	if err != nil {
-		log.Fatalf("Failed to decode SYSTEM_EVENT_KEY: %s", err)
-	}
-	return bytes
-}
 
 // DecodedArg holds the name and decoded value of a single extrinsic argument.
 type DecodedArg struct {

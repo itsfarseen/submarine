@@ -1,5 +1,5 @@
 
-package scale
+package system
 
 import (
 	"encoding/binary"

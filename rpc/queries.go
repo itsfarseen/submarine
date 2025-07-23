@@ -2,19 +2,19 @@ package rpc
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"strings"
-	"submarine/scale"
 )
 
 const SYSTEM_EVENT_KEY = "0x26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7"
 
-func (client *RPC) GetMetadata(blockHash string) scale.MetadataV14 {
-	log.Println("Querying runtime metadata...")
+type ChainMetadata struct {
+	Version uint
+	Data    []byte
+}
 
+func (client *RPC) GetMetadata(blockHash string) ChainMetadata {
 	metadataReq := client.Send("state_getMetadata", []any{blockHash})
 
 	metadataHex, err := metadataReq.AsString()
@@ -29,33 +29,21 @@ func (client *RPC) GetMetadata(blockHash string) scale.MetadataV14 {
 		log.Fatalf("Failed to decode metadata hex: %v", err)
 	}
 
+	var version uint = 0
+
 	// The version is the 5th byte (index 4) after the 4-byte magic number ('meta').
 	if len(metadataBytes) < 5 {
-		log.Println("Metadata is too short to contain a version number.")
+		log.Fatalf("Metadata is too short to contain a version number.")
 	} else {
-		version := metadataBytes[4]
-		log.Printf("✅ Successfully retrieved metadata (V%d).", version)
+		version = uint(metadataBytes[4])
 	}
 
-	err = os.WriteFile("metadata.dump", metadataBytes, 0644)
-	if err != nil {
-		panic(err)
-	}
+	data := metadataBytes[5:]
 
-	reader := scale.NewReader(metadataBytes[5:])
-	meta, err := scale.DecodeMetadataV14(reader)
-	if err != nil {
-		log.Printf("pos: %d", reader.Pos())
-		log.Fatal(err)
+	return ChainMetadata{
+		Version: version,
+		Data:    data,
 	}
-
-	json, err := json.MarshalIndent(meta, "", "   ")
-	err = os.WriteFile("metadata.json", json, 0644)
-	if err != nil {
-		panic(err)
-	}
-
-	return meta
 }
 
 func (client *RPC) GetEvents(blockHash string) []byte {

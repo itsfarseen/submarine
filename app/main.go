@@ -8,6 +8,7 @@ import (
 	"strings"
 	"submarine/decoder"
 	. "submarine/rpc"
+	"submarine/scale"
 )
 
 func main() {
@@ -88,7 +89,14 @@ func main() {
 	}
 	log.Printf("✅ Block data for hash %s:", blockHash)
 
-	metadata := client.GetMetadata(blockHash)
+	metadataRaw := client.GetMetadata(blockHash)
+	log.Printf("Metadata Version: %d", metadataRaw.Version)
+
+	metadataReader := scale.NewReader(metadataRaw.Data)
+	metadata, err := scale.DecodeMetadataV14(metadataReader)
+	if err != nil {
+		log.Fatalf("Failed to decode metadata: %s", err)
+	}
 
 	exts := make([]decoder.DecodedExtrinsic, 0, 10)
 

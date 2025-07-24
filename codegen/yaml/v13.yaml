@@ -1,0 +1,118 @@
+ErrorMetadata:
+  type: "import"
+  module: "v12"
+  item: "ErrorMetadata"
+
+EventMetadata:
+  type: "import"
+  module: "v12"
+  item: "EventMetadata"
+
+ExtrinsicMetadata:
+  type: "import"
+  module: "v12"
+  item: "ExtrinsicMetadata"
+
+FunctionArgumentMetadata:
+  type: "import"
+  module: "v12"
+  item: "FunctionArgumentMetadata"
+
+FunctionMetadata:
+  type: "import"
+  module: "v12"
+  item: "FunctionMetadata"
+
+Metadata:
+  type: "import"
+  module: "v12"
+  item: "Metadata"
+
+ModuleConstantMetadata:
+  type: "import"
+  module: "v12"
+  item: "ModuleConstantMetadata"
+
+ModuleMetadata:
+  type: "import"
+  module: "v12"
+  item: "ModuleMetadata"
+
+StorageEntryModifier:
+  type: "import"
+  module: "v12"
+  item: "StorageEntryModifier"
+
+StorageHasher:
+  type: "import"
+  module: "v12"
+  item: "StorageHasher"
+
+StorageEntryMetadata:
+  type: "struct"
+  fields:
+    name:
+      type: "text"
+    modifier:
+      type: "StorageEntryModifier"
+    type:
+      type: "StorageEntryType"
+    fallback:
+      type: "bytes"
+    docs:
+      type: "vec"
+      item:
+        type: "text"
+
+StorageEntryType:
+  type: "enum_complex"
+  variants:
+    - name: "Plain"
+      type: "type"
+    - name: "Map"
+      type: "struct"
+      fields:
+        - name: "hasher"
+          type: "StorageHasher"
+        - name: "key"
+          type: "type"
+        - name: "value"
+          type: "type"
+        - name: "linked"
+          type: "bool"
+    - name: "DoubleMap"
+      type: "struct"
+      fields:
+        - name: "hasher"
+          type: "StorageHasher"
+        - name: "key1"
+          type: "type"
+        - name: "key2"
+          type: "type"
+        - name: "value"
+          type: "type"
+        - name: "key2Hasher"
+          type: "StorageHasher"
+    - name: "NMap"
+      type: "struct"
+      fields:
+        - name: "keyVec"
+          type: "vec"
+          item:
+            type: "type"
+        - name: "hashers"
+          type: "vec"
+          item:
+            type: "StorageHasher"
+        - name: "value"
+          type: "type"
+
+StorageMetadata:
+  type: "struct"
+  fields:
+    prefix:
+      type: "text"
+    items:
+      type: "vec"
+      item:
+        type: "StorageEntryMetadata"

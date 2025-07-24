@@ -1,0 +1,96 @@
+ErrorMetadata:
+  type: "import"
+  module: "v11"
+  item: "ErrorMetadata"
+
+EventMetadata:
+  type: "import"
+  module: "v11"
+  item: "EventMetadata"
+
+ExtrinsicMetadata:
+  type: "import"
+  module: "v11"
+  item: "ExtrinsicMetadata"
+
+FunctionArgumentMetadata:
+  type: "import"
+  module: "v11"
+  item: "FunctionArgumentMetadata"
+
+FunctionMetadata:
+  type: "import"
+  module: "v11"
+  item: "FunctionMetadata"
+
+ModuleConstantMetadata:
+  type: "import"
+  module: "v11"
+  item: "ModuleConstantMetadata"
+
+StorageEntryModifier:
+  type: "import"
+  module: "v11"
+  item: "StorageEntryModifier"
+
+StorageEntryMetadata:
+  type: "import"
+  module: "v11"
+  item: "StorageEntryMetadata"
+
+StorageEntryType:
+  type: "import"
+  module: "v11"
+  item: "StorageEntryType"
+
+StorageMetadata:
+  type: "import"
+  module: "v11"
+  item: "StorageMetadata"
+
+StorageHasher:
+  type: "import"
+  module: "v11"
+  item: "StorageHasher"
+
+Metadata:
+  type: "struct"
+  fields:
+    modules:
+      type: "vec"
+      item:
+        type: "ModuleMetadata"
+    extrinsic:
+      type: "ExtrinsicMetadata"
+
+ModuleMetadata:
+  type: "struct"
+  fields:
+    name:
+      type: "text"
+    storage:
+      type: "option"
+      item:
+        type: "StorageMetadata"
+    calls:
+      type: "option"
+      item:
+        type: "vec"
+        item:
+          type: "FunctionMetadata"
+    events:
+      type: "option"
+      item:
+        type: "vec"
+        item:
+          type: "EventMetadata"
+    constants:
+      type: "vec"
+      item:
+        type: "ModuleConstantMetadata"
+    errors:
+      type: "vec"
+      item:
+        type: "ErrorMetadata"
+    index:
+      type: "u8"

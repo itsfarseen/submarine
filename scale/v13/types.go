@@ -105,7 +105,7 @@ type ModuleConstantMetadata struct {
 
 type ExtrinsicMetadataV13 struct {
 	Version          uint8
-	SignedExtensions []SignedExtensionMetadata
+	SignedExtensions []Text
 }
 
 type SignedExtensionMetadata struct {
@@ -380,21 +380,6 @@ func DecodeExtrinsicMetadataV13(r *Reader) (ExtrinsicMetadataV13, error) {
 	if err != nil {
 		return result, err
 	}
-	result.SignedExtensions, err = DecodeVec(r, DecodeSignedExtensionMetadata)
-	return result, err
-}
-
-func DecodeSignedExtensionMetadata(r *Reader) (SignedExtensionMetadata, error) {
-	var result SignedExtensionMetadata
-	var err error
-	result.Identifier, err = DecodeText(r)
-	if err != nil {
-		return result, err
-	}
-	result.Type, err = DecodeText(r)
-	if err != nil {
-		return result, err
-	}
-	result.AdditionalSigned, err = DecodeText(r)
+	result.SignedExtensions, err = DecodeVec(r, DecodeText)
 	return result, err
 }

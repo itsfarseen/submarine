@@ -89,22 +89,12 @@ func parseTypeFromMap(def map[string]any) (*Type, error) {
 	switch rawType {
 	case "struct":
 		t.Kind = KindStruct
-		rawFields, ok := def["fields"]
+		rawFields, ok := def["fields"].([]any)
 		if !ok {
-			return nil, fmt.Errorf("struct definition missing 'fields'")
+			return nil, fmt.Errorf("struct definition missing 'fields' or not a list")
 		}
 
-		var members []NamedMember
-		var err error
-		switch f := rawFields.(type) {
-		case map[string]any:
-			members, err = parseNamedMembersFromMap(f)
-		case []any:
-			members, err = parseNamedMembersFromList(f)
-		default:
-			return nil, fmt.Errorf("struct 'fields' must be a map or a list, got %T", rawFields)
-		}
-
+		members, err := parseNamedMembersFromList(rawFields)
 		if err != nil {
 			return nil, err
 		}
@@ -159,21 +149,7 @@ func parseTypeFromMap(def map[string]any) (*Type, error) {
 	return t, nil
 }
 
-func parseNamedMembersFromMap(m map[string]any) ([]NamedMember, error) {
-	members := make([]NamedMember, 0, len(m))
-	for name, typeDef := range m {
-		memberType, err := parseType(typeDef)
-		if err != nil {
-			return nil, fmt.Errorf("parsing field '%s': %w", name, err)
-		}
-		members = append(members, NamedMember{Name: name, Type: memberType})
-	}
-	// Sort by name for deterministic order.
-	sort.Slice(members, func(i, j int) bool {
-		return members[i].Name < members[j].Name
-	})
-	return members, nil
-}
+
 
 func parseNamedMembersFromList(l []any) ([]NamedMember, error) {
 	members := make([]NamedMember, len(l))

@@ -56,41 +56,41 @@ StorageHasher:
 Metadata:
   type: "struct"
   fields:
-    modules:
+    - name: "modules"
       type: "vec"
       item:
         type: "ModuleMetadata"
-    extrinsic:
+    - name: "extrinsic"
       type: "ExtrinsicMetadata"
 
 ModuleMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    storage:
+    - name: "storage"
       type: "option"
       item:
         type: "StorageMetadata"
-    calls:
+    - name: "calls"
       type: "option"
       item:
         type: "vec"
         item:
           type: "FunctionMetadata"
-    events:
+    - name: "events"
       type: "option"
       item:
         type: "vec"
         item:
           type: "EventMetadata"
-    constants:
+    - name: "constants"
       type: "vec"
       item:
         type: "ModuleConstantMetadata"
-    errors:
+    - name: "errors"
       type: "vec"
       item:
         type: "ErrorMetadata"
-    index:
+    - name: "index"
       type: "u8"

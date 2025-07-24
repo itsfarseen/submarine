@@ -1,9 +1,9 @@
 ErrorMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    docs: 
+    - name: "docs"
       type: "vec"
       item: 
         type: "text"
@@ -11,13 +11,13 @@ ErrorMetadata:
 EventMetadata:
   type: "struct"
   fields:
-    name: 
+    - name: "name"
       type: "text"
-    args:
+    - name: "args"
       type: "vec"
       item: 
         type: "type"
-    docs:
+    - name: "docs"
       type: "vec"
       item: 
         type: "text"
@@ -25,21 +25,21 @@ EventMetadata:
 FunctionArgumentMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    type:
+    - name: "type"
       type: "type"
 
 FunctionMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    args:
+    - name: "args"
       type: "vec"
       item:
         type: "FunctionArgumentMetadata"
-    docs:
+    - name: "docs"
       type: "vec"
       item:
         type: "text"
@@ -47,7 +47,7 @@ FunctionMetadata:
 Metadata:
   type: "struct"
   fields:
-    modules:
+    - name: "modules"
       type: "vec"
       item:
         type: "ModuleMetadata"
@@ -55,13 +55,13 @@ Metadata:
 ModuleConstantMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    type:
+    - name: "type"
       type: "type"
-    value:
+    - name: "value"
       type: "bytes"
-    docs:
+    - name: "docs"
       type: "vec"
       item:
         type: "text"
@@ -69,29 +69,29 @@ ModuleConstantMetadata:
 ModuleMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    storage:
+    - name: "storage"
       type: "option"
       item:
         type: "StorageMetadata"
-    calls:
+    - name: "calls"
       type: "option"
       item:
         type: "vec"
         item:
           type: "FunctionMetadata"
-    events:
+    - name: "events"
       type: "option"
       item:
         type: "vec"
         item:
           type: "EventMetadata"
-    constants:
+    - name: "constants"
       type: "vec"
       item:
         type: "ModuleConstantMetadata"
-    errors:
+    - name: "errors"
       type: "vec"
       item:
         type: "ErrorMetadata"
@@ -99,15 +99,15 @@ ModuleMetadata:
 StorageEntryMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    modifier:
+    - name: "modifier"
       type: "StorageEntryModifier"
-    type:
+    - name: "type"
       type: "StorageEntryType"
-    fallback:
+    - name: "fallback"
       type: "bytes"
-    docs:
+    - name: "docs"
       type: "vec"
       item:
         type: "text"
@@ -161,9 +161,9 @@ StorageHasher:
 StorageMetadata:
   type: "struct"
   fields:
-    prefix:
+    - name: "prefix"
       type: "text"
-    items:
+    - name: "items"
       type: "vec"
       item:
         type: "StorageEntryMetadata"

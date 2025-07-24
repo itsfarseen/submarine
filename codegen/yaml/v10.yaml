@@ -31,7 +31,7 @@ StorageEntryModifier:
 Metadata:
   type: "struct"
   fields:
-    modules:
+    - name: "modules"
       type: "vec"
       item:
         type: "ModuleMetadata"
@@ -39,29 +39,29 @@ Metadata:
 ModuleMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    storage:
+    - name: "storage"
       type: "option"
       item:
         type: "StorageMetadata"
-    calls:
+    - name: "calls"
       type: "option"
       item:
         type: "vec"
         item:
           type: "FunctionMetadata"
-    events:
+    - name: "events"
       type: "option"
       item:
         type: "vec"
         item:
           type: "EventMetadata"
-    constants:
+    - name: "constants"
       type: "vec"
       item:
         type: "ModuleConstantMetadata"
-    errors:
+    - name: "errors"
       type: "vec"
       item:
         type: "ErrorMetadata"
@@ -69,15 +69,15 @@ ModuleMetadata:
 StorageEntryMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    modifier:
+    - name: "modifier"
       type: "StorageEntryModifier"
-    type:
+    - name: "type"
       type: "StorageEntryType"
-    fallback:
+    - name: "fallback"
       type: "bytes"
-    docs:
+    - name: "docs"
       type: "vec"
       item:
         type: "text"
@@ -115,9 +115,9 @@ StorageEntryType:
 StorageMetadata:
   type: "struct"
   fields:
-    prefix:
+    - name: "prefix"
       type: "text"
-    items:
+    - name: "items"
       type: "vec"
       item:
         type: "StorageEntryMetadata"

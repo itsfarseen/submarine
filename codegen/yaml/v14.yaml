@@ -11,27 +11,27 @@ StorageHasher:
 PortableType:
   type: "struct"
   fields:
-    id:
+    - name: "id"
       type: "Si1LookupTypeId"
-    type:
+    - name: "type"
       type: "Si1Type"
 
 ErrorMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    fields:
+    - name: "fields"
       type: "vec"
       item:
         type: "Si1Field"
-    index:
+    - name: "index"
       type: "u8"
-    docs:
+    - name: "docs"
       type: "vec"
       item:
         type: "text"
-    args:
+    - name: "args"
       type: "vec"
       item:
         type: "type"
@@ -39,19 +39,19 @@ ErrorMetadata:
 EventMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    fields:
+    - name: "fields"
       type: "vec"
       item:
         type: "Si1Field"
-    index:
+    - name: "index"
       type: "u8"
-    docs:
+    - name: "docs"
       type: "vec"
       item:
         type: "text"
-    args:
+    - name: "args"
       type: "vec"
       item:
         type: "type"
@@ -59,11 +59,11 @@ EventMetadata:
 FunctionArgumentMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    type:
+    - name: "type"
       type: "type"
-    typeName:
+    - name: "typeName"
       type: "option"
       item:
         type: "type"
@@ -71,19 +71,19 @@ FunctionArgumentMetadata:
 FunctionMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    fields:
+    - name: "fields"
       type: "vec"
       item:
         type: "Si1Field"
-    index:
+    - name: "index"
       type: "u8"
-    docs:
+    - name: "docs"
       type: "vec"
       item:
         type: "text"
-    args:
+    - name: "args"
       type: "vec"
       item:
         type: "FunctionArgumentMetadata"
@@ -91,11 +91,11 @@ FunctionMetadata:
 ExtrinsicMetadata:
   type: "struct"
   fields:
-    type:
+    - name: "type"
       type: "SiLookupTypeId"
-    version:
+    - name: "version"
       type: "u8"
-    signedExtensions:
+    - name: "signedExtensions"
       type: "vec"
       item:
         type: "SignedExtensionMetadata"
@@ -103,33 +103,33 @@ ExtrinsicMetadata:
 Metadata:
   type: "struct"
   fields:
-    lookup:
+    - name: "lookup"
       type: "PortableRegistry"
-    pallets:
+    - name: "pallets"
       type: "vec"
       item:
         type: "PalletMetadata"
-    extrinsic:
+    - name: "extrinsic"
       type: "ExtrinsicMetadata"
-    type:
+    - name: "type"
       type: "SiLookupTypeId"
 
 PalletCallMetadata:
   type: "struct"
   fields:
-    type:
+    - name: "type"
       type: "SiLookupTypeId"
 
 PalletConstantMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    type:
+    - name: "type"
       type: "SiLookupTypeId"
-    value:
+    - name: "value"
       type: "bytes"
-    docs:
+    - name: "docs"
       type: "vec"
       item:
         type: "text"
@@ -137,49 +137,49 @@ PalletConstantMetadata:
 PalletErrorMetadata:
   type: "struct"
   fields:
-    type:
+    - name: "type"
       type: "SiLookupTypeId"
 
 PalletEventMetadata:
   type: "struct"
   fields:
-    type:
+    - name: "type"
       type: "SiLookupTypeId"
 
 PalletMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    storage:
+    - name: "storage"
       type: "option"
       item:
         type: "PalletStorageMetadata"
-    calls:
+    - name: "calls"
       type: "option"
       item:
         type: "PalletCallMetadata"
-    events:
+    - name: "events"
       type: "option"
       item:
         type: "PalletEventMetadata"
-    constants:
+    - name: "constants"
       type: "vec"
       item:
         type: "PalletConstantMetadata"
-    errors:
+    - name: "errors"
       type: "option"
       item:
         type: "PalletErrorMetadata"
-    index:
+    - name: "index"
       type: "u8"
 
 PalletStorageMetadata:
   type: "struct"
   fields:
-    prefix:
+    - name: "prefix"
       type: "text"
-    items:
+    - name: "items"
       type: "vec"
       item:
         type: "StorageEntryMetadata"
@@ -187,25 +187,25 @@ PalletStorageMetadata:
 SignedExtensionMetadata:
   type: "struct"
   fields:
-    identifier:
+    - name: "identifier"
       type: "text"
-    type:
+    - name: "type"
       type: "SiLookupTypeId"
-    additionalSigned:
+    - name: "additionalSigned"
       type: "SiLookupTypeId"
 
 StorageEntryMetadata:
   type: "struct"
   fields:
-    name:
+    - name: "name"
       type: "text"
-    modifier:
+    - name: "modifier"
       type: "StorageEntryModifier"
-    type:
+    - name: "type"
       type: "StorageEntryType"
-    fallback:
+    - name: "fallback"
       type: "bytes"
-    docs:
+    - name: "docs"
       type: "vec"
       item:
         type: "text"

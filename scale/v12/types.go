@@ -2,6 +2,7 @@ package v12
 
 import (
 	"fmt"
+	"log"
 	. "submarine/scale"
 )
 
@@ -124,36 +125,38 @@ func DecodeModuleMetadata(r *Reader) (ModuleMetadata, error) {
 
 	result.Name, err = DecodeText(r)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("name: %w", err)
 	}
+	log.Print("DBG", result)
 
 	result.Storage, err = DecodeOption(r, DecodeStorageMetadata)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("storage: %w", err)
 	}
 
 	result.Calls, err = DecodeOption(r, func(r *Reader) ([]FunctionMetadata, error) {
 		return DecodeVec(r, DecodeFunctionMetadata)
 	})
+
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("calls: %w", err)
 	}
 
 	result.Events, err = DecodeOption(r, func(r *Reader) ([]EventMetadata, error) {
 		return DecodeVec(r, DecodeEventMetadata)
 	})
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("events: %w", err)
 	}
 
 	result.Constants, err = DecodeVec(r, DecodeModuleConstantMetadata)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("constants: %w", err)
 	}
 
 	result.Errors, err = DecodeVec(r, DecodeErrorMetadata)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("errors: %w", err)
 	}
 
 	return result, err

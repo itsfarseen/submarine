@@ -91,7 +91,7 @@ func DecodeArgFromString(metadata *v9.Metadata, r *Reader, typeName string) (any
 			return nil, err
 		}
 		return binary.LittleEndian.Uint16(b), nil
-	case "u32":
+	case "u32", "BlockNumber", "LeasePeriod":
 		return DecodeU32(r)
 	case "u64":
 		b, err := r.ReadBytes(8)
@@ -107,7 +107,7 @@ func DecodeArgFromString(metadata *v9.Metadata, r *Reader, typeName string) (any
 		return DecodeBytes(r)
 	case "Text", "String", "Type":
 		return DecodeText(r)
-	case "AccountId": // Typically a 32-byte array
+	case "AccountId", "AuthorityId": // Typically a 32-byte array
 		return r.ReadBytes(32)
 	case "H256", "Hash": // 32-byte hash
 		return r.ReadBytes(32)
@@ -133,6 +133,10 @@ func DecodeArgFromString(metadata *v9.Metadata, r *Reader, typeName string) (any
 		return system.DecodeDispatchInfo(r)
 	case "DispatchError":
 		return system.DecodeDispatchError(r)
+	case "DispatchResultOf":
+		return system.DecodeDispatchOutcome(r)
+	case "RawOrigin":
+		return system.DecodeRawOrigin(r)
 	default:
 		// This is where it gets tricky. We might have `T::AccountId` or other complex types.
 		// A proper implementation would need to look up these types in the runtime,

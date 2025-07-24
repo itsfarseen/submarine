@@ -133,6 +133,10 @@ func DecodeArgFromString(metadata *v12.Metadata, r *Reader, typeName string) (an
 		return system.DecodeDispatchInfo(r)
 	case "DispatchError":
 		return system.DecodeDispatchError(r)
+	case "DispatchResultOf":
+		return system.DecodeDispatchOutcome(r)
+	case "RawOrigin":
+		return system.DecodeRawOrigin(r)
 	default:
 		// This is where it gets tricky. We might have `T::AccountId` or other complex types.
 		// A proper implementation would need to look up these types in the runtime,

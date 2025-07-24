@@ -105,7 +105,7 @@ func DecodePalletEvent(metadata *v12.Metadata, r *Reader) (*DecodedPalletVariant
 	eventfulModules := make([]v12.ModuleMetadata, 0)
 	for _, p := range metadata.Modules {
 		if p.Events.HasValue {
-			eventfulModules = append(eventfulModules, p)
+			eventfulModules = append(eventfulModules, v12.ModuleMetadata(p))
 		}
 	}
 

@@ -114,7 +114,6 @@ func DecodePalletEvent(metadata *v11.Metadata, r *Reader) (*DecodedPalletVariant
 	}
 	pallet := eventfulModules[palletIndex]
 
-
 	if !pallet.Events.HasValue {
 		return nil, fmt.Errorf("pallet '%s' has no events defined", pallet.Name)
 	}

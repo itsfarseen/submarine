@@ -91,7 +91,7 @@ func DecodeArgFromString(metadata *v12.Metadata, r *Reader, typeName string) (an
 			return nil, err
 		}
 		return binary.LittleEndian.Uint16(b), nil
-	case "u32":
+	case "u32", "BlockNumber", "LeasePeriod":
 		return DecodeU32(r)
 	case "u64":
 		b, err := r.ReadBytes(8)
@@ -107,7 +107,7 @@ func DecodeArgFromString(metadata *v12.Metadata, r *Reader, typeName string) (an
 		return DecodeBytes(r)
 	case "Text", "String", "Type":
 		return DecodeText(r)
-	case "AccountId": // Typically a 32-byte array
+	case "AccountId", "AuthorityId": // Typically a 32-byte array
 		return r.ReadBytes(32)
 	case "H256", "Hash": // 32-byte hash
 		return r.ReadBytes(32)

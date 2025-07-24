@@ -73,7 +73,7 @@ func main() {
 
 	// Block contents
 
-	blockNumberToQuery := uint64(100)
+	blockNumberToQuery := uint64(1_000_000)
 	log.Printf("Querying block #%d...", blockNumberToQuery)
 
 	blockHashReq := client.Send("chain_getBlockHash", []any{blockNumberToQuery})

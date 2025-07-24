@@ -67,6 +67,14 @@ func DecodeU8(r *Reader) (uint8, error) {
 	return r.ReadByte()
 }
 
+func DecodeU16(r *Reader) (uint16, error) {
+	bytes, err := r.ReadBytes(2)
+	if err != nil {
+		return 0, fmt.Errorf("u16: %w", err)
+	}
+	return binary.LittleEndian.Uint16(bytes), nil
+}
+
 func DecodeU32(r *Reader) (uint32, error) {
 	bytes, err := r.ReadBytes(4)
 	if err != nil {

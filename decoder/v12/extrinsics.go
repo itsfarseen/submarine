@@ -77,10 +77,19 @@ func DecodeCall(metadata *v12.Metadata, r *Reader) (*DecodedPalletVariant, error
 	}
 
 	// --- Find the Call Definition in Metadata ---
-	if int(palletIndex) >= len(metadata.Modules) {
-		return nil, fmt.Errorf("pallet with index %d not found in metadata", palletIndex)
+	// In metadata v12 and older, the pallet index is the index in the filtered
+	// list of pallets that actually have calls.
+	callableModules := make([]v12.ModuleMetadata, 0)
+	for _, p := range metadata.Modules {
+		if p.Calls.HasValue {
+			callableModules = append(callableModules, p)
+		}
 	}
-	pallet := metadata.Modules[palletIndex]
+
+	if int(palletIndex) >= len(callableModules) {
+		return nil, fmt.Errorf("pallet with index %d not found in callable modules", palletIndex)
+	}
+	pallet := callableModules[palletIndex]
 
 	if !pallet.Calls.HasValue {
 		return nil, fmt.Errorf("pallet '%s' has no calls defined in metadata", pallet.Name)

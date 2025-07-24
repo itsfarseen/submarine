@@ -390,12 +390,12 @@ type ConsumedWeight PerDispatchClassWeight
 type DigestItemKind int
 
 const (
-	DigestItemOther             DigestItemKind = 0
-	DigestItemChangesTrieRoot   DigestItemKind = 2
-	DigestItemConsensus         DigestItemKind = 4
-	DigestItemSeal              DigestItemKind = 5
-	DigestItemPreRuntime        DigestItemKind = 6
-	DigestItemChangesTrieSignal DigestItemKind = 7
+	DigestItemOther                     DigestItemKind = 0
+	DigestItemChangesTrieRoot           DigestItemKind = 2
+	DigestItemConsensus                 DigestItemKind = 4
+	DigestItemSeal                      DigestItemKind = 5
+	DigestItemPreRuntime                DigestItemKind = 6
+	DigestItemChangesTrieSignal         DigestItemKind = 7
 	DigestItemRuntimeEnvironmentUpdated DigestItemKind = 8
 )
 
@@ -490,7 +490,7 @@ type DispatchErrorModuleU8a struct {
 	Error [8]byte // U8aFixed of length 8, assuming a max error size
 }
 
-type DispatchErrorModule = DispatchErrorModuleU8a
+
 
 func DecodeDispatchErrorModuleU8a(r *Reader) (DispatchErrorModuleU8a, error) {
 	var d DispatchErrorModuleU8a
@@ -931,11 +931,6 @@ type EventIndex uint32
 type Key Bytes
 type RefCountTo259 uint8
 
-type DispatchErrorModuleU8 struct {
-	Index uint8
-	Error uint8
-}
-
 type DispatchErrorPre6FirstKind int
 
 const (
@@ -952,7 +947,7 @@ const (
 
 type DispatchErrorPre6First struct {
 	Kind          DispatchErrorPre6FirstKind
-	Module        DispatchErrorModulePre6
+	Module        DispatchErrorModuleU8a
 	Token         TokenError
 	Arithmetic    ArithmeticError
 	Transactional TransactionalError
@@ -961,17 +956,6 @@ type DispatchErrorPre6First struct {
 type DispatchResultTo198 struct {
 	IsErr bool
 	Err   Text
-}
-
-func DecodeDispatchErrorModuleU8(r *Reader) (DispatchErrorModuleU8, error) {
-	var d DispatchErrorModuleU8
-	var err error
-	d.Index, err = r.ReadByte()
-	if err != nil {
-		return d, err
-	}
-	d.Error, err = r.ReadByte()
-	return d, err
 }
 
 type SyncState struct {
@@ -1095,13 +1079,11 @@ type DispatchOutcomePre6 struct {
 
 type DispatchErrorPre6 struct {
 	Kind          DispatchErrorKind // Re-using for simplicity
-	Module        DispatchErrorModulePre6
+	Module        DispatchErrorModuleU8a
 	Token         TokenError
 	Arithmetic    ArithmeticError
 	Transactional TransactionalError
 }
-
-type DispatchErrorModulePre6 DispatchErrorModuleU8
 
 // NetworkState and related types are for RPC responses, not SCALE encoded.
 // Their structs are defined for type safety, but decoders are omitted.
@@ -1191,7 +1173,7 @@ func DecodeDispatchErrorPre6First(r *Reader) (DispatchErrorPre6First, error) {
 	d.Kind = DispatchErrorPre6FirstKind(b)
 	switch d.Kind {
 	case DispatchErrorPre6FirstModule:
-		d.Module, err = DecodeDispatchErrorModuleU8(r)
+		d.Module, err = DecodeDispatchErrorModuleU8a(r)
 	case DispatchErrorPre6FirstToken:
 		d.Token, err = DecodeTokenError(r)
 	case DispatchErrorPre6FirstArithmetic:

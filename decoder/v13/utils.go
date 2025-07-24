@@ -3,10 +3,10 @@ package v13
 import (
 	"encoding/binary"
 	"fmt"
-	"math/big"
 	"strconv"
 	"strings"
 	. "submarine/scale"
+	"submarine/scale/system"
 	"submarine/scale/v13"
 )
 
@@ -100,15 +100,7 @@ func DecodeArgFromString(metadata *v13.Metadata, r *Reader, typeName string) (an
 		}
 		return binary.LittleEndian.Uint64(b), nil
 	case "u128", "Balance":
-		b, err := r.ReadBytes(16)
-		if err != nil {
-			return nil, err
-		}
-		// Reverse for big.Int which expects big-endian bytes
-		for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
-			b[i], b[j] = b[j], b[i]
-		}
-		return new(big.Int).SetBytes(b), nil
+		return DecodeU128(r)
 	case "bool":
 		return DecodeBool(r)
 	case "Bytes":
@@ -121,6 +113,26 @@ func DecodeArgFromString(metadata *v13.Metadata, r *Reader, typeName string) (an
 		return r.ReadBytes(32)
 	case "MultiAddress":
 		return DecodeMultiAddress(r)
+	case "AccountInfo":
+		return system.DecodeAccountInfoWithTripleRefCount(r)
+	case "DispatchResult":
+		return system.DecodeDispatchOutcome(r)
+	case "Weight":
+		return system.DecodeWeight(r)
+	case "Phase":
+		return system.DecodePhase(r)
+	case "EventRecord":
+		return system.DecodeEventRecord(r)
+	case "LastRuntimeUpgradeInfo":
+		return system.DecodeLastRuntimeUpgradeInfo(r)
+	case "BlockLength":
+		return system.DecodeBlockLength(r)
+	case "BlockWeights":
+		return system.DecodeBlockWeights(r)
+	case "DispatchInfo":
+		return system.DecodeDispatchInfo(r)
+	case "DispatchError":
+		return system.DecodeDispatchError(r)
 	default:
 		// This is where it gets tricky. We might have `T::AccountId` or other complex types.
 		// A proper implementation would need to look up these types in the runtime,

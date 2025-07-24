@@ -75,6 +75,18 @@ func DecodeU32(r *Reader) (uint32, error) {
 	return binary.LittleEndian.Uint32(bytes), nil
 }
 
+func DecodeU128(r *Reader) (*big.Int, error) {
+	b, err := r.ReadBytes(16)
+	if err != nil {
+		return nil, err
+	}
+	// Reverse for big.Int which expects big-endian bytes
+	for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
+		b[i], b[j] = b[j], b[i]
+	}
+	return new(big.Int).SetBytes(b), nil
+}
+
 func DecodeBool(r *Reader) (bool, error) {
 	b, err := r.ReadByte()
 	if err != nil {

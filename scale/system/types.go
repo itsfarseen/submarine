@@ -1,7 +1,7 @@
-
 package system
 
 import (
+	. "submarine/scale"
 	"encoding/binary"
 	"fmt"
 	"math/big"
@@ -490,6 +490,8 @@ type DispatchErrorModuleU8a struct {
 	Error [8]byte // U8aFixed of length 8, assuming a max error size
 }
 
+type DispatchErrorModule = DispatchErrorModuleU8a
+
 func DecodeDispatchErrorModuleU8a(r *Reader) (DispatchErrorModuleU8a, error) {
 	var d DispatchErrorModuleU8a
 	var err error
@@ -697,6 +699,8 @@ type GenericEvent struct {
 	VariantIndex byte
 	Data         Bytes
 }
+
+type Event = GenericEvent
 
 type EventRecord struct {
 	Phase  Phase
@@ -932,6 +936,33 @@ type DispatchErrorModuleU8 struct {
 	Error uint8
 }
 
+type DispatchErrorPre6FirstKind int
+
+const (
+	DispatchErrorPre6FirstOther DispatchErrorPre6FirstKind = iota
+	DispatchErrorPre6FirstCannotLookup
+	DispatchErrorPre6FirstBadOrigin
+	DispatchErrorPre6FirstModule
+	DispatchErrorPre6FirstConsumerRemaining
+	DispatchErrorPre6FirstNoProviders
+	DispatchErrorPre6FirstToken
+	DispatchErrorPre6FirstArithmetic
+	DispatchErrorPre6FirstTransactional
+)
+
+type DispatchErrorPre6First struct {
+	Kind          DispatchErrorPre6FirstKind
+	Module        DispatchErrorModulePre6
+	Token         TokenError
+	Arithmetic    ArithmeticError
+	Transactional TransactionalError
+}
+
+type DispatchResultTo198 struct {
+	IsErr bool
+	Err   Text
+}
+
 func DecodeDispatchErrorModuleU8(r *Reader) (DispatchErrorModuleU8, error) {
 	var d DispatchErrorModuleU8
 	var err error
@@ -1122,4 +1153,69 @@ type PeerEndpointAddr struct {
 type PeerPing struct {
 	Nanos uint64
 	Secs  uint64
+}
+
+// --- Decoders for new types ---
+
+func DecodeEventId(r *Reader) (EventId, error) {
+	var h EventId
+	b, err := r.ReadBytes(32)
+	if err != nil {
+		return h, err
+	}
+	copy(h[:], b)
+	return h, nil
+}
+
+func DecodeEventIndex(r *Reader) (EventIndex, error) {
+	u, err := DecodeU32(r)
+	return EventIndex(u), err
+}
+
+func DecodeKey(r *Reader) (Key, error) {
+	b, err := DecodeBytes(r)
+	return Key(b), err
+}
+
+func DecodeRefCountTo259(r *Reader) (RefCountTo259, error) {
+	u, err := DecodeU8(r)
+	return RefCountTo259(u), err
+}
+
+func DecodeDispatchErrorPre6First(r *Reader) (DispatchErrorPre6First, error) {
+	b, err := r.ReadByte()
+	if err != nil {
+		return DispatchErrorPre6First{}, err
+	}
+	var d DispatchErrorPre6First
+	d.Kind = DispatchErrorPre6FirstKind(b)
+	switch d.Kind {
+	case DispatchErrorPre6FirstModule:
+		d.Module, err = DecodeDispatchErrorModuleU8(r)
+	case DispatchErrorPre6FirstToken:
+		d.Token, err = DecodeTokenError(r)
+	case DispatchErrorPre6FirstArithmetic:
+		d.Arithmetic, err = DecodeArithmeticError(r)
+	case DispatchErrorPre6FirstTransactional:
+		d.Transactional, err = DecodeTransactionalError(r)
+	}
+	return d, err
+}
+
+func DecodeDispatchResultTo198(r *Reader) (DispatchResultTo198, error) {
+	b, err := r.ReadByte()
+	if err != nil {
+		return DispatchResultTo198{}, err
+	}
+	var res DispatchResultTo198
+	if b == 0 { // Ok
+		res.IsErr = false
+		return res, nil
+	}
+	if b == 1 { // Err
+		res.IsErr = true
+		res.Err, err = DecodeText(r)
+		return res, err
+	}
+	return res, fmt.Errorf("invalid DispatchResultTo198 variant: %d", b)
 }

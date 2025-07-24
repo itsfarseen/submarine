@@ -100,10 +100,20 @@ func DecodePalletEvent(metadata *v11.Metadata, r *Reader) (*DecodedPalletVariant
 	}
 
 	// --- Find the Pallet Definition ---
-	if int(palletIndex) >= len(metadata.Modules) {
+	// In metadata v11 and older, the pallet index is the index in the filtered
+	// list of pallets that actually have events.
+	eventfulModules := make([]v11.ModuleMetadata, 0)
+	for _, p := range metadata.Modules {
+		if p.Events.HasValue {
+			eventfulModules = append(eventfulModules, p)
+		}
+	}
+
+	if int(palletIndex) >= len(eventfulModules) {
 		return nil, fmt.Errorf("pallet with index %d not found", palletIndex)
 	}
-	pallet := metadata.Modules[palletIndex]
+	pallet := eventfulModules[palletIndex]
+
 
 	if !pallet.Events.HasValue {
 		return nil, fmt.Errorf("pallet '%s' has no events defined", pallet.Name)

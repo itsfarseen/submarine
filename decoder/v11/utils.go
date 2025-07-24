@@ -91,7 +91,7 @@ func DecodeArgFromString(metadata *v11.Metadata, r *Reader, typeName string) (an
 			return nil, err
 		}
 		return binary.LittleEndian.Uint16(b), nil
-	case "u32", "BlockNumber":
+	case "u32", "BlockNumber", "LeasePeriod":
 		return DecodeU32(r)
 	case "u64":
 		b, err := r.ReadBytes(8)

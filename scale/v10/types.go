@@ -35,11 +35,50 @@ func DecodeMetadata(r *Reader) (Metadata, error) {
 	return Metadata(v9Meta), nil
 }
 
-// DecodeModuleMetadata is needed for v11 to call into.
 func DecodeModuleMetadata(r *Reader) (ModuleMetadata, error) {
 	v9Module, err := v9.DecodeModuleMetadata(r)
 	if err != nil {
 		return ModuleMetadata{}, err
 	}
 	return ModuleMetadata(v9Module), nil
+}
+
+func DecodeStorageMetadata(r *Reader) (StorageMetadata, error) {
+	v9Storage, err := v9.DecodeStorageMetadata(r)
+	if err != nil {
+		return StorageMetadata{}, err
+	}
+	return StorageMetadata(v9Storage), nil
+}
+
+func DecodeFunctionMetadata(r *Reader) (FunctionMetadata, error) {
+	v9Func, err := v9.DecodeFunctionMetadata(r)
+	if err != nil {
+		return FunctionMetadata{}, err
+	}
+	return FunctionMetadata(v9Func), nil
+}
+
+func DecodeEventMetadata(r *Reader) (EventMetadata, error) {
+	v9Event, err := v9.DecodeEventMetadata(r)
+	if err != nil {
+		return EventMetadata{}, err
+	}
+	return EventMetadata(v9Event), nil
+}
+
+func DecodeModuleConstantMetadata(r *Reader) (ModuleConstantMetadata, error) {
+	v9Const, err := v9.DecodeModuleConstantMetadata(r)
+	if err != nil {
+		return ModuleConstantMetadata{}, err
+	}
+	return ModuleConstantMetadata(v9Const), nil
+}
+
+func DecodeErrorMetadata(r *Reader) (ErrorMetadata, error) {
+	v9Error, err := v9.DecodeErrorMetadata(r)
+	if err != nil {
+		return ErrorMetadata{}, err
+	}
+	return ErrorMetadata(v9Error), nil
 }

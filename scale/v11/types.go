@@ -6,10 +6,9 @@ import (
 	"submarine/scale/v10"
 )
 
-// v11 reuses most of v10, but adds an Extrinsic field to Metadata.
+// v11 reuses most of v10, but adds an Extrinsic field to Metadata and Index to ModuleMetadata.
 
 // Reused types from v10
-type ModuleMetadata v10.ModuleMetadata
 type StorageMetadata v10.StorageMetadata
 type StorageEntryMetadata v10.StorageEntryMetadata
 type StorageEntryModifier v10.StorageEntryModifier
@@ -27,6 +26,16 @@ type ModuleConstantMetadata v10.ModuleConstantMetadata
 type Metadata struct {
 	Modules   []ModuleMetadata
 	Extrinsic ExtrinsicMetadataV11
+}
+
+type ModuleMetadata struct {
+	Name      Text
+	Storage   Option[StorageMetadata]
+	Calls     Option[[]FunctionMetadata]
+	Events    Option[[]EventMetadata]
+	Constants []ModuleConstantMetadata
+	Errors    []ErrorMetadata
+	Index     uint8
 }
 
 type ExtrinsicMetadataV11 struct {
@@ -47,27 +56,70 @@ func DecodeExtrinsicMetadataV11(r *Reader) (ExtrinsicMetadataV11, error) {
 	return result, err
 }
 
+func DecodeModuleMetadata(r *Reader) (ModuleMetadata, error) {
+	var result ModuleMetadata
+	var err error
+
+	result.Name, err = DecodeText(r)
+	if err != nil {
+		return result, err
+	}
+
+	result.Storage, err = DecodeOption(r, func(r *Reader) (StorageMetadata, error) {
+		v10val, err := v10.DecodeStorageMetadata(r)
+		return StorageMetadata(v10val), err
+	})
+	if err != nil {
+		return result, err
+	}
+
+	result.Calls, err = DecodeOption(r, func(r *Reader) ([]FunctionMetadata, error) {
+		return DecodeVec(r, func(r *Reader) (FunctionMetadata, error) {
+			v10val, err := v10.DecodeFunctionMetadata(r)
+			return FunctionMetadata(v10val), err
+		})
+	})
+	if err != nil {
+		return result, err
+	}
+
+	result.Events, err = DecodeOption(r, func(r *Reader) ([]EventMetadata, error) {
+		return DecodeVec(r, func(r *Reader) (EventMetadata, error) {
+			v10val, err := v10.DecodeEventMetadata(r)
+			return EventMetadata(v10val), err
+		})
+	})
+	if err != nil {
+		return result, err
+	}
+
+	result.Constants, err = DecodeVec(r, func(r *Reader) (ModuleConstantMetadata, error) {
+		v10val, err := v10.DecodeModuleConstantMetadata(r)
+		return ModuleConstantMetadata(v10val), err
+	})
+	if err != nil {
+		return result, err
+	}
+
+	result.Errors, err = DecodeVec(r, func(r *Reader) (ErrorMetadata, error) {
+		v10val, err := v10.DecodeErrorMetadata(r)
+		return ErrorMetadata(v10val), err
+	})
+	if err != nil {
+		return result, err
+	}
+
+	result.Index, err = DecodeU8(r)
+	return result, err
+}
+
 func DecodeMetadata(r *Reader) (Metadata, error) {
 	var result Metadata
 	var err error
 
-	// Since ModuleMetadata is an alias, we can't directly use v10.DecodeModuleMetadata
-	// because the return type won't match. We must cast it.
-	// A generic DecodeVecWithCast would be ideal, but for now, we'll do it manually.
-	numModules, err := DecodeCompact(r)
+	result.Modules, err = DecodeVec(r, DecodeModuleMetadata)
 	if err != nil {
-		return result, fmt.Errorf("modules vec len: %w", err)
-	}
-
-	result.Modules = make([]ModuleMetadata, numModules.Int64())
-	for i := int64(0); i < numModules.Int64(); i++ {
-		// We need to decode a v10 module and cast it to a v11 module.
-		// This is safe because they are aliases with identical structure.
-		v10Module, err := v10.DecodeModuleMetadata(r)
-		if err != nil {
-			return result, fmt.Errorf("modules[%d]: %w", i, err)
-		}
-		result.Modules[i] = ModuleMetadata(v10Module)
+		return result, fmt.Errorf("modules: %w", err)
 	}
 
 	result.Extrinsic, err = DecodeExtrinsicMetadataV11(r)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/goccy/go-yaml"
@@ -149,8 +148,6 @@ func parseTypeFromMap(def map[string]any) (*Type, error) {
 	return t, nil
 }
 
-
-
 func parseNamedMembersFromList(l []any) ([]NamedMember, error) {
 	members := make([]NamedMember, len(l))
 	for i, item := range l {
@@ -160,14 +157,8 @@ func parseNamedMembersFromList(l []any) ([]NamedMember, error) {
 		}
 		name, _ := itemMap["name"].(string)
 
-		var typeDef any
-		if t, ok := itemMap["type"]; ok {
-			typeDef = t
-		} else {
-			typeDef = itemMap
-		}
-
-		memberType, err := parseType(typeDef)
+		// Pass the whole map to parseType. It can handle nested structs, vecs, etc.
+		memberType, err := parseType(itemMap)
 		if err != nil {
 			return nil, fmt.Errorf("parsing member '%s': %w", name, err)
 		}
@@ -175,3 +166,4 @@ func parseNamedMembersFromList(l []any) ([]NamedMember, error) {
 	}
 	return members, nil
 }
+

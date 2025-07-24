@@ -1,3 +1,18 @@
+Si1LookupTypeId:
+  type: "import"
+  module: "scaleInfo"
+  item: "Si1LookupTypeId"
+
+Si1Field:
+  type: "import"
+  module: "scaleInfo"
+  item: "Si1Field"
+
+Si1Type:
+  type: "import"
+  module: "scaleInfo"
+  item: "Si1Type"
+
 StorageEntryModifier:
   type: "import"
   module: "v13"
@@ -92,7 +107,7 @@ ExtrinsicMetadata:
   type: "struct"
   fields:
     - name: "type"
-      type: "SiLookupTypeId"
+      type: "Si1LookupTypeId"
     - name: "version"
       type: "u8"
     - name: "signedExtensions"
@@ -112,13 +127,13 @@ Metadata:
     - name: "extrinsic"
       type: "ExtrinsicMetadata"
     - name: "type"
-      type: "SiLookupTypeId"
+      type: "Si1LookupTypeId"
 
 PalletCallMetadata:
   type: "struct"
   fields:
     - name: "type"
-      type: "SiLookupTypeId"
+      type: "Si1LookupTypeId"
 
 PalletConstantMetadata:
   type: "struct"
@@ -126,7 +141,7 @@ PalletConstantMetadata:
     - name: "name"
       type: "text"
     - name: "type"
-      type: "SiLookupTypeId"
+      type: "Si1LookupTypeId"
     - name: "value"
       type: "bytes"
     - name: "docs"
@@ -138,13 +153,13 @@ PalletErrorMetadata:
   type: "struct"
   fields:
     - name: "type"
-      type: "SiLookupTypeId"
+      type: "Si1LookupTypeId"
 
 PalletEventMetadata:
   type: "struct"
   fields:
     - name: "type"
-      type: "SiLookupTypeId"
+      type: "Si1LookupTypeId"
 
 PalletMetadata:
   type: "struct"
@@ -190,9 +205,9 @@ SignedExtensionMetadata:
     - name: "identifier"
       type: "text"
     - name: "type"
-      type: "SiLookupTypeId"
+      type: "Si1LookupTypeId"
     - name: "additionalSigned"
-      type: "SiLookupTypeId"
+      type: "Si1LookupTypeId"
 
 StorageEntryMetadata:
   type: "struct"
@@ -214,7 +229,7 @@ StorageEntryType:
   type: "enum_complex"
   variants:
     - name: "Plain"
-      type: "SiLookupTypeId"
+      type: "Si1LookupTypeId"
     - name: "Map"
       type: "struct"
       fields:
@@ -223,6 +238,6 @@ StorageEntryType:
           item:
             type: "StorageHasher"
         - name: "key"
-          type: "SiLookupTypeId"
+          type: "Si1LookupTypeId"
         - name: "value"
-          type: "SiLookupTypeId"
+          type: "Si1LookupTypeId"

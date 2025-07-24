@@ -1,0 +1,148 @@
+compact_u32:
+  type: "u32"
+Type:
+  type: "text"
+Si0TypeDefPrimitive:
+  type: "text"
+Si0Path:
+  type: "text"
+
+Si1LookupTypeId:
+  type: "compact_u32"
+
+Si1Field:
+  type: "struct"
+  fields:
+    - name: "name"
+      type: "option"
+      item:
+        type: "text"
+    - name: "type"
+      type: "Si1LookupTypeId"
+    - name: "typeName"
+      type: "option"
+      item:
+        type: "text"
+    - name: "docs"
+      type: "vec"
+      item:
+        type: "text"
+
+Si1Path:
+  type: "Si0Path"
+
+Si1Type:
+  type: "struct"
+  fields:
+    - name: "path"
+      type: "Si1Path"
+    - name: "params"
+      type: "vec"
+      item:
+        type: "Si1TypeParameter"
+    - name: "def"
+      type: "Si1TypeDef"
+    - name: "docs"
+      type: "vec"
+      item:
+        type: "text"
+
+Si1TypeDef:
+  type: "enum_complex"
+  variants:
+    - name: "Composite"
+      type: "Si1TypeDefComposite"
+    - name: "Variant"
+      type: "Si1TypeDefVariant"
+    - name: "Sequence"
+      type: "Si1TypeDefSequence"
+    - name: "Array"
+      type: "Si1TypeDefArray"
+    - name: "Tuple"
+      type: "Si1TypeDefTuple"
+    - name: "Primitive"
+      type: "Si1TypeDefPrimitive"
+    - name: "Compact"
+      type: "Si1TypeDefCompact"
+    - name: "BitSequence"
+      type: "Si1TypeDefBitSequence"
+    - name: "HistoricMetaCompat"
+      type: "Type"
+
+Si1TypeDefArray:
+  type: "struct"
+  fields:
+    - name: "len"
+      type: "u32"
+    - name: "type"
+      type: "Si1LookupTypeId"
+
+Si1TypeDefBitSequence:
+  type: "struct"
+  fields:
+    - name: "bitStoreType"
+      type: "Si1LookupTypeId"
+    - name: "bitOrderType"
+      type: "Si1LookupTypeId"
+
+Si1TypeDefCompact:
+  type: "struct"
+  fields:
+    - name: "type"
+      type: "Si1LookupTypeId"
+
+Si1TypeDefComposite:
+  type: "struct"
+  fields:
+    - name: "fields"
+      type: "vec"
+      item:
+        type: "Si1Field"
+
+Si1TypeDefPrimitive:
+  type: "Si0TypeDefPrimitive"
+
+Si1TypeDefSequence:
+  type: "struct"
+  fields:
+    - name: "type"
+      type: "Si1LookupTypeId"
+
+Si1TypeDefTuple:
+  type: "vec"
+  item:
+    type: "Si1LookupTypeId"
+
+Si1TypeParameter:
+  type: "struct"
+  fields:
+    - name: "name"
+      type: "text"
+    - name: "type"
+      type: "option"
+      item:
+        type: "Si1LookupTypeId"
+
+Si1TypeDefVariant:
+  type: "struct"
+  fields:
+    - name: "variants"
+      type: "vec"
+      item:
+        type: "Si1Variant"
+
+Si1Variant:
+  type: "struct"
+  fields:
+    - name: "name"
+      type: "text"
+    - name: "fields"
+      type: "vec"
+      item:
+        type: "Si1Field"
+    - name: "index"
+      type: "u8"
+    - name: "docs"
+      type: "vec"
+      item:
+        type: "text"

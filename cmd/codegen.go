@@ -42,14 +42,11 @@ func main() {
 // all internal type references (Ref) and cross-module imports (Import)
 // are valid and point to existing definitions.
 func Validate(allModules *AllModules) {
-	// First, validate all internal references within each module.
-	for moduleName, module := range allModules.Modules {
-		for typeName, typeDef := range module.Types {
-			walkAndValidateRefs(allModules, moduleName, typeName, typeDef, make(map[string]bool))
-		}
-	}
+	validateRefs(allModules)
+	validateImports(allModules)
+}
 
-	// Second, validate all cross-module imports.
+func validateImports(allModules *AllModules) {
 	for moduleName, module := range allModules.Modules {
 		for typeName, typeDef := range module.Types {
 			if typeDef.Kind == KindImport {
@@ -68,6 +65,14 @@ func Validate(allModules *AllModules) {
 						moduleName, typeName, targetTypeName, targetModuleName)
 				}
 			}
+		}
+	}
+}
+
+func validateRefs(allModules *AllModules) {
+	for moduleName, module := range allModules.Modules {
+		for typeName, typeDef := range module.Types {
+			walkAndValidateRefs(allModules, moduleName, typeName, typeDef, make(map[string]bool))
 		}
 	}
 }

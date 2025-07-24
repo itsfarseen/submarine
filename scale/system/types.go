@@ -17,9 +17,21 @@ type AccountData struct {
 
 func DecodeAccountData(r *Reader) (AccountData, error) {
 	var ad AccountData
-	// This is a placeholder implementation.
-	// A real implementation would decode the 4 u128 values.
-	return ad, nil
+	var err error
+	ad.Free, err = DecodeU128(r)
+	if err != nil {
+		return ad, err
+	}
+	ad.Reserved, err = DecodeU128(r)
+	if err != nil {
+		return ad, err
+	}
+	ad.MiscFrozen, err = DecodeU128(r)
+	if err != nil {
+		return ad, err
+	}
+	ad.FeeFrozen, err = DecodeU128(r)
+	return ad, err
 }
 
 // Based on https://github.com/polkadot-js/api/blob/master/packages/types/src/interfaces/system/types.ts
@@ -170,6 +182,10 @@ const (
 type ArithmeticError struct {
 	Kind ArithmeticErrorKind
 }
+
+func (a ArithmeticError) IsUnderflow() bool     { return a.Kind == ArithmeticErrorUnderflow }
+func (a ArithmeticError) IsOverflow() bool      { return a.Kind == ArithmeticErrorOverflow }
+func (a ArithmeticError) IsDivisionByZero() bool { return a.Kind == ArithmeticErrorDivisionByZero }
 
 func DecodeArithmeticError(r *Reader) (ArithmeticError, error) {
 	b, err := r.ReadByte()
@@ -457,6 +473,10 @@ type DispatchClass struct {
 	Kind DispatchClassKind
 }
 
+func (d DispatchClass) IsNormal() bool      { return d.Kind == DispatchClassNormal }
+func (d DispatchClass) IsOperational() bool { return d.Kind == DispatchClassOperational }
+func (d DispatchClass) IsMandatory() bool   { return d.Kind == DispatchClassMandatory }
+
 func DecodeDispatchClass(r *Reader) (DispatchClass, error) {
 	b, err := r.ReadByte()
 	if err != nil {
@@ -655,6 +675,10 @@ type Phase struct {
 	ApplyExtrinsicU32 uint32
 }
 
+func (p Phase) IsApplyExtrinsic() bool { return p.Kind == PhaseApplyExtrinsic }
+func (p Phase) IsFinalization() bool   { return p.Kind == PhaseFinalization }
+func (p Phase) IsInitialization() bool { return p.Kind == PhaseInitialization }
+
 func DecodePhase(r *Reader) (Phase, error) {
 	b, err := r.ReadByte()
 	if err != nil {
@@ -668,13 +692,52 @@ func DecodePhase(r *Reader) (Phase, error) {
 	return p, err
 }
 
+type GenericEvent struct {
+	PalletIndex  byte
+	VariantIndex byte
+	Data         Bytes
+}
+
 type EventRecord struct {
 	Phase  Phase
-	Event  any // Generic event, to be defined elsewhere
+	Event  GenericEvent
 	Topics [][32]byte
 }
 
-// Skipping EventRecord decoder as it depends on a generic Event type that requires metadata.
+func DecodeEventRecord(r *Reader) (EventRecord, error) {
+	var er EventRecord
+	var err error
+	er.Phase, err = DecodePhase(r)
+	if err != nil {
+		return er, err
+	}
+
+	// Event is a variant, but its internal structure depends on metadata.
+	// We can decode the pallet and variant index, but the fields must be
+	// decoded by a higher-level package with metadata access.
+	// For now, we'll just read the indexes and treat the rest as raw bytes.
+	// This part is tricky because we don't know the length of the event data.
+	// The `decoder` package handles this properly. This implementation is a placeholder.
+	er.Event.PalletIndex, err = r.ReadByte()
+	if err != nil {
+		return er, err
+	}
+	er.Event.VariantIndex, err = r.ReadByte()
+	if err != nil {
+		return er, err
+	}
+
+	er.Topics, err = DecodeVec(r, func(r *Reader) ([32]byte, error) {
+		var h [32]byte
+		b, err := r.ReadBytes(32)
+		if err != nil {
+			return h, err
+		}
+		copy(h[:], b)
+		return h, nil
+	})
+	return er, err
+}
 
 type Health struct {
 	Peers           uint64
@@ -682,10 +745,9 @@ type Health struct {
 	ShouldHavePeers bool
 }
 
+// DecodeHealth is a placeholder as Health is an RPC response type, not SCALE encoded.
 func DecodeHealth(r *Reader) (Health, error) {
-	var h Health
-	// This is a placeholder, actual decoding depends on the wire format.
-	return h, nil
+	return Health{}, fmt.Errorf("DecodeHealth is not implemented for SCALE")
 }
 
 type InvalidTransactionKind int
@@ -856,4 +918,208 @@ func DecodeTransactionValidityError(r *Reader) (TransactionValidityError, error)
 		t.Unknown, err = DecodeUnknownTransaction(r)
 	}
 	return t, err
+}
+
+// --- Added Missing Types ---
+
+type EventId [32]byte
+type EventIndex uint32
+type Key Bytes
+type RefCountTo259 uint8
+
+type DispatchErrorModuleU8 struct {
+	Index uint8
+	Error uint8
+}
+
+func DecodeDispatchErrorModuleU8(r *Reader) (DispatchErrorModuleU8, error) {
+	var d DispatchErrorModuleU8
+	var err error
+	d.Index, err = r.ReadByte()
+	if err != nil {
+		return d, err
+	}
+	d.Error, err = r.ReadByte()
+	return d, err
+}
+
+type SyncState struct {
+	StartingBlock uint32
+	CurrentBlock  uint32
+	HighestBlock  Option[uint32]
+}
+
+func DecodeSyncState(r *Reader) (SyncState, error) {
+	var s SyncState
+	var err error
+	s.StartingBlock, err = DecodeU32(r)
+	if err != nil {
+		return s, err
+	}
+	s.CurrentBlock, err = DecodeU32(r)
+	if err != nil {
+		return s, err
+	}
+	s.HighestBlock, err = DecodeOption(r, DecodeU32)
+	return s, err
+}
+
+type PeerInfo struct {
+	PeerId          Text
+	Roles           Text
+	ProtocolVersion uint32
+	BestHash        [32]byte
+	BestNumber      uint32
+}
+
+func DecodePeerInfo(r *Reader) (PeerInfo, error) {
+	var p PeerInfo
+	var err error
+	p.PeerId, err = DecodeText(r)
+	if err != nil {
+		return p, err
+	}
+	p.Roles, err = DecodeText(r)
+	if err != nil {
+		return p, err
+	}
+	p.ProtocolVersion, err = DecodeU32(r)
+	if err != nil {
+		return p, err
+	}
+	b, err := r.ReadBytes(32)
+	if err != nil {
+		return p, err
+	}
+	copy(p.BestHash[:], b)
+	p.BestNumber, err = DecodeU32(r)
+	return p, err
+}
+
+// --- Historical and Network Types ---
+
+type DispatchErrorTo198 struct {
+	Module Option[uint8]
+	Error  uint8
+}
+
+func DecodeDispatchErrorTo198(r *Reader) (DispatchErrorTo198, error) {
+	var d DispatchErrorTo198
+	var err error
+	d.Module, err = DecodeOption(r, DecodeU8)
+	if err != nil {
+		return d, err
+	}
+	d.Error, err = r.ReadByte()
+	return d, err
+}
+
+type DispatchInfoTo190 struct {
+	Weight Weight
+	Class  DispatchClass
+}
+
+func DecodeDispatchInfoTo190(r *Reader) (DispatchInfoTo190, error) {
+	var d DispatchInfoTo190
+	var err error
+	d.Weight, err = DecodeWeight(r)
+	if err != nil {
+		return d, err
+	}
+	d.Class, err = DecodeDispatchClass(r)
+	return d, err
+}
+
+type DispatchInfoTo244 struct {
+	Weight  Weight
+	Class   DispatchClass
+	PaysFee bool
+}
+
+func DecodeDispatchInfoTo244(r *Reader) (DispatchInfoTo244, error) {
+	var d DispatchInfoTo244
+	var err error
+	d.Weight, err = DecodeWeight(r)
+	if err != nil {
+		return d, err
+	}
+	d.Class, err = DecodeDispatchClass(r)
+	if err != nil {
+		return d, err
+	}
+	d.PaysFee, err = DecodeBool(r)
+	return d, err
+}
+
+type ApplyExtrinsicResultPre6 struct {
+	IsErr bool
+	Ok    DispatchOutcomePre6
+	Err   TransactionValidityError
+}
+
+type DispatchOutcomePre6 struct {
+	IsErr bool
+	Err   DispatchErrorPre6
+}
+
+type DispatchErrorPre6 struct {
+	Kind          DispatchErrorKind // Re-using for simplicity
+	Module        DispatchErrorModulePre6
+	Token         TokenError
+	Arithmetic    ArithmeticError
+	Transactional TransactionalError
+}
+
+type DispatchErrorModulePre6 DispatchErrorModuleU8
+
+// NetworkState and related types are for RPC responses, not SCALE encoded.
+// Their structs are defined for type safety, but decoders are omitted.
+type NetworkState struct {
+	PeerId                Text
+	ListenedAddresses     []Text
+	ExternalAddresses     []Text
+	ConnectedPeers        map[Text]Peer
+	NotConnectedPeers     map[Text]NotConnectedPeer
+	AverageDownloadPerSec uint64
+	AverageUploadPerSec   uint64
+	Peerset               NetworkStatePeerset
+}
+
+type NetworkStatePeerset struct {
+	MessageQueue uint64
+	Nodes        map[Text]NetworkStatePeersetInfo
+}
+
+type NetworkStatePeersetInfo struct {
+	Connected  bool
+	Reputation int32
+}
+
+type NotConnectedPeer struct {
+	KnownAddresses []Text
+	LatestPingTime Option[PeerPing]
+	VersionString  Option[Text]
+}
+
+type Peer struct {
+	Enabled        bool
+	Endpoint       PeerEndpoint
+	KnownAddresses []Text
+	LatestPingTime PeerPing
+	Open           bool
+	VersionString  Text
+}
+
+type PeerEndpoint struct {
+	Listening PeerEndpointAddr
+}
+
+type PeerEndpointAddr struct {
+	LocalAddr    Text
+	SendBackAddr Text
+}
+
+type PeerPing struct {
+	Nanos uint64
+	Secs  uint64
 }

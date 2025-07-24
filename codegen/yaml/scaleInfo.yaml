@@ -1,5 +1,4 @@
-compact_u32:
-  type: "u32"
+
 Type:
   type: "text"
 Si0TypeDefPrimitive:
@@ -8,7 +7,7 @@ Si0Path:
   type: "text"
 
 Si1LookupTypeId:
-  type: "compact_u32"
+  type: "compact"
 
 Si1Field:
   type: "struct"

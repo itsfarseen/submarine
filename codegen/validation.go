@@ -11,6 +11,7 @@ var primitives = map[string]struct{}{
 	"u64":              {},
 	"bool":             {},
 	"type":             {}, // 'type' is used as a generic type placeholder in some definitions
+	"compact":          {},
 	"Si1LookupTypeId":  {},
 	"Si1Type":          {},
 	"PortableRegistry": {},

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
-	"log"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -58,7 +57,6 @@ func Generate(allModules *AllModules, outputDir string) error {
 		if err := os.MkdirAll(dirName, 0755); err != nil {
 			return fmt.Errorf("creating output directory: %w", err)
 		}
-		fmt.Printf("dir: %s\n", dirName)
 
 		file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
@@ -84,7 +82,7 @@ func (c *Codegen) Generate() {
 		fmt.Printf("Generating %s\n", moduleName)
 		err := c.generateModule(moduleName)
 		if err != nil {
-			slog.Warn("failed to codegen module %s: %w", moduleName, err)
+			slog.Warn("failed to codegen module", "module", moduleName, "error", err)
 			continue
 		}
 	}
@@ -118,10 +116,10 @@ func (m *ModuleCodegen) getOutput() []byte {
 	buf.Write(m.Body.Bytes())
 	formatted, err := format.Source(buf.Bytes())
 	if err != nil {
-		slog.Warn("formatting error", err)
-		return formatted
+		slog.Warn("formatting error", "error", err)
+		return buf.Bytes()
 	}
-	return buf.Bytes()
+	return formatted
 }
 
 func (c *Codegen) generateModule(moduleName string) error {
@@ -135,7 +133,7 @@ func (c *Codegen) generateModule(moduleName string) error {
 	for typeName := range module.Types {
 		err := c.generateType(moduleName, typeName)
 		if err != nil {
-			slog.Warn("generating type %s/%s: %w", moduleName, typeName, err)
+			slog.Warn("generating type", "module", moduleName, "type", typeName, "error", err)
 		}
 	}
 
@@ -144,7 +142,7 @@ func (c *Codegen) generateModule(moduleName string) error {
 		Imports:     moduleCodegen.Imports,
 	}
 	if err := c.renderTemplate(&moduleCodegen.Header, "file", templateData); err != nil {
-		slog.Warn("generating header %s: %w", moduleName, err)
+		slog.Warn("generating header", "module", moduleName, "error", err)
 	}
 
 	return nil
@@ -174,7 +172,6 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 		fields := make([]FieldOrVariant, len(struct_.Fields))
 		for i, field := range struct_.Fields {
 			fieldName := toPascalCase(field.Name)
-			log.Print(field)
 			fieldType, err := c.getGoType(moduleName, fieldName, field.Type)
 			if err != nil {
 				return fmt.Errorf("struct field %s: %w", fieldName, err)
@@ -287,11 +284,7 @@ func (c *Codegen) getGoType(moduleName string, typeName string, type_ *Type) (st
 		resolved := c.resolveImport(importType)
 		importLine := fmt.Sprintf("%s/%s", rootModulePath, resolved.ModuleName)
 		moduleCodegen.appendImport(importLine)
-		innerGoType, err := c.getGoType(resolved.ModuleName, resolved.TypeName, resolved.Type)
-		if err != nil {
-			return "", err
-		}
-		goTypeName = fmt.Sprintf("%s.%s", resolved.ModuleName, innerGoType)
+		goTypeName = fmt.Sprintf("%s.%s", resolved.ModuleName, resolved.TypeName)
 	default:
 		fmt.Printf("Kind ERR %s\n", type_.Kind)
 		panic("unreachable: we should exhaustively handle all kinds")

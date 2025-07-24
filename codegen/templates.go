@@ -38,8 +38,7 @@ import (
 
 {{define "struct"}}
 type {{.Name}} struct {
-	{{range .Fields}}
-		{{.Name}} {{.Type}}
+	{{range .Fields}}{{.Name}} {{.Type}}
 	{{end}}
 }
 {{end}}
@@ -48,8 +47,7 @@ type {{.Name}} struct {
 type {{.Name}} int
 
 const (
-	{{range $i, $v := .Variants}}
-		{{$.Name}}{{$v}} {{$.Name}} = {{$i}}
+	{{range $i, $v := .Variants}}{{$.Name}}{{$v}} {{$.Name}} = {{$i}}
 	{{end}}
 )
 {{end}}
@@ -57,10 +55,8 @@ const (
 {{define "enum_complex"}}
 type {{.Name}} struct {
 	Kind string
-	{{range .Variants}}
-		{{.Name}} *{{.Type}}
+	{{range .Variants}}{{.Name}} *{{.Type}}
 	{{end}}
 }
 {{end}}
 `
-

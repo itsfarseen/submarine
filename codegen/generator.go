@@ -10,6 +10,8 @@ import (
 	"text/template"
 )
 
+var rootModulePath string = "submarine"
+
 func Generate(allModules *AllModules, outputDir string) error {
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return fmt.Errorf("creating output directory: %w", err)
@@ -25,13 +27,17 @@ func Generate(allModules *AllModules, outputDir string) error {
 }
 
 func generateModule(moduleName string, module *Module, allModules *AllModules, outputDir string) error {
+	moduleDir := filepath.Join(outputDir, moduleName)
+	if err := os.MkdirAll(moduleDir, 0755); err != nil {
+		return fmt.Errorf("creating module directory %s: %w", moduleDir, err)
+	}
+
+	imports := make(map[string]string)
+	imports[fmt.Sprintf("%s/scale", rootModulePath)] = "scale"
+
 	funcs := template.FuncMap{
-		"getGoType": func(name string, t *Type) string {
-			return getGoType(name, t, allModules)
-		},
-		"getResolvedType": func(t *Type) *Type {
-			return resolveImport(t, allModules)
-		},
+		"getGoType":    getGoType,
+		"resolve":      resolve,
 		"toPascalCase": toPascalCase,
 		"dict": func(values ...interface{}) (map[string]interface{}, error) {
 			if len(values)%2 != 0 {
@@ -54,74 +60,96 @@ func generateModule(moduleName string, module *Module, allModules *AllModules, o
 		return fmt.Errorf("parsing template: %w", err)
 	}
 
+	// First pass to populate imports
+	for name, t := range module.Types {
+		getGoType(name, t, moduleName)
+	}
+
 	var buf bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&buf, "file", module); err != nil {
+	templateData := map[string]interface{}{
+		"PackageName": moduleName,
+		"ModuleName":  moduleName,
+		"Types":       module.Types,
+		"Imports":     imports,
+	}
+	if err := tmpl.ExecuteTemplate(&buf, "file", templateData); err != nil {
 		return fmt.Errorf("executing template: %w", err)
 	}
 
-	// Format the generated code
 	formatted, err := format.Source(buf.Bytes())
 	if err != nil {
-		// Create a new file with the unformatted code for debugging
-		debugPath := filepath.Join(outputDir, moduleName+".debug.go")
+		debugPath := filepath.Join(moduleDir, "types.debug.go")
 		os.WriteFile(debugPath, buf.Bytes(), 0644)
-		return fmt.Errorf("formatting generated code: %w", err)
+		return fmt.Errorf("formatting generated code for module %s: %w", moduleName, err)
 	}
 
-	// Write the formatted code to a file
-	outputPath := filepath.Join(outputDir, moduleName+".go")
-	if err := os.WriteFile(outputPath, formatted, 0644); err != nil {
-		return fmt.Errorf("writing generated code to %s: %w", outputPath, err)
+	outPath := filepath.Join(moduleDir, "types.go")
+	if err := os.WriteFile(outPath, formatted, 0644); err != nil {
+		return fmt.Errorf("writing generated code to %s: %w", outPath, err)
 	}
 
 	return nil
 }
 
-func getGoType(name string, t *Type, allModules *AllModules) string {
-	resolvedType := resolveImport(t, allModules)
+type ResolvedInfo struct {
+	Type       *Type
+	ModuleName string
+}
 
-	switch resolvedType.Kind {
-	case KindRef:
-		switch resolvedType.Ref.Name {
-		case "text":
-			return "string"
-		case "bytes":
-			return "[]byte"
-		case "u8":
-			return "uint8"
-		case "u32":
-			return "uint32"
-		case "u64":
-			return "uint64"
-		case "bool":
-			return "bool"
-		default:
-			return toPascalCase(resolvedType.Ref.Name)
-		}
-	case KindStruct, KindEnumSimple, KindEnumComplex:
-		return toPascalCase(name)
-	case KindOption:
-		return "*" + getGoType(name, resolvedType.Option.Type, allModules)
-	case KindVec:
-		return "[]" + getGoType(name, resolvedType.Vec.Type, allModules)
-	default:
-		return "any"
+func resolveImport(t *Type, moduleName string, modules map[string]Module) ResolvedInfo {
+	if t.Kind == KindImport {
+		targetModuleName := t.Import.Module
+		targetTypeName := t.Import.Item
+		targetModule := modules[targetModuleName]
+		targetType := targetModule.Types[targetTypeName]
+		return resolveImport(targetType, targetModuleName, modules)
+	}
+	return ResolvedInfo{
+		Type:       t,
+		ModuleName: moduleName,
 	}
 }
 
-func resolveImport(t *Type, allModules *AllModules) *Type {
-	if t.Kind == KindImport {
-		targetModule, ok := allModules.Modules[t.Import.Module]
-		if !ok {
-			return t // Should be caught by validation
-		}
-		targetType, ok := targetModule.Types[t.Import.Item]
-		if !ok {
-			return t // Should be caught by validation
-		}
-		return resolveImport(targetType, allModules)
+func getGoType(name string, t *Type, moduleName string, modules map[string]Module, imports []string) string {
+	info := resolveImport(t, moduleName, modules)
+	finalType, finalModule := info.Type, info.ModuleName
+	if finalModule != moduleName {
+		imports = append(imports, fmt.Sprintf("%s/generated/%s", rootModulePath, finalModule))
+		return fmt.Sprintf("%s.%s", finalModule, finalType.Name)
 	}
-	return t
+
+	var goTypeName string
+	switch finalType.Kind {
+	case KindRef:
+		switch finalType.Ref.Name {
+		case "text":
+			goTypeName = "string"
+		case "bytes":
+			goTypeName = "[]byte"
+		case "u8":
+			goTypeName = "uint8"
+		case "u32":
+			goTypeName = "uint32"
+		case "u64":
+			goTypeName = "uint64"
+		case "bool":
+			goTypeName = "bool"
+		default:
+			goTypeName = toPascalCase(finalType.Ref.Name)
+		}
+	case KindStruct, KindEnumSimple, KindEnumComplex:
+		goTypeName = toPascalCase(name)
+	case KindOption:
+		goTypeName = "*" + getGoType(name, finalType.Option.Type, moduleName, modules, imports)
+	case KindVec:
+		goTypeName = "[]" + getGoType(name, finalType.Vec.Type, moduleName, modules, imports)
+	case KindImport:
+		panic("unreachable: should be caught by resolveImport")
+	default:
+		panic("unreachable: we should exhaustively handle all kinds")
+	}
+
+	return goTypeName
 }
 
 func toPascalCase(s string) string {

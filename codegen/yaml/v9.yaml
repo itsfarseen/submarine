@@ -125,29 +125,35 @@ StorageEntryType:
     - name: "Plain"
       type: "type"
     - name: "Map"
-      type: "struct"
-      fields:
-        - name: "hasher"
-          type: "StorageHasher"
-        - name: "key"
-          type: "type"
-        - name: "value"
-          type: "type"
-        - name: "linked"
-          type: "bool"
+      type: StorageEntryMap
     - name: "DoubleMap"
-      type: "struct"
-      fields:
-        - name: "hasher"
-          type: "StorageHasher"
-        - name: "key1"
-          type: "type"
-        - name: "key2"
-          type: "type"
-        - name: "value"
-          type: "type"
-        - name: "key2Hasher"
-          type: "StorageHasher"
+      type: StorageEntryDoubleMap
+
+StorageEntryMap:
+  type: "struct"
+  fields:
+    - name: "hasher"
+      type: "StorageHasher"
+    - name: "key"
+      type: "type"
+    - name: "value"
+      type: "type"
+    - name: "linked"
+      type: "bool"
+
+StorageEntryDoubleMap:
+  type: "struct"
+  fields:
+    - name: "hasher"
+      type: "StorageHasher"
+    - name: "key1"
+      type: "type"
+    - name: "key2"
+      type: "type"
+    - name: "value"
+      type: "type"
+    - name: "key2Hasher"
+      type: "StorageHasher"
 
 StorageHasher:
   type: "enum_simple"

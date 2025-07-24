@@ -1,20 +1,17 @@
-package codegen
+package parser
 
 import "fmt"
 
 // a set of known primitive types that are valid references.
 var primitives = map[string]struct{}{
-	"text":             {},
-	"bytes":            {},
-	"u8":               {},
-	"u32":              {},
-	"u64":              {},
-	"bool":             {},
-	"type":             {}, // 'type' is used as a generic type placeholder in some definitions
-	"compact":          {},
-	"Si1LookupTypeId":  {},
-	"Si1Type":          {},
-	"PortableRegistry": {},
+	"text":    {},
+	"bytes":   {},
+	"u8":      {},
+	"u32":     {},
+	"u64":     {},
+	"bool":    {},
+	"type":    {}, // 'type' is used as a generic type placeholder in some definitions
+	"compact": {},
 }
 
 // Validate checks the integrity of all parsed modules. It verifies that

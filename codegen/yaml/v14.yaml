@@ -231,13 +231,16 @@ StorageEntryType:
     - name: "Plain"
       type: "Si1LookupTypeId"
     - name: "Map"
-      type: "struct"
-      fields:
-        - name: "hashers"
-          type: "vec"
-          item:
-            type: "StorageHasher"
-        - name: "key"
-          type: "Si1LookupTypeId"
-        - name: "value"
-          type: "Si1LookupTypeId"
+      type: "StorageEntryMap"
+
+StorageEntryMap:
+  type: "struct"
+  fields:
+    - name: "hashers"
+      type: "vec"
+      item:
+        type: "StorageHasher"
+    - name: "key"
+      type: "Si1LookupTypeId"
+    - name: "value"
+      type: "Si1LookupTypeId"

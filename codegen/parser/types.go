@@ -1,4 +1,4 @@
-package codegen
+package parser
 
 type TypeKind string
 

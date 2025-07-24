@@ -1,4 +1,4 @@
-package codegen
+package parser
 
 import (
 	"fmt"
@@ -10,21 +10,18 @@ import (
 )
 
 type AllModules struct {
-	Modules map[string]Module
+	ModuleNames []string // for preserving order
+	Modules     map[string]Module
 }
 
 type Module struct {
 	Types map[string]*Type
 }
 
-func Parse(dir string) (*AllModules, error) {
-	files, err := filepath.Glob(filepath.Join(dir, "*.yaml"))
-	if err != nil {
-		return nil, fmt.Errorf("glob yaml files: %w", err)
-	}
-
+func Parse(files []string) (*AllModules, error) {
 	allModules := &AllModules{
-		Modules: make(map[string]Module),
+		ModuleNames: make([]string, 0),
+		Modules:     make(map[string]Module),
 	}
 
 	for _, file := range files {
@@ -32,6 +29,7 @@ func Parse(dir string) (*AllModules, error) {
 		if err != nil {
 			return nil, err
 		}
+		allModules.ModuleNames = append(allModules.ModuleNames, moduleName)
 		allModules.Modules[moduleName] = module
 	}
 
@@ -166,4 +164,3 @@ func parseNamedMembersFromList(l []any) ([]NamedMember, error) {
 	}
 	return members, nil
 }
-

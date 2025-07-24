@@ -70,42 +70,51 @@ StorageEntryType:
     - name: "Plain"
       type: "type"
     - name: "Map"
-      type: "struct"
-      fields:
-        - name: "hasher"
-          type: "StorageHasher"
-        - name: "key"
-          type: "type"
-        - name: "value"
-          type: "type"
-        - name: "linked"
-          type: "bool"
+      type: "StorageEntryMap"
     - name: "DoubleMap"
-      type: "struct"
-      fields:
-        - name: "hasher"
-          type: "StorageHasher"
-        - name: "key1"
-          type: "type"
-        - name: "key2"
-          type: "type"
-        - name: "value"
-          type: "type"
-        - name: "key2Hasher"
-          type: "StorageHasher"
+      type: "StorageEntryDoubleMap"
     - name: "NMap"
-      type: "struct"
-      fields:
-        - name: "keyVec"
-          type: "vec"
-          item:
-            type: "type"
-        - name: "hashers"
-          type: "vec"
-          item:
-            type: "StorageHasher"
-        - name: "value"
-          type: "type"
+      type: "StorageEntryNMap"
+
+StorageEntryMap:
+  type: "struct"
+  fields:
+    - name: "hasher"
+      type: "StorageHasher"
+    - name: "key"
+      type: "type"
+    - name: "value"
+      type: "type"
+    - name: "linked"
+      type: "bool"
+
+StorageEntryDoubleMap:
+  type: "struct"
+  fields:
+    - name: "hasher"
+      type: "StorageHasher"
+    - name: "key1"
+      type: "type"
+    - name: "key2"
+      type: "type"
+    - name: "value"
+      type: "type"
+    - name: "key2Hasher"
+      type: "StorageHasher"
+
+StorageEntryNMap:
+  type: "struct"
+  fields:
+    - name: "keyVec"
+      type: "vec"
+      item:
+        type: "type"
+    - name: "hashers"
+      type: "vec"
+      item:
+        type: "StorageHasher"
+    - name: "value"
+      type: "type"
 
 StorageMetadata:
   type: "struct"

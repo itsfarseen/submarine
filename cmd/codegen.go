@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 	"submarine/codegen"
+	"submarine/codegen/parser"
 )
 
 func main() {
@@ -11,8 +13,22 @@ func main() {
 	yamlDir := "codegen/yaml"
 	outputDir := "generated"
 
+	files := []string{
+		"scaleInfo.yaml",
+		"v9.yaml",
+		"v10.yaml",
+		"v11.yaml",
+		"v12.yaml",
+		"v13.yaml",
+		"v14.yaml",
+	}
+
+	for i := range files {
+		files[i] = filepath.Join(yamlDir, files[i])
+	}
+
 	// Parse all the YAML files into a structured format.
-	allModules, err := codegen.Parse(yamlDir)
+	allModules, err := parser.Parse(files)
 	if err != nil {
 		log.Fatalf("Error parsing modules from %s: %v", yamlDir, err)
 	}
@@ -20,7 +36,7 @@ func main() {
 	fmt.Println("Successfully parsed all modules. Starting validation...")
 
 	// Validate the parsed modules to check for broken references or imports.
-	codegen.Validate(allModules)
+	parser.Validate(allModules)
 
 	fmt.Println("Validation complete. Starting code generation...")
 

@@ -1,0 +1,133 @@
+ErrorMetadata:
+  type: "import"
+  module: "v9"
+  item: "ErrorMetadata"
+
+EventMetadata:
+  type: "import"
+  module: "v9"
+  item: "EventMetadata"
+
+FunctionArgumentMetadata:
+  type: "import"
+  module: "v9"
+  item: "FunctionArgumentMetadata"
+
+FunctionMetadata:
+  type: "import"
+  module: "v9"
+  item: "FunctionMetadata"
+
+ModuleConstantMetadata:
+  type: "import"
+  module: "v9"
+  item: "ModuleConstantMetadata"
+
+StorageEntryModifier:
+  type: "import"
+  module: "v9"
+  item: "StorageEntryModifier"
+
+Metadata:
+  type: "struct"
+  fields:
+    modules:
+      type: "vec"
+      item:
+        type: "ModuleMetadata"
+
+ModuleMetadata:
+  type: "struct"
+  fields:
+    name:
+      type: "text"
+    storage:
+      type: "option"
+      item:
+        type: "StorageMetadata"
+    calls:
+      type: "option"
+      item:
+        type: "vec"
+        item:
+          type: "FunctionMetadata"
+    events:
+      type: "option"
+      item:
+        type: "vec"
+        item:
+          type: "EventMetadata"
+    constants:
+      type: "vec"
+      item:
+        type: "ModuleConstantMetadata"
+    errors:
+      type: "vec"
+      item:
+        type: "ErrorMetadata"
+
+StorageEntryMetadata:
+  type: "struct"
+  fields:
+    name:
+      type: "text"
+    modifier:
+      type: "StorageEntryModifier"
+    type:
+      type: "StorageEntryType"
+    fallback:
+      type: "bytes"
+    docs:
+      type: "vec"
+      item:
+        type: "text"
+
+StorageEntryType:
+  type: "enum_complex"
+  variants:
+    - name: "Plain"
+      type: "type"
+    - name: "Map"
+      type: "struct"
+      fields:
+        - name: "hasher"
+          type: "StorageHasher"
+        - name: "key"
+          type: "type"
+        - name: "value"
+          type: "type"
+        - name: "linked"
+          type: "bool"
+    - name: "DoubleMap"
+      type: "struct"
+      fields:
+        - name: "hasher"
+          type: "StorageHasher"
+        - name: "key1"
+          type: "type"
+        - name: "key2"
+          type: "type"
+        - name: "value"
+          type: "type"
+        - name: "key2Hasher"
+          type: "StorageHasher"
+
+StorageMetadata:
+  type: "struct"
+  fields:
+    prefix:
+      type: "text"
+    items:
+      type: "vec"
+      item:
+        type: "StorageEntryMetadata"
+
+StorageHasher:
+  type: "enum_simple"
+  variants:
+    - "Blake2_128"
+    - "Blake2_256"
+    - "Blake2_128Concat"
+    - "Twox128"
+    - "Twox256"
+    - "Twox64Concat"

@@ -14,19 +14,6 @@ import (
 
 var rootModulePath string = "submarine/generated"
 
-var primitives = map[string]string{
-	"text":    "string",
-	"bytes":   "[]byte",
-	"u8":      "uint8",
-	"u32":     "uint32",
-	"u64":     "uint64",
-	"bool":    "bool",
-	"type":    "string", // 'type' is used as a generic type placeholder in some definitions
-	"compact": "big.Int",
-}
-
-type Foo = int
-
 func Generate(allModules *AllModules, outputDir string) error {
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return fmt.Errorf("creating output directory: %w", err)
@@ -241,7 +228,7 @@ func (c *Codegen) getGoType(moduleName string, typeName string, type_ *Type) (st
 	switch type_.Kind {
 	case KindRef:
 		switch type_.Ref.Name {
-		case "text":
+		case "text", "type":
 			goTypeName = "string"
 		case "bytes":
 			goTypeName = "[]byte"

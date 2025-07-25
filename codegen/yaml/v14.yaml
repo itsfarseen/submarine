@@ -23,6 +23,13 @@ StorageHasher:
   module: "v13"
   item: "StorageHasher"
 
+PortableRegistry:
+  type: "struct"
+  fields:
+    - name: "types"
+      type: "vec"
+      item: "PortableType"
+
 PortableType:
   type: "struct"
   fields:

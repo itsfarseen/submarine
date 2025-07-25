@@ -30,8 +30,7 @@ const templates = `
 package {{.PackageName}}
 
 import (
-	{{range $import := .Imports}}
-	"{{$import}}"
+	{{range $import := .Imports}}"{{$import}}"
 	{{end}}
 )
 {{end}}

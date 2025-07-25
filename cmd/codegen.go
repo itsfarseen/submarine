@@ -11,7 +11,8 @@ import (
 func main() {
 	// Define the directory containing the YAML type definitions.
 	yamlDir := "codegen/yaml"
-	outputDir := "generated"
+	rootModulePath := "submarine/scale/gen"
+	outputDir := "scale/gen"
 
 	files := []string{
 		"scaleInfo.yaml",
@@ -40,7 +41,7 @@ func main() {
 
 	fmt.Println("Validation complete. Starting code generation...")
 
-	if err := codegen.Generate(allModules, outputDir); err != nil {
+	if err := codegen.Generate(allModules, rootModulePath, outputDir); err != nil {
 		log.Fatalf("Error generating code: %v", err)
 	}
 

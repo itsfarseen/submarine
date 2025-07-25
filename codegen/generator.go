@@ -12,9 +12,7 @@ import (
 	"text/template"
 )
 
-var rootModulePath string = "submarine/generated"
-
-func Generate(allModules *AllModules, outputDir string) error {
+func Generate(allModules *AllModules, rootModulePath string, outputDir string) error {
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return fmt.Errorf("creating output directory: %w", err)
 	}
@@ -25,10 +23,11 @@ func Generate(allModules *AllModules, outputDir string) error {
 	}
 
 	codegen := Codegen{
-		ModuleNames: allModules.ModuleNames,
-		Modules:     allModules.Modules,
-		Template:    templatesParsed,
-		Generated:   make(map[string]*ModuleCodegen),
+		RootModulePath: rootModulePath,
+		ModuleNames:    allModules.ModuleNames,
+		Modules:        allModules.Modules,
+		Template:       templatesParsed,
+		Generated:      make(map[string]*ModuleCodegen),
 	}
 
 	codegen.Generate()
@@ -58,10 +57,11 @@ func Generate(allModules *AllModules, outputDir string) error {
 }
 
 type Codegen struct {
-	ModuleNames []string // for preserving order
-	Modules     map[string]Module
-	Template    *template.Template
-	Generated   map[string]*ModuleCodegen
+	RootModulePath string
+	ModuleNames    []string // for preserving order
+	Modules        map[string]Module
+	Template       *template.Template
+	Generated      map[string]*ModuleCodegen
 }
 
 func (c *Codegen) Generate() {
@@ -269,7 +269,7 @@ func (c *Codegen) getGoType(moduleName string, typeName string, type_ *Type) (st
 	case KindImport:
 		importType := type_.Import
 		resolved := c.resolveImport(importType)
-		importLine := fmt.Sprintf("%s/%s", rootModulePath, resolved.ModuleName)
+		importLine := fmt.Sprintf("%s/%s", c.RootModulePath, resolved.ModuleName)
 		moduleCodegen.appendImport(importLine)
 		goTypeName = fmt.Sprintf("%s.%s", resolved.ModuleName, resolved.TypeName)
 	default:

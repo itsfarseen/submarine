@@ -94,7 +94,6 @@ func (m *ModuleCodegen) appendImport(line string) {
 	if !slices.Contains(m.Imports, line) {
 		m.Imports = append(m.Imports, line)
 	}
-
 }
 
 func (m *ModuleCodegen) getOutput() []byte {
@@ -114,6 +113,8 @@ func (c *Codegen) generateModule(moduleName string) error {
 	c.Generated[moduleName] = &moduleCodegen
 
 	moduleCodegen.Path = filepath.Join(moduleName, "types.go")
+	moduleCodegen.appendImport("fmt")
+	moduleCodegen.appendImport("submarine/scale")
 
 	module := c.Modules[moduleName]
 
@@ -148,11 +149,21 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 
 	switch type_.Kind {
 	case KindRef:
-		innerType, err := c.getGoType(moduleName, "UNKNOWN_", type_)
+		innerTypeName, err := c.getGoType(moduleName, "UNKNOWN_", type_)
 		if err != nil {
 			return err
 		}
-		moduleCodegen.Body.WriteString(fmt.Sprintf("type %s = %s\n", typeName, innerType))
+		moduleCodegen.Body.WriteString(fmt.Sprintf("type %s = %s\n", typeName, innerTypeName))
+		const funcTemplate string = `
+		func Decode%s(reader *scale.Reader) (%s, error) {
+			return %s
+		}
+		`
+		innerDecodeFunc, err := c.getDecodeFuncForTypeName(moduleName, type_.Ref.Name)
+		if err != nil {
+			return err
+		}
+		moduleCodegen.Body.WriteString(fmt.Sprintf(funcTemplate, typeName, typeName, innerDecodeFunc))
 		return nil
 	case KindStruct:
 		struct_ := type_.Struct
@@ -163,13 +174,20 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 			if err != nil {
 				return fmt.Errorf("struct field %s: %w", fieldName, err)
 			}
+			decodeFunc, err := c.getDecodeFuncForType(moduleName, field.Type)
+			if err != nil {
+				return fmt.Errorf("struct field %s: %w", fieldName, err)
+			}
 			fields[i] = FieldOrVariant{
-				Name: fieldName,
-				Type: fieldType,
+				Name:       fieldName,
+				Type:       fieldType,
+				DecodeFunc: decodeFunc,
 			}
 		}
-		templateName = "struct"
-		templateData = StructTemplate{Name: typeName, Fields: fields}
+		if err := c.renderTemplate(&moduleCodegen.Body, "struct", StructTemplate{Name: typeName, Fields: fields}); err != nil {
+			return fmt.Errorf("executing template struct: %w", err)
+		}
+		return nil
 	case KindEnumSimple:
 		enumSimple := type_.EnumSimple
 		templateName = "enum_simple"
@@ -183,15 +201,37 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 			if err != nil {
 				return fmt.Errorf("enum variant %s: %w", variantName, err)
 			}
+			decodeFunc, err := c.getDecodeFuncForType(moduleName, variant.Type)
+			if err != nil {
+				return fmt.Errorf("struct field %s: %w", variantName, err)
+			}
 			variants[i] = FieldOrVariant{
-				Name: variantName,
-				Type: variantType,
+				Name:       variantName,
+				Type:       variantType,
+				DecodeFunc: decodeFunc,
 			}
 		}
 		templateName = "enum_complex"
 		templateData = EnumComplexTemplate{Name: typeName, Variants: variants}
 	case KindImport:
 		return nil // handled by imports
+	case KindVec, KindOption:
+		innerType, err := c.getGoType(moduleName, "UNKNOWN_", type_)
+		if err != nil {
+			return err
+		}
+		moduleCodegen.Body.WriteString(fmt.Sprintf("type %s = %s\n", typeName, innerType))
+		decodeFunc, err := c.getDecodeFuncForType(moduleName, type_)
+		if err != nil {
+			return err
+		}
+		const funcTemplate string = `
+		func Decode%s(reader *scale.Reader) (%s, error) {
+			return %s
+		}
+		`
+		moduleCodegen.Body.WriteString(fmt.Sprintf(funcTemplate, typeName, typeName, decodeFunc))
+		return nil
 	default:
 		return fmt.Errorf("unknown type kind: %s", type_.Kind)
 	}
@@ -217,6 +257,75 @@ func (c *Codegen) resolveImport(importType *Import) ResolvedInfo {
 	}
 
 	return c.resolveImport(targetType.Import)
+}
+
+func (c *Codegen) getDecodeFuncForTypeName(moduleName string, typeName string) (string, error) {
+	// handle primitives
+	switch typeName {
+	case "text", "type":
+		return "scale.DecodeText(reader)", nil
+	case "bytes":
+		return "scale.DecodeBytes(reader)", nil
+	case "u8":
+		return "scale.DecodeU8(reader)", nil
+	case "u32":
+		return "scale.DecodeU32(reader)", nil
+	case "u64":
+		return "scale.DecodeU64(reader)", nil
+	case "bool":
+		return "scale.DecodeBool(reader)", nil
+	case "compact":
+		return "scale.DecodeCompact(reader)", nil
+	}
+
+	module := c.Modules[moduleName]
+	type_, ok := module.Types[typeName]
+	if !ok {
+		return "", fmt.Errorf("Type %s not found in module %s", typeName, moduleName)
+	}
+	switch type_.Kind {
+	case KindImport:
+		importType := type_.Import
+		resolved := c.resolveImport(importType)
+		innerDecodeFunc, err := c.getDecodeFuncForTypeName(resolved.ModuleName, resolved.TypeName)
+		if err != nil {
+			return "", err
+		}
+		return resolved.ModuleName + "." + innerDecodeFunc, nil
+	default:
+		return fmt.Sprintf("Decode%s(reader)", typeName), nil
+	}
+}
+
+func (c *Codegen) getDecodeFuncForType(moduleName string, type_ *Type) (string, error) {
+	switch type_.Kind {
+	case KindRef:
+		return c.getDecodeFuncForTypeName(moduleName, type_.Ref.Name)
+	case KindOption:
+		option := type_.Option
+		itemTypeName, err := c.getGoType(moduleName, "UNKNOWN_", option.Type)
+		if err != nil {
+			return "", fmt.Errorf("option item name: %w", err)
+		}
+		itemDecodeFunc, err := c.getDecodeFuncForType(moduleName, option.Type)
+		if err != nil {
+			return "", fmt.Errorf("option item type: %w", err)
+		}
+		return fmt.Sprintf("scale.DecodeOption(reader, func(reader *scale.Reader) (%s, error) { return %s })", itemTypeName, itemDecodeFunc), nil
+	case KindVec:
+		vec := type_.Vec
+		itemTypeName, err := c.getGoType(moduleName, "UNKNOWN_", vec.Type)
+		if err != nil {
+			return "", fmt.Errorf("vec item name: %w", err)
+		}
+		itemDecodeFunc, err := c.getDecodeFuncForType(moduleName, vec.Type)
+		if err != nil {
+			return "", fmt.Errorf("vec item: %w", err)
+		}
+		return fmt.Sprintf("scale.DecodeVec(reader, func(reader *scale.Reader) (%s, error) { return %s })", itemTypeName, itemDecodeFunc), nil
+	default:
+		return "UNKNOWN_()", fmt.Errorf("unknown type kind: %s", type_.Kind)
+	}
 }
 
 func (c *Codegen) getGoType(moduleName string, typeName string, type_ *Type) (string, error) {

@@ -13,14 +13,14 @@ const (
 )
 
 type Type struct {
-	Kind TypeKind
-	*Struct
-	*EnumSimple
-	*EnumComplex
-	*Import
-	*Vec
-	*Option
-	*Ref
+	Kind        TypeKind
+	Struct      *Struct
+	EnumSimple  *EnumSimple
+	EnumComplex *EnumComplex
+	Import      *Import
+	Vec         *Vec
+	Option      *Option
+	Ref         *Ref
 }
 
 type Struct struct {

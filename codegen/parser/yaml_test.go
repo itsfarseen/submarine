@@ -275,7 +275,150 @@ func TestCountIndent(t *testing.T) {
 	for _, test := range tests {
 		result := CountIndent(test.input)
 		if result != test.expected {
-			t.Errorf("CountIndent(%q) = %d, expected %d", test.input, result, test.expected)
+			t.Errorf("countIndent(%q) = %d, expected %d", test.input, result, test.expected)
 		}
+	}
+}
+
+func TestStripQuotes(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`"quoted string"`, "quoted string"},
+		{`'single quoted'`, "single quoted"},
+		{"unquoted", "unquoted"},
+		{`"`, `"`},
+		{`""`, ""},
+		{`''`, ""},
+		{`"mismatched'`, `"mismatched'`},
+		{`'mismatched"`, `'mismatched"`},
+		{`"only start`, `"only start`},
+		{`only end"`, `only end"`},
+	}
+
+	for _, test := range tests {
+		result := StripQuotes(test.input)
+		if result != test.expected {
+			t.Errorf("stripQuotes(%q) = %q, expected %q", test.input, result, test.expected)
+		}
+	}
+}
+
+func TestParseQuotedStrings(t *testing.T) {
+	input := `name: "John Doe"
+description: 'A person with spaces'
+unquoted: simple_value
+empty_double: ""
+empty_single: ''`
+	reader := strings.NewReader(input)
+
+	result, err := ParseYAML(reader)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	obj, ok := result.(*YamlObject)
+	if !ok {
+		t.Fatalf("Expected YamlObject, got %T", result)
+	}
+
+	tests := []struct {
+		key      string
+		expected string
+	}{
+		{"name", "John Doe"},
+		{"description", "A person with spaces"},
+		{"unquoted", "simple_value"},
+		{"empty_double", ""},
+		{"empty_single", ""},
+	}
+
+	for _, test := range tests {
+		found := false
+		for _, field := range obj.Fields {
+			if field.Key == test.key {
+				if field.Value != test.expected {
+					t.Errorf("Expected %s: %q, got %q", test.key, test.expected, field.Value)
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Key %s not found", test.key)
+		}
+	}
+}
+
+func TestParseQuotedArrayItems(t *testing.T) {
+	input := `- "quoted item"
+- 'single quoted'
+- unquoted_item
+- ""
+- ''`
+	reader := strings.NewReader(input)
+
+	result, err := ParseYAML(reader)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	arr, ok := result.(*YamlArray)
+	if !ok {
+		t.Fatalf("Expected YamlArray, got %T", result)
+	}
+
+	expected := []string{"quoted item", "single quoted", "unquoted_item", "", ""}
+
+	if len(arr.Items) != len(expected) {
+		t.Errorf("Expected %d items, got %d", len(expected), len(arr.Items))
+	}
+
+	for i, item := range arr.Items {
+		if item != expected[i] {
+			t.Errorf("Expected %q at index %d, got %q", expected[i], i, item)
+		}
+	}
+}
+
+func TestParseInlineQuotedObjectValues(t *testing.T) {
+	input := `- name: "John Doe"
+- description: 'A quoted description'
+- age: 30`
+	reader := strings.NewReader(input)
+
+	result, err := ParseYAML(reader)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	arr, ok := result.(*YamlArray)
+	if !ok {
+		t.Fatalf("Expected YamlArray, got %T", result)
+	}
+
+	if len(arr.Items) != 3 {
+		t.Errorf("Expected 3 items, got %d", len(arr.Items))
+	}
+
+	// Check first object
+	obj1, ok := arr.Items[0].(*YamlObject)
+	if !ok {
+		t.Fatalf("Expected first item to be YamlObject, got %T", arr.Items[0])
+	}
+
+	if obj1.Fields[0].Value != "John Doe" {
+		t.Errorf("Expected 'John Doe', got %q", obj1.Fields[0].Value)
+	}
+
+	// Check second object
+	obj2, ok := arr.Items[1].(*YamlObject)
+	if !ok {
+		t.Fatalf("Expected second item to be YamlObject, got %T", arr.Items[1])
+	}
+
+	if obj2.Fields[0].Value != "A quoted description" {
+		t.Errorf("Expected 'A quoted description', got %q", obj2.Fields[0].Value)
 	}
 }

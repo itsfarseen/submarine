@@ -94,7 +94,7 @@ func (p *YamlParser) parseValue(expectedIndent int) any {
 
 	// It's a simple string value
 	p.Advance()
-	return trimmed
+	return StripQuotes(trimmed)
 }
 
 func (p *YamlParser) parseArray(baseIndent int) *YamlArray {
@@ -128,7 +128,7 @@ func (p *YamlParser) parseArray(baseIndent int) *YamlArray {
 				obj := &YamlObject{}
 				parts := strings.SplitN(itemContent, ":", 2)
 				key := strings.TrimSpace(parts[0])
-				val := strings.TrimSpace(parts[1])
+				val := StripQuotes(strings.TrimSpace(parts[1]))
 				obj.Fields = append(obj.Fields, &YamlKV{Key: key, Value: val})
 
 				// Check if there are more fields at the same indentation level for this array item
@@ -146,7 +146,7 @@ func (p *YamlParser) parseArray(baseIndent int) *YamlArray {
 					if nextIndent == indent+2 && strings.Contains(nextTrimmed, ":") {
 						parts := strings.SplitN(nextTrimmed, ":", 2)
 						key := strings.TrimSpace(parts[0])
-						val := strings.TrimSpace(parts[1])
+						val := StripQuotes(strings.TrimSpace(parts[1]))
 						obj.Fields = append(obj.Fields, &YamlKV{Key: key, Value: val})
 						p.Advance()
 					} else {
@@ -157,7 +157,7 @@ func (p *YamlParser) parseArray(baseIndent int) *YamlArray {
 				array.Items = append(array.Items, obj)
 			} else {
 				// Simple string item
-				array.Items = append(array.Items, itemContent)
+				array.Items = append(array.Items, StripQuotes(itemContent))
 			}
 		} else {
 			break
@@ -198,7 +198,7 @@ func (p *YamlParser) parseObject(baseIndent int) *YamlObject {
 				obj.Fields = append(obj.Fields, &YamlKV{Key: key, Value: value})
 			} else {
 				// Inline value
-				obj.Fields = append(obj.Fields, &YamlKV{Key: key, Value: valueStr})
+				obj.Fields = append(obj.Fields, &YamlKV{Key: key, Value: StripQuotes(valueStr)})
 			}
 		} else if indent > baseIndent {
 			// This should be handled by recursive calls
@@ -221,4 +221,22 @@ func CountIndent(s string) int {
 		}
 	}
 	return count
+}
+
+func StripQuotes(s string) string {
+	if len(s) < 2 {
+		return s
+	}
+
+	// Handle double quotes
+	if s[0] == '"' && s[len(s)-1] == '"' {
+		return s[1 : len(s)-1]
+	}
+
+	// Handle single quotes
+	if s[0] == '\'' && s[len(s)-1] == '\'' {
+		return s[1 : len(s)-1]
+	}
+
+	return s
 }

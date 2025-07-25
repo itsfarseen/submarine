@@ -25,7 +25,8 @@ func Parse(files []string) (*AllModules, error) {
 	}
 
 	for _, file := range files {
-		moduleName, module, err := parseModule(file)
+		moduleName := strings.TrimSuffix(filepath.Base(file), ".yaml")
+		module, err := parseModule(file)
 		if err != nil {
 			return nil, err
 		}
@@ -36,17 +37,15 @@ func Parse(files []string) (*AllModules, error) {
 	return allModules, nil
 }
 
-func parseModule(file string) (string, Module, error) {
-	moduleName := strings.TrimSuffix(filepath.Base(file), ".yaml")
-
+func parseModule(file string) (Module, error) {
 	data, err := os.ReadFile(file)
 	if err != nil {
-		return "", Module{}, fmt.Errorf("reading file %s: %w", file, err)
+		return Module{}, fmt.Errorf("reading file %s: %w", file, err)
 	}
 
 	var rawModuleDefs map[string]any
 	if err := yaml.Unmarshal(data, &rawModuleDefs); err != nil {
-		return "", Module{}, fmt.Errorf("unmarshaling yaml from %s: %w", file, err)
+		return Module{}, fmt.Errorf("unmarshaling yaml from %s: %w", file, err)
 	}
 
 	module := Module{
@@ -56,12 +55,12 @@ func parseModule(file string) (string, Module, error) {
 	for typeName, rawDef := range rawModuleDefs {
 		parsedType, err := parseType(rawDef)
 		if err != nil {
-			return "", Module{}, fmt.Errorf("parsing type '%s' in module '%s': %w", typeName, moduleName, err)
+			return Module{}, fmt.Errorf("parsing type '%s' in file '%s': %w", typeName, file, err)
 		}
 		module.Types[typeName] = parsedType
 	}
 
-	return moduleName, module, nil
+	return module, nil
 }
 
 func parseType(rawDef any) (*Type, error) {

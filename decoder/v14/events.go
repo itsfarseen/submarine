@@ -4,7 +4,8 @@ import (
 	"fmt"
 	. "submarine/decoder/models"
 	. "submarine/scale"
-	"submarine/scale/v14"
+	"submarine/scale/gen/scaleInfo"
+	"submarine/scale/gen/v14"
 )
 
 // DecodeEvents is the main entry point for decoding the raw bytes from System.Events.
@@ -117,18 +118,18 @@ func DecodePalletVariant(metadata *v14.Metadata, r *Reader, variantType string) 
 	}
 
 	// --- Find the Variant (Call/Event) Definition ---
-	var variantDefTypeID SiLookupTypeId
+	var variantDefTypeID scaleInfo.Si1LookupTypeId
 	switch variantType {
 	case "calls":
-		if !pallet.Calls.HasValue {
+		if pallet.Calls == nil {
 			return nil, fmt.Errorf("pallet '%s' has no calls defined", pallet.Name)
 		}
-		variantDefTypeID = pallet.Calls.Value.Type
+		variantDefTypeID = pallet.Calls.Type
 	case "events":
-		if !pallet.Events.HasValue {
+		if pallet.Events == nil {
 			return nil, fmt.Errorf("pallet '%s' has no events defined", pallet.Name)
 		}
-		variantDefTypeID = pallet.Events.Value.Type
+		variantDefTypeID = pallet.Events.Type
 	default:
 		return nil, fmt.Errorf("invalid variant type: %s", variantType)
 	}
@@ -138,12 +139,12 @@ func DecodePalletVariant(metadata *v14.Metadata, r *Reader, variantType string) 
 		return nil, fmt.Errorf("%s type definition for pallet '%s' not found", variantType, pallet.Name)
 	}
 
-	if variantTypeInfo.Def.Kind != KindSi1TypeDefVariant {
+	if variantTypeInfo.Def.Kind != scaleInfo.Si1TypeDefKindVariant {
 		return nil, fmt.Errorf("expected %s type to be a variant, but got %T", variantType, variantTypeInfo.Def)
 	}
 	variantTypeDef := variantTypeInfo.Def.Variant
 
-	var chosenVariant Si1Variant
+	var chosenVariant scaleInfo.Si1Variant
 	foundVariant := false
 	for _, v := range variantTypeDef.Variants {
 		if v.Index == variantIndex {
@@ -160,8 +161,8 @@ func DecodePalletVariant(metadata *v14.Metadata, r *Reader, variantType string) 
 	decodedArgs := make([]DecodedArg, len(chosenVariant.Fields))
 	for i, field := range chosenVariant.Fields {
 		argName := "unnamed"
-		if field.Name.HasValue {
-			argName = string(field.Name.Value)
+		if field.Name != nil {
+			argName = *field.Name
 		}
 
 		argValue, err := DecodeArg(metadata, r, field.Type)
@@ -176,8 +177,8 @@ func DecodePalletVariant(metadata *v14.Metadata, r *Reader, variantType string) 
 	}
 
 	return &DecodedPalletVariant{
-		PalletName:  string(pallet.Name),
-		VariantName: string(chosenVariant.Name),
+		PalletName:  pallet.Name,
+		VariantName: chosenVariant.Name,
 		Args:        decodedArgs,
 	}, nil
 }

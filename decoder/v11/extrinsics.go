@@ -4,7 +4,7 @@ import (
 	"fmt"
 	. "submarine/decoder/models"
 	. "submarine/scale"
-	"submarine/scale/v11"
+	"submarine/scale/gen/v11"
 )
 
 // DecodeExtrinsic is the main entry point for decoding an extrinsic.

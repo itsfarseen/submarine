@@ -7,7 +7,7 @@ import (
 	"strings"
 	. "submarine/scale"
 	"submarine/scale/system"
-	"submarine/scale/v11"
+	"submarine/scale/gen/v11"
 )
 
 // DecodeArgFromString recursively decodes an argument based on its type string.

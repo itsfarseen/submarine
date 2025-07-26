@@ -4,7 +4,7 @@ import (
 	"fmt"
 	. "submarine/decoder/models"
 	. "submarine/scale"
-	"submarine/scale/v13"
+	"submarine/scale/gen/v13"
 )
 
 // DecodeEvents is the main entry point for decoding the raw bytes from System.Events.
@@ -113,21 +113,21 @@ func DecodePalletEvent(metadata *v13.Metadata, r *Reader) (*DecodedPalletVariant
 		return nil, fmt.Errorf("pallet with index %d not found", palletIndex)
 	}
 
-	if !pallet.Events.HasValue {
+	if pallet.Events == nil {
 		return nil, fmt.Errorf("pallet '%s' has no events defined", pallet.Name)
 	}
 
-	if int(variantIndex) >= len(pallet.Events.Value) {
+	if int(variantIndex) >= len(*pallet.Events) {
 		return nil, fmt.Errorf("event with index %d not found in pallet '%s'", variantIndex, pallet.Name)
 	}
 
-	chosenVariant := pallet.Events.Value[variantIndex]
+	chosenVariant := (*pallet.Events)[variantIndex]
 
 	// --- Decode Arguments ---
 	// For v13, we don't have named args in the metadata for events, just a list of type names.
 	decodedArgs := make([]DecodedArg, len(chosenVariant.Args))
 	for i, argType := range chosenVariant.Args {
-		argValue, err := DecodeArgFromString(metadata, r, string(argType))
+		argValue, err := DecodeArgFromString(metadata, r, argType)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode arg %d for '%s.%s': %w", i, pallet.Name, chosenVariant.Name, err)
 		}
@@ -139,8 +139,8 @@ func DecodePalletEvent(metadata *v13.Metadata, r *Reader) (*DecodedPalletVariant
 	}
 
 	return &DecodedPalletVariant{
-		PalletName:  string(pallet.Name),
-		VariantName: string(chosenVariant.Name),
+		PalletName:  pallet.Name,
+		VariantName: chosenVariant.Name,
 		Args:        decodedArgs,
 	}, nil
 }

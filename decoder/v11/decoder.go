@@ -4,7 +4,7 @@ import (
 	"fmt"
 	. "submarine/decoder/models"
 	. "submarine/scale"
-	"submarine/scale/v11"
+	"submarine/scale/gen/v11"
 )
 
 // DecodeCall decodes the pallet index, call index, and the corresponding arguments.
@@ -26,7 +26,7 @@ func DecodeCall(metadata *v11.Metadata, r *Reader) (*DecodedPalletVariant, error
 	// list of pallets that actually have calls.
 	callableModules := make([]v11.ModuleMetadata, 0)
 	for _, p := range metadata.Modules {
-		if p.Calls.HasValue {
+		if p.Calls != nil {
 			callableModules = append(callableModules, p)
 		}
 	}
@@ -36,33 +36,33 @@ func DecodeCall(metadata *v11.Metadata, r *Reader) (*DecodedPalletVariant, error
 	}
 	pallet := callableModules[palletIndex]
 
-	if !pallet.Calls.HasValue {
+	if pallet.Calls == nil {
 		return nil, fmt.Errorf("pallet '%s' has no calls defined in metadata", pallet.Name)
 	}
 
-	if int(callIndex) >= len(pallet.Calls.Value) {
+	if int(callIndex) >= len(*pallet.Calls) {
 		return nil, fmt.Errorf("call with index %d not found in pallet '%s'", callIndex, pallet.Name)
 	}
 
-	callVariant := pallet.Calls.Value[callIndex]
+	callVariant := (*pallet.Calls)[callIndex]
 
 	// --- Decode Arguments ---
 	decodedArgs := make([]DecodedArg, len(callVariant.Args))
 	for i, arg := range callVariant.Args {
-		argValue, err := DecodeArgFromString(metadata, r, string(arg.Type))
+		argValue, err := DecodeArgFromString(metadata, r, arg.Type)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode arg '%s' for call '%s.%s': %w", arg.Name, pallet.Name, callVariant.Name, err)
 		}
 
 		decodedArgs[i] = DecodedArg{
-			Name:  string(arg.Name),
+			Name:  arg.Name,
 			Value: argValue,
 		}
 	}
 
 	return &DecodedPalletVariant{
-		PalletName:  string(pallet.Name),
-		VariantName: string(callVariant.Name),
+		PalletName:  pallet.Name,
+		VariantName: callVariant.Name,
 		Args:        decodedArgs,
 	}, nil
 }

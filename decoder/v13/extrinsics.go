@@ -4,6 +4,7 @@ import (
 	"fmt"
 	. "submarine/decoder/models"
 	. "submarine/scale"
+	"submarine/scale/base"
 	"submarine/scale/gen/v13"
 )
 
@@ -24,17 +25,17 @@ func DecodeExtrinsic(metadata *v13.Metadata, extrinsicBytes []byte) (*DecodedExt
 	}
 
 	isSigned := (txFormat & 0b10000000) != 0
-	var signatureData MultiSignature
+	var signatureData base.Signature
 
 	if isSigned {
 		// 1. Decode the sender's Address.
-		_, err := DecodeMultiAddress(r)
+		_, err := base.DecodeAddress(r)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode sender address: %w", err)
 		}
 
 		// 2. Decode the Signature.
-		signatureData, err = DecodeMultiSignature(r)
+		signatureData, err = base.DecodeSignature(r)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode signature: %w", err)
 		}

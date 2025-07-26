@@ -7,6 +7,7 @@ import (
 	"math/big"
 	. "submarine/decoder/models"
 	. "submarine/scale"
+	"submarine/scale/base"
 	"submarine/scale/gen/scaleInfo"
 	"submarine/scale/gen/v14"
 )
@@ -36,20 +37,20 @@ func DecodeExtrinsic(metadata *v14.Metadata, extrinsicBytes []byte) (*DecodedExt
 	log.Printf("extrinsic %d %x", n, txFormat)
 
 	isSigned := (txFormat & 0b10000000) != 0
-	var signatureData MultiSignature
+	var signatureData base.Signature
 
 	if isSigned {
 		// --- Correctly decode the extrinsic wrapper ---
 		// The correct order is: Address, Signature, then Extra (all signed extensions).
 
 		// 1. Decode the sender's Address. The type is given by metadata.
-		_, err := DecodeMultiAddress(r)
+		_, err := base.DecodeAddress(r)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode sender address: %w", err)
 		}
 
 		// 3. Decode the Signature. This is a MultiSignature enum.
-		signatureData, err = DecodeMultiSignature(r)
+		signatureData, err = base.DecodeSignature(r)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode signature: %w", err)
 		}

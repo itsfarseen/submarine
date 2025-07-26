@@ -111,8 +111,6 @@ func DecodeArgFromString(metadata *v9.Metadata, r *Reader, typeName string) (any
 		return r.ReadBytes(32)
 	case "H256", "Hash": // 32-byte hash
 		return r.ReadBytes(32)
-	case "MultiAddress":
-		return DecodeMultiAddress(r)
 	case "AccountInfo":
 		return system.DecodeAccountInfoWithTripleRefCount(r)
 	case "DispatchResult":

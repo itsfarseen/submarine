@@ -1,7 +1,8 @@
 package models
 
 import (
-	. "submarine/scale"
+	"submarine/scale"
+	"submarine/scale/base"
 )
 
 // DecodedArg holds the name and decoded value of a single extrinsic argument.
@@ -19,7 +20,7 @@ type DecodedCall struct {
 
 // DecodedExtrinsic represents the full decoded extrinsic.
 type DecodedExtrinsic struct {
-	Signature MultiSignature
+	Signature base.Signature
 	Call      DecodedPalletVariant
 }
 

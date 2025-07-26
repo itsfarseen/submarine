@@ -4,6 +4,7 @@ import (
 	"fmt"
 	. "submarine/decoder/models"
 	. "submarine/scale"
+	"submarine/scale/base"
 	"submarine/scale/gen/v9"
 )
 
@@ -28,7 +29,7 @@ func DecodeExtrinsic(metadata *v9.Metadata, extrinsicBytes []byte) (*DecodedExtr
 
 	return &DecodedExtrinsic{
 		// Signature data is not decoded in this simplified version for v9.
-		Signature: MultiSignature{},
+		Signature: base.Signature{},
 		Call:      *call,
 	}, nil
 }

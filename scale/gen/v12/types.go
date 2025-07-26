@@ -38,7 +38,7 @@ func DecodeFunctionMetadata(reader *scale.Reader) (FunctionMetadata, error) {
 
 type Metadata struct {
 	Modules   []ModuleMetadata
-	Extrinsic v11.ExtrinsicMetadata
+	Extrinsic ExtrinsicMetadata
 }
 
 func DecodeMetadata(reader *scale.Reader) (Metadata, error) {
@@ -66,11 +66,11 @@ func DecodeModuleConstantMetadata(reader *scale.Reader) (ModuleConstantMetadata,
 
 type ModuleMetadata struct {
 	Name      string
-	Storage   *v11.StorageMetadata
-	Calls     *[]v11.FunctionMetadata
-	Events    *[]v11.EventMetadata
-	Constants []v11.ModuleConstantMetadata
-	Errors    []v11.ErrorMetadata
+	Storage   *StorageMetadata
+	Calls     *[]FunctionMetadata
+	Events    *[]EventMetadata
+	Constants []ModuleConstantMetadata
+	Errors    []ErrorMetadata
 	Index     uint8
 }
 
@@ -83,33 +83,33 @@ func DecodeModuleMetadata(reader *scale.Reader) (ModuleMetadata, error) {
 		return t, fmt.Errorf("field Name: %w", err)
 	}
 
-	t.Storage, err = scale.DecodeOption(reader, func(reader *scale.Reader) (v11.StorageMetadata, error) { return DecodeStorageMetadata(reader) })
+	t.Storage, err = scale.DecodeOption(reader, func(reader *scale.Reader) (StorageMetadata, error) { return DecodeStorageMetadata(reader) })
 	if err != nil {
 		return t, fmt.Errorf("field Storage: %w", err)
 	}
 
-	t.Calls, err = scale.DecodeOption(reader, func(reader *scale.Reader) ([]v11.FunctionMetadata, error) {
-		return scale.DecodeVec(reader, func(reader *scale.Reader) (v11.FunctionMetadata, error) { return DecodeFunctionMetadata(reader) })
+	t.Calls, err = scale.DecodeOption(reader, func(reader *scale.Reader) ([]FunctionMetadata, error) {
+		return scale.DecodeVec(reader, func(reader *scale.Reader) (FunctionMetadata, error) { return DecodeFunctionMetadata(reader) })
 	})
 	if err != nil {
 		return t, fmt.Errorf("field Calls: %w", err)
 	}
 
-	t.Events, err = scale.DecodeOption(reader, func(reader *scale.Reader) ([]v11.EventMetadata, error) {
-		return scale.DecodeVec(reader, func(reader *scale.Reader) (v11.EventMetadata, error) { return DecodeEventMetadata(reader) })
+	t.Events, err = scale.DecodeOption(reader, func(reader *scale.Reader) ([]EventMetadata, error) {
+		return scale.DecodeVec(reader, func(reader *scale.Reader) (EventMetadata, error) { return DecodeEventMetadata(reader) })
 	})
 	if err != nil {
 		return t, fmt.Errorf("field Events: %w", err)
 	}
 
-	t.Constants, err = scale.DecodeVec(reader, func(reader *scale.Reader) (v11.ModuleConstantMetadata, error) {
+	t.Constants, err = scale.DecodeVec(reader, func(reader *scale.Reader) (ModuleConstantMetadata, error) {
 		return DecodeModuleConstantMetadata(reader)
 	})
 	if err != nil {
 		return t, fmt.Errorf("field Constants: %w", err)
 	}
 
-	t.Errors, err = scale.DecodeVec(reader, func(reader *scale.Reader) (v11.ErrorMetadata, error) { return DecodeErrorMetadata(reader) })
+	t.Errors, err = scale.DecodeVec(reader, func(reader *scale.Reader) (ErrorMetadata, error) { return DecodeErrorMetadata(reader) })
 	if err != nil {
 		return t, fmt.Errorf("field Errors: %w", err)
 	}

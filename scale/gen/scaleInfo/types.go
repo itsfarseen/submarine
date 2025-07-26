@@ -20,7 +20,7 @@ func DecodeSi0TypeDefPrimitive(reader *scale.Reader) (Si0TypeDefPrimitive, error
 
 type Si1Field struct {
 	Name     *string
-	Type     big.Int
+	Type     Si1LookupTypeId
 	TypeName *string
 	Docs     []string
 }
@@ -58,14 +58,14 @@ func DecodeSi1LookupTypeId(reader *scale.Reader) (Si1LookupTypeId, error) {
 	return scale.DecodeCompact(reader)
 }
 
-type Si1Path = string
+type Si1Path = Si0Path
 
 func DecodeSi1Path(reader *scale.Reader) (Si1Path, error) {
 	return DecodeSi0Path(reader)
 }
 
 type Si1Type struct {
-	Path   string
+	Path   Si1Path
 	Params []Si1TypeParameter
 	Def    Si1TypeDef
 	Docs   []string
@@ -118,8 +118,8 @@ type Si1TypeDef struct {
 	Variant            *Si1TypeDefVariant
 	Sequence           *Si1TypeDefSequence
 	Array              *Si1TypeDefArray
-	Tuple              *[]big.Int
-	Primitive          *string
+	Tuple              *Si1TypeDefTuple
+	Primitive          *Si1TypeDefPrimitive
 	Compact            *Si1TypeDefCompact
 	BitSequence        *Si1TypeDefBitSequence
 	HistoricMetaCompat *string
@@ -215,7 +215,7 @@ func DecodeSi1TypeDef(reader *scale.Reader) (Si1TypeDef, error) {
 
 type Si1TypeDefArray struct {
 	Len  uint32
-	Type big.Int
+	Type Si1LookupTypeId
 }
 
 func DecodeSi1TypeDefArray(reader *scale.Reader) (Si1TypeDefArray, error) {
@@ -236,8 +236,8 @@ func DecodeSi1TypeDefArray(reader *scale.Reader) (Si1TypeDefArray, error) {
 }
 
 type Si1TypeDefBitSequence struct {
-	BitStoreType big.Int
-	BitOrderType big.Int
+	BitStoreType Si1LookupTypeId
+	BitOrderType Si1LookupTypeId
 }
 
 func DecodeSi1TypeDefBitSequence(reader *scale.Reader) (Si1TypeDefBitSequence, error) {
@@ -258,7 +258,7 @@ func DecodeSi1TypeDefBitSequence(reader *scale.Reader) (Si1TypeDefBitSequence, e
 }
 
 type Si1TypeDefCompact struct {
-	Type big.Int
+	Type Si1LookupTypeId
 }
 
 func DecodeSi1TypeDefCompact(reader *scale.Reader) (Si1TypeDefCompact, error) {
@@ -289,14 +289,14 @@ func DecodeSi1TypeDefComposite(reader *scale.Reader) (Si1TypeDefComposite, error
 	return t, nil
 }
 
-type Si1TypeDefPrimitive = string
+type Si1TypeDefPrimitive = Si0TypeDefPrimitive
 
 func DecodeSi1TypeDefPrimitive(reader *scale.Reader) (Si1TypeDefPrimitive, error) {
 	return DecodeSi0TypeDefPrimitive(reader)
 }
 
 type Si1TypeDefSequence struct {
-	Type big.Int
+	Type Si1LookupTypeId
 }
 
 func DecodeSi1TypeDefSequence(reader *scale.Reader) (Si1TypeDefSequence, error) {
@@ -311,10 +311,10 @@ func DecodeSi1TypeDefSequence(reader *scale.Reader) (Si1TypeDefSequence, error) 
 	return t, nil
 }
 
-type Si1TypeDefTuple = []big.Int
+type Si1TypeDefTuple = []Si1LookupTypeId
 
 func DecodeSi1TypeDefTuple(reader *scale.Reader) (Si1TypeDefTuple, error) {
-	return scale.DecodeVec(reader, func(reader *scale.Reader) (big.Int, error) { return DecodeSi1LookupTypeId(reader) })
+	return scale.DecodeVec(reader, func(reader *scale.Reader) (Si1LookupTypeId, error) { return DecodeSi1LookupTypeId(reader) })
 }
 
 type Si1TypeDefVariant struct {
@@ -335,7 +335,7 @@ func DecodeSi1TypeDefVariant(reader *scale.Reader) (Si1TypeDefVariant, error) {
 
 type Si1TypeParameter struct {
 	Name string
-	Type *big.Int
+	Type *Si1LookupTypeId
 }
 
 func DecodeSi1TypeParameter(reader *scale.Reader) (Si1TypeParameter, error) {
@@ -347,7 +347,7 @@ func DecodeSi1TypeParameter(reader *scale.Reader) (Si1TypeParameter, error) {
 		return t, fmt.Errorf("field Name: %w", err)
 	}
 
-	t.Type, err = scale.DecodeOption(reader, func(reader *scale.Reader) (big.Int, error) { return DecodeSi1LookupTypeId(reader) })
+	t.Type, err = scale.DecodeOption(reader, func(reader *scale.Reader) (Si1LookupTypeId, error) { return DecodeSi1LookupTypeId(reader) })
 	if err != nil {
 		return t, fmt.Errorf("field Type: %w", err)
 	}

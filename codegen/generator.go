@@ -165,6 +165,18 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 		}
 		moduleCodegen.Body.WriteString(fmt.Sprintf(funcTemplate, typeName, typeName, innerDecodeFunc))
 		return nil
+	case KindImport:
+		importLine := fmt.Sprintf("%s/%s", c.RootModulePath, type_.Import.Module)
+		moduleCodegen.appendImport(importLine)
+
+		moduleCodegen.Body.WriteString(fmt.Sprintf("type %s = %s.%s\n", typeName, type_.Import.Module, type_.Import.Item))
+		const funcTemplate string = `
+		func Decode%s(reader *scale.Reader) (%s, error) {
+			return %s.Decode%s(reader)
+		}
+		`
+		moduleCodegen.Body.WriteString(fmt.Sprintf(funcTemplate, typeName, typeName, type_.Import.Module, type_.Import.Item))
+		return nil
 	case KindStruct:
 		struct_ := type_.Struct
 		fields := make([]FieldOrVariant, len(struct_.Fields))
@@ -213,8 +225,6 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 		}
 		templateName = "enum_complex"
 		templateData = EnumComplexTemplate{Name: typeName, Variants: variants}
-	case KindImport:
-		return nil // handled by imports
 	case KindVec, KindOption:
 		innerType, err := c.getGoType(moduleName, "UNKNOWN_", type_)
 		if err != nil {
@@ -249,16 +259,6 @@ type ResolvedInfo struct {
 	TypeName   string
 }
 
-func (c *Codegen) resolveImport(importType *Import) ResolvedInfo {
-	targetModule := c.Modules[importType.Module]
-	targetType := targetModule.Types[importType.Item]
-	if targetType.Kind != KindImport {
-		return ResolvedInfo{Type: targetType, ModuleName: importType.Module, TypeName: importType.Item}
-	}
-
-	return c.resolveImport(targetType.Import)
-}
-
 func (c *Codegen) getDecodeFuncForTypeName(moduleName string, typeName string) (string, error) {
 	// handle primitives
 	switch typeName {
@@ -279,22 +279,11 @@ func (c *Codegen) getDecodeFuncForTypeName(moduleName string, typeName string) (
 	}
 
 	module := c.Modules[moduleName]
-	type_, ok := module.Types[typeName]
+	_, ok := module.Types[typeName]
 	if !ok {
 		return "", fmt.Errorf("Type %s not found in module %s", typeName, moduleName)
 	}
-	switch type_.Kind {
-	case KindImport:
-		importType := type_.Import
-		resolved := c.resolveImport(importType)
-		innerDecodeFunc, err := c.getDecodeFuncForTypeName(resolved.ModuleName, resolved.TypeName)
-		if err != nil {
-			return "", err
-		}
-		return resolved.ModuleName + "." + innerDecodeFunc, nil
-	default:
-		return fmt.Sprintf("Decode%s(reader)", typeName), nil
-	}
+	return fmt.Sprintf("Decode%s(reader)", typeName), nil
 }
 
 func (c *Codegen) getDecodeFuncForType(moduleName string, type_ *Type) (string, error) {
@@ -377,10 +366,9 @@ func (c *Codegen) getGoType(moduleName string, typeName string, type_ *Type) (st
 		goTypeName = "[]" + itemGoType
 	case KindImport:
 		importType := type_.Import
-		resolved := c.resolveImport(importType)
-		importLine := fmt.Sprintf("%s/%s", c.RootModulePath, resolved.ModuleName)
+		importLine := fmt.Sprintf("%s/%s", c.RootModulePath, importType.Module)
 		moduleCodegen.appendImport(importLine)
-		goTypeName = fmt.Sprintf("%s.%s", resolved.ModuleName, resolved.TypeName)
+		goTypeName = fmt.Sprintf("%s.%s", importType.Module, importType.Item)
 	default:
 		fmt.Printf("Kind ERR %s\n", type_.Kind)
 		panic("unreachable: we should exhaustively handle all kinds")

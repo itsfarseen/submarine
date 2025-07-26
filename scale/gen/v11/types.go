@@ -3,8 +3,20 @@ package v11
 import (
 	"fmt"
 	"submarine/scale"
-	"submarine/scale/gen/v9"
+	"submarine/scale/gen/v10"
 )
+
+type ErrorMetadata = v10.ErrorMetadata
+
+func DecodeErrorMetadata(reader *scale.Reader) (ErrorMetadata, error) {
+	return v10.DecodeErrorMetadata(reader)
+}
+
+type EventMetadata = v10.EventMetadata
+
+func DecodeEventMetadata(reader *scale.Reader) (EventMetadata, error) {
+	return v10.DecodeEventMetadata(reader)
+}
 
 type ExtrinsicMetadata struct {
 	Version          uint8
@@ -26,6 +38,18 @@ func DecodeExtrinsicMetadata(reader *scale.Reader) (ExtrinsicMetadata, error) {
 	}
 
 	return t, nil
+}
+
+type FunctionArgumentMetadata = v10.FunctionArgumentMetadata
+
+func DecodeFunctionArgumentMetadata(reader *scale.Reader) (FunctionArgumentMetadata, error) {
+	return v10.DecodeFunctionArgumentMetadata(reader)
+}
+
+type FunctionMetadata = v10.FunctionMetadata
+
+func DecodeFunctionMetadata(reader *scale.Reader) (FunctionMetadata, error) {
+	return v10.DecodeFunctionMetadata(reader)
 }
 
 type Metadata struct {
@@ -50,13 +74,19 @@ func DecodeMetadata(reader *scale.Reader) (Metadata, error) {
 	return t, nil
 }
 
+type ModuleConstantMetadata = v10.ModuleConstantMetadata
+
+func DecodeModuleConstantMetadata(reader *scale.Reader) (ModuleConstantMetadata, error) {
+	return v10.DecodeModuleConstantMetadata(reader)
+}
+
 type ModuleMetadata struct {
 	Name      string
 	Storage   *StorageMetadata
-	Calls     *[]v9.FunctionMetadata
-	Events    *[]v9.EventMetadata
-	Constants []v9.ModuleConstantMetadata
-	Errors    []v9.ErrorMetadata
+	Calls     *[]v10.FunctionMetadata
+	Events    *[]v10.EventMetadata
+	Constants []v10.ModuleConstantMetadata
+	Errors    []v10.ErrorMetadata
 }
 
 func DecodeModuleMetadata(reader *scale.Reader) (ModuleMetadata, error) {
@@ -73,28 +103,28 @@ func DecodeModuleMetadata(reader *scale.Reader) (ModuleMetadata, error) {
 		return t, fmt.Errorf("field Storage: %w", err)
 	}
 
-	t.Calls, err = scale.DecodeOption(reader, func(reader *scale.Reader) ([]v9.FunctionMetadata, error) {
-		return scale.DecodeVec(reader, func(reader *scale.Reader) (v9.FunctionMetadata, error) { return v9.DecodeFunctionMetadata(reader) })
+	t.Calls, err = scale.DecodeOption(reader, func(reader *scale.Reader) ([]v10.FunctionMetadata, error) {
+		return scale.DecodeVec(reader, func(reader *scale.Reader) (v10.FunctionMetadata, error) { return DecodeFunctionMetadata(reader) })
 	})
 	if err != nil {
 		return t, fmt.Errorf("field Calls: %w", err)
 	}
 
-	t.Events, err = scale.DecodeOption(reader, func(reader *scale.Reader) ([]v9.EventMetadata, error) {
-		return scale.DecodeVec(reader, func(reader *scale.Reader) (v9.EventMetadata, error) { return v9.DecodeEventMetadata(reader) })
+	t.Events, err = scale.DecodeOption(reader, func(reader *scale.Reader) ([]v10.EventMetadata, error) {
+		return scale.DecodeVec(reader, func(reader *scale.Reader) (v10.EventMetadata, error) { return DecodeEventMetadata(reader) })
 	})
 	if err != nil {
 		return t, fmt.Errorf("field Events: %w", err)
 	}
 
-	t.Constants, err = scale.DecodeVec(reader, func(reader *scale.Reader) (v9.ModuleConstantMetadata, error) {
-		return v9.DecodeModuleConstantMetadata(reader)
+	t.Constants, err = scale.DecodeVec(reader, func(reader *scale.Reader) (v10.ModuleConstantMetadata, error) {
+		return DecodeModuleConstantMetadata(reader)
 	})
 	if err != nil {
 		return t, fmt.Errorf("field Constants: %w", err)
 	}
 
-	t.Errors, err = scale.DecodeVec(reader, func(reader *scale.Reader) (v9.ErrorMetadata, error) { return v9.DecodeErrorMetadata(reader) })
+	t.Errors, err = scale.DecodeVec(reader, func(reader *scale.Reader) (v10.ErrorMetadata, error) { return DecodeErrorMetadata(reader) })
 	if err != nil {
 		return t, fmt.Errorf("field Errors: %w", err)
 	}
@@ -178,7 +208,7 @@ func DecodeStorageEntryMap(reader *scale.Reader) (StorageEntryMap, error) {
 
 type StorageEntryMetadata struct {
 	Name     string
-	Modifier v9.StorageEntryModifier
+	Modifier v10.StorageEntryModifier
 	Type     StorageEntryType
 	Fallback []byte
 	Docs     []string
@@ -193,7 +223,7 @@ func DecodeStorageEntryMetadata(reader *scale.Reader) (StorageEntryMetadata, err
 		return t, fmt.Errorf("field Name: %w", err)
 	}
 
-	t.Modifier, err = v9.DecodeStorageEntryModifier(reader)
+	t.Modifier, err = DecodeStorageEntryModifier(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Modifier: %w", err)
 	}
@@ -214,6 +244,12 @@ func DecodeStorageEntryMetadata(reader *scale.Reader) (StorageEntryMetadata, err
 	}
 
 	return t, nil
+}
+
+type StorageEntryModifier = v10.StorageEntryModifier
+
+func DecodeStorageEntryModifier(reader *scale.Reader) (StorageEntryModifier, error) {
+	return v10.DecodeStorageEntryModifier(reader)
 }
 
 type StorageEntryTypeKind byte

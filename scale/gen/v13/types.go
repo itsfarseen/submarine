@@ -3,23 +3,70 @@ package v13
 import (
 	"fmt"
 	"submarine/scale"
-	"submarine/scale/gen/v11"
-	"submarine/scale/gen/v9"
+	"submarine/scale/gen/v12"
 )
 
+type ErrorMetadata = v12.ErrorMetadata
+
+func DecodeErrorMetadata(reader *scale.Reader) (ErrorMetadata, error) {
+	return v12.DecodeErrorMetadata(reader)
+}
+
+type EventMetadata = v12.EventMetadata
+
+func DecodeEventMetadata(reader *scale.Reader) (EventMetadata, error) {
+	return v12.DecodeEventMetadata(reader)
+}
+
+type ExtrinsicMetadata = v12.ExtrinsicMetadata
+
+func DecodeExtrinsicMetadata(reader *scale.Reader) (ExtrinsicMetadata, error) {
+	return v12.DecodeExtrinsicMetadata(reader)
+}
+
+type FunctionArgumentMetadata = v12.FunctionArgumentMetadata
+
+func DecodeFunctionArgumentMetadata(reader *scale.Reader) (FunctionArgumentMetadata, error) {
+	return v12.DecodeFunctionArgumentMetadata(reader)
+}
+
+type FunctionMetadata = v12.FunctionMetadata
+
+func DecodeFunctionMetadata(reader *scale.Reader) (FunctionMetadata, error) {
+	return v12.DecodeFunctionMetadata(reader)
+}
+
+type Metadata = v12.Metadata
+
+func DecodeMetadata(reader *scale.Reader) (Metadata, error) {
+	return v12.DecodeMetadata(reader)
+}
+
+type ModuleConstantMetadata = v12.ModuleConstantMetadata
+
+func DecodeModuleConstantMetadata(reader *scale.Reader) (ModuleConstantMetadata, error) {
+	return v12.DecodeModuleConstantMetadata(reader)
+}
+
+type ModuleMetadata = v12.ModuleMetadata
+
+func DecodeModuleMetadata(reader *scale.Reader) (ModuleMetadata, error) {
+	return v12.DecodeModuleMetadata(reader)
+}
+
 type StorageEntryDoubleMap struct {
-	Hasher     v11.StorageHasher
+	Hasher     v12.StorageHasher
 	Key1       string
 	Key2       string
 	Value      string
-	Key2Hasher v11.StorageHasher
+	Key2Hasher v12.StorageHasher
 }
 
 func DecodeStorageEntryDoubleMap(reader *scale.Reader) (StorageEntryDoubleMap, error) {
 	var t StorageEntryDoubleMap
 	var err error
 
-	t.Hasher, err = v11.DecodeStorageHasher(reader)
+	t.Hasher, err = DecodeStorageHasher(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Hasher: %w", err)
 	}
@@ -39,7 +86,7 @@ func DecodeStorageEntryDoubleMap(reader *scale.Reader) (StorageEntryDoubleMap, e
 		return t, fmt.Errorf("field Value: %w", err)
 	}
 
-	t.Key2Hasher, err = v11.DecodeStorageHasher(reader)
+	t.Key2Hasher, err = DecodeStorageHasher(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Key2Hasher: %w", err)
 	}
@@ -48,7 +95,7 @@ func DecodeStorageEntryDoubleMap(reader *scale.Reader) (StorageEntryDoubleMap, e
 }
 
 type StorageEntryMap struct {
-	Hasher v11.StorageHasher
+	Hasher v12.StorageHasher
 	Key    string
 	Value  string
 	Linked bool
@@ -58,7 +105,7 @@ func DecodeStorageEntryMap(reader *scale.Reader) (StorageEntryMap, error) {
 	var t StorageEntryMap
 	var err error
 
-	t.Hasher, err = v11.DecodeStorageHasher(reader)
+	t.Hasher, err = DecodeStorageHasher(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Hasher: %w", err)
 	}
@@ -83,7 +130,7 @@ func DecodeStorageEntryMap(reader *scale.Reader) (StorageEntryMap, error) {
 
 type StorageEntryMetadata struct {
 	Name     string
-	Modifier v9.StorageEntryModifier
+	Modifier v12.StorageEntryModifier
 	Type     StorageEntryType
 	Fallback []byte
 	Docs     []string
@@ -98,7 +145,7 @@ func DecodeStorageEntryMetadata(reader *scale.Reader) (StorageEntryMetadata, err
 		return t, fmt.Errorf("field Name: %w", err)
 	}
 
-	t.Modifier, err = v9.DecodeStorageEntryModifier(reader)
+	t.Modifier, err = DecodeStorageEntryModifier(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Modifier: %w", err)
 	}
@@ -121,9 +168,15 @@ func DecodeStorageEntryMetadata(reader *scale.Reader) (StorageEntryMetadata, err
 	return t, nil
 }
 
+type StorageEntryModifier = v12.StorageEntryModifier
+
+func DecodeStorageEntryModifier(reader *scale.Reader) (StorageEntryModifier, error) {
+	return v12.DecodeStorageEntryModifier(reader)
+}
+
 type StorageEntryNMap struct {
 	KeyVec  []string
-	Hashers []v11.StorageHasher
+	Hashers []v12.StorageHasher
 	Value   string
 }
 
@@ -136,7 +189,7 @@ func DecodeStorageEntryNMap(reader *scale.Reader) (StorageEntryNMap, error) {
 		return t, fmt.Errorf("field KeyVec: %w", err)
 	}
 
-	t.Hashers, err = scale.DecodeVec(reader, func(reader *scale.Reader) (v11.StorageHasher, error) { return v11.DecodeStorageHasher(reader) })
+	t.Hashers, err = scale.DecodeVec(reader, func(reader *scale.Reader) (v12.StorageHasher, error) { return DecodeStorageHasher(reader) })
 	if err != nil {
 		return t, fmt.Errorf("field Hashers: %w", err)
 	}
@@ -212,6 +265,12 @@ func DecodeStorageEntryType(reader *scale.Reader) (StorageEntryType, error) {
 	default:
 		return t, fmt.Errorf("unknown tag: %d", tag)
 	}
+}
+
+type StorageHasher = v12.StorageHasher
+
+func DecodeStorageHasher(reader *scale.Reader) (StorageHasher, error) {
+	return v12.DecodeStorageHasher(reader)
 }
 
 type StorageMetadata struct {

@@ -47,56 +47,6 @@ func DecodeStorageEntryDoubleMap(reader *scale.Reader) (StorageEntryDoubleMap, e
 	return t, nil
 }
 
-type StorageEntryNMap struct {
-	KeyVec  []string
-	Hashers []v11.StorageHasher
-	Value   string
-}
-
-func DecodeStorageEntryNMap(reader *scale.Reader) (StorageEntryNMap, error) {
-	var t StorageEntryNMap
-	var err error
-
-	t.KeyVec, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field KeyVec: %w", err)
-	}
-
-	t.Hashers, err = scale.DecodeVec(reader, func(reader *scale.Reader) (v11.StorageHasher, error) { return v11.DecodeStorageHasher(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Hashers: %w", err)
-	}
-
-	t.Value, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Value: %w", err)
-	}
-
-	return t, nil
-}
-
-type StorageMetadata struct {
-	Prefix string
-	Items  []StorageEntryMetadata
-}
-
-func DecodeStorageMetadata(reader *scale.Reader) (StorageMetadata, error) {
-	var t StorageMetadata
-	var err error
-
-	t.Prefix, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Prefix: %w", err)
-	}
-
-	t.Items, err = scale.DecodeVec(reader, func(reader *scale.Reader) (StorageEntryMetadata, error) { return DecodeStorageEntryMetadata(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Items: %w", err)
-	}
-
-	return t, nil
-}
-
 type StorageEntryMap struct {
 	Hasher v11.StorageHasher
 	Key    string
@@ -126,6 +76,74 @@ func DecodeStorageEntryMap(reader *scale.Reader) (StorageEntryMap, error) {
 	t.Linked, err = scale.DecodeBool(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Linked: %w", err)
+	}
+
+	return t, nil
+}
+
+type StorageEntryMetadata struct {
+	Name     string
+	Modifier v9.StorageEntryModifier
+	Type     StorageEntryType
+	Fallback []byte
+	Docs     []string
+}
+
+func DecodeStorageEntryMetadata(reader *scale.Reader) (StorageEntryMetadata, error) {
+	var t StorageEntryMetadata
+	var err error
+
+	t.Name, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Name: %w", err)
+	}
+
+	t.Modifier, err = v9.DecodeStorageEntryModifier(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Modifier: %w", err)
+	}
+
+	t.Type, err = DecodeStorageEntryType(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Type: %w", err)
+	}
+
+	t.Fallback, err = scale.DecodeBytes(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Fallback: %w", err)
+	}
+
+	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Docs: %w", err)
+	}
+
+	return t, nil
+}
+
+type StorageEntryNMap struct {
+	KeyVec  []string
+	Hashers []v11.StorageHasher
+	Value   string
+}
+
+func DecodeStorageEntryNMap(reader *scale.Reader) (StorageEntryNMap, error) {
+	var t StorageEntryNMap
+	var err error
+
+	t.KeyVec, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field KeyVec: %w", err)
+	}
+
+	t.Hashers, err = scale.DecodeVec(reader, func(reader *scale.Reader) (v11.StorageHasher, error) { return v11.DecodeStorageHasher(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Hashers: %w", err)
+	}
+
+	t.Value, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Value: %w", err)
 	}
 
 	return t, nil
@@ -196,41 +214,23 @@ func DecodeStorageEntryType(reader *scale.Reader) (StorageEntryType, error) {
 	}
 }
 
-type StorageEntryMetadata struct {
-	Name     string
-	Modifier v9.StorageEntryModifier
-	Type     StorageEntryType
-	Fallback []byte
-	Docs     []string
+type StorageMetadata struct {
+	Prefix string
+	Items  []StorageEntryMetadata
 }
 
-func DecodeStorageEntryMetadata(reader *scale.Reader) (StorageEntryMetadata, error) {
-	var t StorageEntryMetadata
+func DecodeStorageMetadata(reader *scale.Reader) (StorageMetadata, error) {
+	var t StorageMetadata
 	var err error
 
-	t.Name, err = scale.DecodeText(reader)
+	t.Prefix, err = scale.DecodeText(reader)
 	if err != nil {
-		return t, fmt.Errorf("field Name: %w", err)
+		return t, fmt.Errorf("field Prefix: %w", err)
 	}
 
-	t.Modifier, err = v9.DecodeStorageEntryModifier(reader)
+	t.Items, err = scale.DecodeVec(reader, func(reader *scale.Reader) (StorageEntryMetadata, error) { return DecodeStorageEntryMetadata(reader) })
 	if err != nil {
-		return t, fmt.Errorf("field Modifier: %w", err)
-	}
-
-	t.Type, err = DecodeStorageEntryType(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Type: %w", err)
-	}
-
-	t.Fallback, err = scale.DecodeBytes(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Fallback: %w", err)
-	}
-
-	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Docs: %w", err)
+		return t, fmt.Errorf("field Items: %w", err)
 	}
 
 	return t, nil

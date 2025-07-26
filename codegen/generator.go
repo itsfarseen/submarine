@@ -118,7 +118,7 @@ func (c *Codegen) generateModule(moduleName string) error {
 
 	module := c.Modules[moduleName]
 
-	for typeName := range module.Types {
+	for _, typeName := range module.TypeNames {
 		err := c.generateType(moduleName, typeName)
 		if err != nil {
 			slog.Warn("generating type", "module", moduleName, "type", typeName, "error", err)

@@ -8,29 +8,81 @@ import (
 	"submarine/scale/gen/v9"
 )
 
-type StorageEntryMap struct {
-	Hashers []v11.StorageHasher
-	Key     scaleInfo.Si1LookupTypeId
-	Value   scaleInfo.Si1LookupTypeId
+type ErrorMetadata struct {
+	Name   string
+	Fields []scaleInfo.Si1Field
+	Index  uint8
+	Docs   []string
+	Args   []string
 }
 
-func DecodeStorageEntryMap(reader *scale.Reader) (StorageEntryMap, error) {
-	var t StorageEntryMap
+func DecodeErrorMetadata(reader *scale.Reader) (ErrorMetadata, error) {
+	var t ErrorMetadata
 	var err error
 
-	t.Hashers, err = scale.DecodeVec(reader, func(reader *scale.Reader) (v11.StorageHasher, error) { return v11.DecodeStorageHasher(reader) })
+	t.Name, err = scale.DecodeText(reader)
 	if err != nil {
-		return t, fmt.Errorf("field Hashers: %w", err)
+		return t, fmt.Errorf("field Name: %w", err)
 	}
 
-	t.Key, err = scaleInfo.DecodeSi1LookupTypeId(reader)
+	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (scaleInfo.Si1Field, error) { return scaleInfo.DecodeSi1Field(reader) })
 	if err != nil {
-		return t, fmt.Errorf("field Key: %w", err)
+		return t, fmt.Errorf("field Fields: %w", err)
 	}
 
-	t.Value, err = scaleInfo.DecodeSi1LookupTypeId(reader)
+	t.Index, err = scale.DecodeU8(reader)
 	if err != nil {
-		return t, fmt.Errorf("field Value: %w", err)
+		return t, fmt.Errorf("field Index: %w", err)
+	}
+
+	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Docs: %w", err)
+	}
+
+	t.Args, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Args: %w", err)
+	}
+
+	return t, nil
+}
+
+type EventMetadata struct {
+	Name   string
+	Fields []scaleInfo.Si1Field
+	Index  uint8
+	Docs   []string
+	Args   []string
+}
+
+func DecodeEventMetadata(reader *scale.Reader) (EventMetadata, error) {
+	var t EventMetadata
+	var err error
+
+	t.Name, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Name: %w", err)
+	}
+
+	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (scaleInfo.Si1Field, error) { return scaleInfo.DecodeSi1Field(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Fields: %w", err)
+	}
+
+	t.Index, err = scale.DecodeU8(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Index: %w", err)
+	}
+
+	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Docs: %w", err)
+	}
+
+	t.Args, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Args: %w", err)
 	}
 
 	return t, nil
@@ -66,23 +118,187 @@ func DecodeExtrinsicMetadata(reader *scale.Reader) (ExtrinsicMetadata, error) {
 	return t, nil
 }
 
-type PalletStorageMetadata struct {
-	Prefix string
-	Items  []StorageEntryMetadata
+type FunctionArgumentMetadata struct {
+	Name     string
+	Type     string
+	TypeName *string
 }
 
-func DecodePalletStorageMetadata(reader *scale.Reader) (PalletStorageMetadata, error) {
-	var t PalletStorageMetadata
+func DecodeFunctionArgumentMetadata(reader *scale.Reader) (FunctionArgumentMetadata, error) {
+	var t FunctionArgumentMetadata
 	var err error
 
-	t.Prefix, err = scale.DecodeText(reader)
+	t.Name, err = scale.DecodeText(reader)
 	if err != nil {
-		return t, fmt.Errorf("field Prefix: %w", err)
+		return t, fmt.Errorf("field Name: %w", err)
 	}
 
-	t.Items, err = scale.DecodeVec(reader, func(reader *scale.Reader) (StorageEntryMetadata, error) { return DecodeStorageEntryMetadata(reader) })
+	t.Type, err = scale.DecodeText(reader)
 	if err != nil {
-		return t, fmt.Errorf("field Items: %w", err)
+		return t, fmt.Errorf("field Type: %w", err)
+	}
+
+	t.TypeName, err = scale.DecodeOption(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field TypeName: %w", err)
+	}
+
+	return t, nil
+}
+
+type FunctionMetadata struct {
+	Name   string
+	Fields []scaleInfo.Si1Field
+	Index  uint8
+	Docs   []string
+	Args   []FunctionArgumentMetadata
+}
+
+func DecodeFunctionMetadata(reader *scale.Reader) (FunctionMetadata, error) {
+	var t FunctionMetadata
+	var err error
+
+	t.Name, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Name: %w", err)
+	}
+
+	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (scaleInfo.Si1Field, error) { return scaleInfo.DecodeSi1Field(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Fields: %w", err)
+	}
+
+	t.Index, err = scale.DecodeU8(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Index: %w", err)
+	}
+
+	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Docs: %w", err)
+	}
+
+	t.Args, err = scale.DecodeVec(reader, func(reader *scale.Reader) (FunctionArgumentMetadata, error) {
+		return DecodeFunctionArgumentMetadata(reader)
+	})
+	if err != nil {
+		return t, fmt.Errorf("field Args: %w", err)
+	}
+
+	return t, nil
+}
+
+type Metadata struct {
+	Lookup    PortableRegistry
+	Pallets   []PalletMetadata
+	Extrinsic ExtrinsicMetadata
+	Type      scaleInfo.Si1LookupTypeId
+}
+
+func DecodeMetadata(reader *scale.Reader) (Metadata, error) {
+	var t Metadata
+	var err error
+
+	t.Lookup, err = DecodePortableRegistry(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Lookup: %w", err)
+	}
+
+	t.Pallets, err = scale.DecodeVec(reader, func(reader *scale.Reader) (PalletMetadata, error) { return DecodePalletMetadata(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Pallets: %w", err)
+	}
+
+	t.Extrinsic, err = DecodeExtrinsicMetadata(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Extrinsic: %w", err)
+	}
+
+	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Type: %w", err)
+	}
+
+	return t, nil
+}
+
+type PalletCallMetadata struct {
+	Type scaleInfo.Si1LookupTypeId
+}
+
+func DecodePalletCallMetadata(reader *scale.Reader) (PalletCallMetadata, error) {
+	var t PalletCallMetadata
+	var err error
+
+	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Type: %w", err)
+	}
+
+	return t, nil
+}
+
+type PalletConstantMetadata struct {
+	Name  string
+	Type  scaleInfo.Si1LookupTypeId
+	Value []byte
+	Docs  []string
+}
+
+func DecodePalletConstantMetadata(reader *scale.Reader) (PalletConstantMetadata, error) {
+	var t PalletConstantMetadata
+	var err error
+
+	t.Name, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Name: %w", err)
+	}
+
+	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Type: %w", err)
+	}
+
+	t.Value, err = scale.DecodeBytes(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Value: %w", err)
+	}
+
+	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Docs: %w", err)
+	}
+
+	return t, nil
+}
+
+type PalletErrorMetadata struct {
+	Type scaleInfo.Si1LookupTypeId
+}
+
+func DecodePalletErrorMetadata(reader *scale.Reader) (PalletErrorMetadata, error) {
+	var t PalletErrorMetadata
+	var err error
+
+	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Type: %w", err)
+	}
+
+	return t, nil
+}
+
+type PalletEventMetadata struct {
+	Type scaleInfo.Si1LookupTypeId
+}
+
+func DecodePalletEventMetadata(reader *scale.Reader) (PalletEventMetadata, error) {
+	var t PalletEventMetadata
+	var err error
+
+	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Type: %w", err)
 	}
 
 	return t, nil
@@ -142,6 +358,122 @@ func DecodePalletMetadata(reader *scale.Reader) (PalletMetadata, error) {
 	return t, nil
 }
 
+type PalletStorageMetadata struct {
+	Prefix string
+	Items  []StorageEntryMetadata
+}
+
+func DecodePalletStorageMetadata(reader *scale.Reader) (PalletStorageMetadata, error) {
+	var t PalletStorageMetadata
+	var err error
+
+	t.Prefix, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Prefix: %w", err)
+	}
+
+	t.Items, err = scale.DecodeVec(reader, func(reader *scale.Reader) (StorageEntryMetadata, error) { return DecodeStorageEntryMetadata(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Items: %w", err)
+	}
+
+	return t, nil
+}
+
+type PortableRegistry struct {
+	Types []PortableType
+}
+
+func DecodePortableRegistry(reader *scale.Reader) (PortableRegistry, error) {
+	var t PortableRegistry
+	var err error
+
+	t.Types, err = scale.DecodeVec(reader, func(reader *scale.Reader) (PortableType, error) { return DecodePortableType(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Types: %w", err)
+	}
+
+	return t, nil
+}
+
+type PortableType struct {
+	Id   scaleInfo.Si1LookupTypeId
+	Type scaleInfo.Si1Type
+}
+
+func DecodePortableType(reader *scale.Reader) (PortableType, error) {
+	var t PortableType
+	var err error
+
+	t.Id, err = scaleInfo.DecodeSi1LookupTypeId(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Id: %w", err)
+	}
+
+	t.Type, err = scaleInfo.DecodeSi1Type(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Type: %w", err)
+	}
+
+	return t, nil
+}
+
+type SignedExtensionMetadata struct {
+	Identifier       string
+	Type             scaleInfo.Si1LookupTypeId
+	AdditionalSigned scaleInfo.Si1LookupTypeId
+}
+
+func DecodeSignedExtensionMetadata(reader *scale.Reader) (SignedExtensionMetadata, error) {
+	var t SignedExtensionMetadata
+	var err error
+
+	t.Identifier, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Identifier: %w", err)
+	}
+
+	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Type: %w", err)
+	}
+
+	t.AdditionalSigned, err = scaleInfo.DecodeSi1LookupTypeId(reader)
+	if err != nil {
+		return t, fmt.Errorf("field AdditionalSigned: %w", err)
+	}
+
+	return t, nil
+}
+
+type StorageEntryMap struct {
+	Hashers []v11.StorageHasher
+	Key     scaleInfo.Si1LookupTypeId
+	Value   scaleInfo.Si1LookupTypeId
+}
+
+func DecodeStorageEntryMap(reader *scale.Reader) (StorageEntryMap, error) {
+	var t StorageEntryMap
+	var err error
+
+	t.Hashers, err = scale.DecodeVec(reader, func(reader *scale.Reader) (v11.StorageHasher, error) { return v11.DecodeStorageHasher(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Hashers: %w", err)
+	}
+
+	t.Key, err = scaleInfo.DecodeSi1LookupTypeId(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Key: %w", err)
+	}
+
+	t.Value, err = scaleInfo.DecodeSi1LookupTypeId(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Value: %w", err)
+	}
+
+	return t, nil
+}
+
 type StorageEntryMetadata struct {
 	Name     string
 	Modifier v9.StorageEntryModifier
@@ -177,338 +509,6 @@ func DecodeStorageEntryMetadata(reader *scale.Reader) (StorageEntryMetadata, err
 	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
 	if err != nil {
 		return t, fmt.Errorf("field Docs: %w", err)
-	}
-
-	return t, nil
-}
-
-type PalletConstantMetadata struct {
-	Name  string
-	Type  scaleInfo.Si1LookupTypeId
-	Value []byte
-	Docs  []string
-}
-
-func DecodePalletConstantMetadata(reader *scale.Reader) (PalletConstantMetadata, error) {
-	var t PalletConstantMetadata
-	var err error
-
-	t.Name, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Name: %w", err)
-	}
-
-	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Type: %w", err)
-	}
-
-	t.Value, err = scale.DecodeBytes(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Value: %w", err)
-	}
-
-	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Docs: %w", err)
-	}
-
-	return t, nil
-}
-
-type FunctionMetadata struct {
-	Name   string
-	Fields []scaleInfo.Si1Field
-	Index  uint8
-	Docs   []string
-	Args   []FunctionArgumentMetadata
-}
-
-func DecodeFunctionMetadata(reader *scale.Reader) (FunctionMetadata, error) {
-	var t FunctionMetadata
-	var err error
-
-	t.Name, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Name: %w", err)
-	}
-
-	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (scaleInfo.Si1Field, error) { return scaleInfo.DecodeSi1Field(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Fields: %w", err)
-	}
-
-	t.Index, err = scale.DecodeU8(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Index: %w", err)
-	}
-
-	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Docs: %w", err)
-	}
-
-	t.Args, err = scale.DecodeVec(reader, func(reader *scale.Reader) (FunctionArgumentMetadata, error) {
-		return DecodeFunctionArgumentMetadata(reader)
-	})
-	if err != nil {
-		return t, fmt.Errorf("field Args: %w", err)
-	}
-
-	return t, nil
-}
-
-type SignedExtensionMetadata struct {
-	Identifier       string
-	Type             scaleInfo.Si1LookupTypeId
-	AdditionalSigned scaleInfo.Si1LookupTypeId
-}
-
-func DecodeSignedExtensionMetadata(reader *scale.Reader) (SignedExtensionMetadata, error) {
-	var t SignedExtensionMetadata
-	var err error
-
-	t.Identifier, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Identifier: %w", err)
-	}
-
-	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Type: %w", err)
-	}
-
-	t.AdditionalSigned, err = scaleInfo.DecodeSi1LookupTypeId(reader)
-	if err != nil {
-		return t, fmt.Errorf("field AdditionalSigned: %w", err)
-	}
-
-	return t, nil
-}
-
-type PortableType struct {
-	Id   scaleInfo.Si1LookupTypeId
-	Type scaleInfo.Si1Type
-}
-
-func DecodePortableType(reader *scale.Reader) (PortableType, error) {
-	var t PortableType
-	var err error
-
-	t.Id, err = scaleInfo.DecodeSi1LookupTypeId(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Id: %w", err)
-	}
-
-	t.Type, err = scaleInfo.DecodeSi1Type(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Type: %w", err)
-	}
-
-	return t, nil
-}
-
-type EventMetadata struct {
-	Name   string
-	Fields []scaleInfo.Si1Field
-	Index  uint8
-	Docs   []string
-	Args   []string
-}
-
-func DecodeEventMetadata(reader *scale.Reader) (EventMetadata, error) {
-	var t EventMetadata
-	var err error
-
-	t.Name, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Name: %w", err)
-	}
-
-	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (scaleInfo.Si1Field, error) { return scaleInfo.DecodeSi1Field(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Fields: %w", err)
-	}
-
-	t.Index, err = scale.DecodeU8(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Index: %w", err)
-	}
-
-	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Docs: %w", err)
-	}
-
-	t.Args, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Args: %w", err)
-	}
-
-	return t, nil
-}
-
-type PalletCallMetadata struct {
-	Type scaleInfo.Si1LookupTypeId
-}
-
-func DecodePalletCallMetadata(reader *scale.Reader) (PalletCallMetadata, error) {
-	var t PalletCallMetadata
-	var err error
-
-	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Type: %w", err)
-	}
-
-	return t, nil
-}
-
-type ErrorMetadata struct {
-	Name   string
-	Fields []scaleInfo.Si1Field
-	Index  uint8
-	Docs   []string
-	Args   []string
-}
-
-func DecodeErrorMetadata(reader *scale.Reader) (ErrorMetadata, error) {
-	var t ErrorMetadata
-	var err error
-
-	t.Name, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Name: %w", err)
-	}
-
-	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (scaleInfo.Si1Field, error) { return scaleInfo.DecodeSi1Field(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Fields: %w", err)
-	}
-
-	t.Index, err = scale.DecodeU8(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Index: %w", err)
-	}
-
-	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Docs: %w", err)
-	}
-
-	t.Args, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Args: %w", err)
-	}
-
-	return t, nil
-}
-
-type Metadata struct {
-	Lookup    PortableRegistry
-	Pallets   []PalletMetadata
-	Extrinsic ExtrinsicMetadata
-	Type      scaleInfo.Si1LookupTypeId
-}
-
-func DecodeMetadata(reader *scale.Reader) (Metadata, error) {
-	var t Metadata
-	var err error
-
-	t.Lookup, err = DecodePortableRegistry(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Lookup: %w", err)
-	}
-
-	t.Pallets, err = scale.DecodeVec(reader, func(reader *scale.Reader) (PalletMetadata, error) { return DecodePalletMetadata(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Pallets: %w", err)
-	}
-
-	t.Extrinsic, err = DecodeExtrinsicMetadata(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Extrinsic: %w", err)
-	}
-
-	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Type: %w", err)
-	}
-
-	return t, nil
-}
-
-type PalletErrorMetadata struct {
-	Type scaleInfo.Si1LookupTypeId
-}
-
-func DecodePalletErrorMetadata(reader *scale.Reader) (PalletErrorMetadata, error) {
-	var t PalletErrorMetadata
-	var err error
-
-	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Type: %w", err)
-	}
-
-	return t, nil
-}
-
-type PalletEventMetadata struct {
-	Type scaleInfo.Si1LookupTypeId
-}
-
-func DecodePalletEventMetadata(reader *scale.Reader) (PalletEventMetadata, error) {
-	var t PalletEventMetadata
-	var err error
-
-	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Type: %w", err)
-	}
-
-	return t, nil
-}
-
-type PortableRegistry struct {
-	Types []PortableType
-}
-
-func DecodePortableRegistry(reader *scale.Reader) (PortableRegistry, error) {
-	var t PortableRegistry
-	var err error
-
-	t.Types, err = scale.DecodeVec(reader, func(reader *scale.Reader) (PortableType, error) { return DecodePortableType(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Types: %w", err)
-	}
-
-	return t, nil
-}
-
-type FunctionArgumentMetadata struct {
-	Name     string
-	Type     string
-	TypeName *string
-}
-
-func DecodeFunctionArgumentMetadata(reader *scale.Reader) (FunctionArgumentMetadata, error) {
-	var t FunctionArgumentMetadata
-	var err error
-
-	t.Name, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Name: %w", err)
-	}
-
-	t.Type, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Type: %w", err)
-	}
-
-	t.TypeName, err = scale.DecodeOption(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field TypeName: %w", err)
 	}
 
 	return t, nil

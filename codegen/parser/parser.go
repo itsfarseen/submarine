@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/goccy/go-yaml"
@@ -15,7 +16,8 @@ type AllModules struct {
 }
 
 type Module struct {
-	Types map[string]*Type
+	Types     map[string]*Type
+	TypeNames []string
 }
 
 func Parse(files []string) (*AllModules, error) {
@@ -59,6 +61,13 @@ func parseModule(file string) (Module, error) {
 		}
 		module.Types[typeName] = parsedType
 	}
+
+	typeNames := make([]string, 0, len(module.Types))
+	for name := range module.Types {
+		typeNames = append(typeNames, name)
+	}
+	sort.Strings(typeNames)
+	module.TypeNames = typeNames
 
 	return module, nil
 }

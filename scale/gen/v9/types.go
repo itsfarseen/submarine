@@ -5,6 +5,28 @@ import (
 	"submarine/scale"
 )
 
+type ErrorMetadata struct {
+	Name string
+	Docs []string
+}
+
+func DecodeErrorMetadata(reader *scale.Reader) (ErrorMetadata, error) {
+	var t ErrorMetadata
+	var err error
+
+	t.Name, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Name: %w", err)
+	}
+
+	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Docs: %w", err)
+	}
+
+	return t, nil
+}
+
 type EventMetadata struct {
 	Name string
 	Args []string
@@ -23,6 +45,108 @@ func DecodeEventMetadata(reader *scale.Reader) (EventMetadata, error) {
 	t.Args, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
 	if err != nil {
 		return t, fmt.Errorf("field Args: %w", err)
+	}
+
+	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Docs: %w", err)
+	}
+
+	return t, nil
+}
+
+type FunctionArgumentMetadata struct {
+	Name string
+	Type string
+}
+
+func DecodeFunctionArgumentMetadata(reader *scale.Reader) (FunctionArgumentMetadata, error) {
+	var t FunctionArgumentMetadata
+	var err error
+
+	t.Name, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Name: %w", err)
+	}
+
+	t.Type, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Type: %w", err)
+	}
+
+	return t, nil
+}
+
+type FunctionMetadata struct {
+	Name string
+	Args []FunctionArgumentMetadata
+	Docs []string
+}
+
+func DecodeFunctionMetadata(reader *scale.Reader) (FunctionMetadata, error) {
+	var t FunctionMetadata
+	var err error
+
+	t.Name, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Name: %w", err)
+	}
+
+	t.Args, err = scale.DecodeVec(reader, func(reader *scale.Reader) (FunctionArgumentMetadata, error) {
+		return DecodeFunctionArgumentMetadata(reader)
+	})
+	if err != nil {
+		return t, fmt.Errorf("field Args: %w", err)
+	}
+
+	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Docs: %w", err)
+	}
+
+	return t, nil
+}
+
+type Metadata struct {
+	Modules []ModuleMetadata
+}
+
+func DecodeMetadata(reader *scale.Reader) (Metadata, error) {
+	var t Metadata
+	var err error
+
+	t.Modules, err = scale.DecodeVec(reader, func(reader *scale.Reader) (ModuleMetadata, error) { return DecodeModuleMetadata(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Modules: %w", err)
+	}
+
+	return t, nil
+}
+
+type ModuleConstantMetadata struct {
+	Name  string
+	Type  string
+	Value []byte
+	Docs  []string
+}
+
+func DecodeModuleConstantMetadata(reader *scale.Reader) (ModuleConstantMetadata, error) {
+	var t ModuleConstantMetadata
+	var err error
+
+	t.Name, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Name: %w", err)
+	}
+
+	t.Type, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Type: %w", err)
+	}
+
+	t.Value, err = scale.DecodeBytes(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Value: %w", err)
 	}
 
 	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
@@ -80,6 +204,80 @@ func DecodeModuleMetadata(reader *scale.Reader) (ModuleMetadata, error) {
 	t.Errors, err = scale.DecodeVec(reader, func(reader *scale.Reader) (ErrorMetadata, error) { return DecodeErrorMetadata(reader) })
 	if err != nil {
 		return t, fmt.Errorf("field Errors: %w", err)
+	}
+
+	return t, nil
+}
+
+type StorageEntryDoubleMap struct {
+	Hasher     StorageHasher
+	Key1       string
+	Key2       string
+	Value      string
+	Key2Hasher StorageHasher
+}
+
+func DecodeStorageEntryDoubleMap(reader *scale.Reader) (StorageEntryDoubleMap, error) {
+	var t StorageEntryDoubleMap
+	var err error
+
+	t.Hasher, err = DecodeStorageHasher(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Hasher: %w", err)
+	}
+
+	t.Key1, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Key1: %w", err)
+	}
+
+	t.Key2, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Key2: %w", err)
+	}
+
+	t.Value, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Value: %w", err)
+	}
+
+	t.Key2Hasher, err = DecodeStorageHasher(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Key2Hasher: %w", err)
+	}
+
+	return t, nil
+}
+
+type StorageEntryMap struct {
+	Hasher StorageHasher
+	Key    string
+	Value  string
+	Linked bool
+}
+
+func DecodeStorageEntryMap(reader *scale.Reader) (StorageEntryMap, error) {
+	var t StorageEntryMap
+	var err error
+
+	t.Hasher, err = DecodeStorageHasher(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Hasher: %w", err)
+	}
+
+	t.Key, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Key: %w", err)
+	}
+
+	t.Value, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Value: %w", err)
+	}
+
+	t.Linked, err = scale.DecodeBool(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Linked: %w", err)
 	}
 
 	return t, nil
@@ -158,136 +356,6 @@ func DecodeStorageEntryModifier(reader *scale.Reader) (StorageEntryModifier, err
 	}
 }
 
-type StorageMetadata struct {
-	Prefix string
-	Items  []StorageEntryMetadata
-}
-
-func DecodeStorageMetadata(reader *scale.Reader) (StorageMetadata, error) {
-	var t StorageMetadata
-	var err error
-
-	t.Prefix, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Prefix: %w", err)
-	}
-
-	t.Items, err = scale.DecodeVec(reader, func(reader *scale.Reader) (StorageEntryMetadata, error) { return DecodeStorageEntryMetadata(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Items: %w", err)
-	}
-
-	return t, nil
-}
-
-type ErrorMetadata struct {
-	Name string
-	Docs []string
-}
-
-func DecodeErrorMetadata(reader *scale.Reader) (ErrorMetadata, error) {
-	var t ErrorMetadata
-	var err error
-
-	t.Name, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Name: %w", err)
-	}
-
-	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Docs: %w", err)
-	}
-
-	return t, nil
-}
-
-type FunctionArgumentMetadata struct {
-	Name string
-	Type string
-}
-
-func DecodeFunctionArgumentMetadata(reader *scale.Reader) (FunctionArgumentMetadata, error) {
-	var t FunctionArgumentMetadata
-	var err error
-
-	t.Name, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Name: %w", err)
-	}
-
-	t.Type, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Type: %w", err)
-	}
-
-	return t, nil
-}
-
-type FunctionMetadata struct {
-	Name string
-	Args []FunctionArgumentMetadata
-	Docs []string
-}
-
-func DecodeFunctionMetadata(reader *scale.Reader) (FunctionMetadata, error) {
-	var t FunctionMetadata
-	var err error
-
-	t.Name, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Name: %w", err)
-	}
-
-	t.Args, err = scale.DecodeVec(reader, func(reader *scale.Reader) (FunctionArgumentMetadata, error) {
-		return DecodeFunctionArgumentMetadata(reader)
-	})
-	if err != nil {
-		return t, fmt.Errorf("field Args: %w", err)
-	}
-
-	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Docs: %w", err)
-	}
-
-	return t, nil
-}
-
-type ModuleConstantMetadata struct {
-	Name  string
-	Type  string
-	Value []byte
-	Docs  []string
-}
-
-func DecodeModuleConstantMetadata(reader *scale.Reader) (ModuleConstantMetadata, error) {
-	var t ModuleConstantMetadata
-	var err error
-
-	t.Name, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Name: %w", err)
-	}
-
-	t.Type, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Type: %w", err)
-	}
-
-	t.Value, err = scale.DecodeBytes(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Value: %w", err)
-	}
-
-	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Docs: %w", err)
-	}
-
-	return t, nil
-}
-
 type StorageEntryTypeKind byte
 
 const (
@@ -343,46 +411,6 @@ func DecodeStorageEntryType(reader *scale.Reader) (StorageEntryType, error) {
 	}
 }
 
-type StorageEntryDoubleMap struct {
-	Hasher     StorageHasher
-	Key1       string
-	Key2       string
-	Value      string
-	Key2Hasher StorageHasher
-}
-
-func DecodeStorageEntryDoubleMap(reader *scale.Reader) (StorageEntryDoubleMap, error) {
-	var t StorageEntryDoubleMap
-	var err error
-
-	t.Hasher, err = DecodeStorageHasher(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Hasher: %w", err)
-	}
-
-	t.Key1, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Key1: %w", err)
-	}
-
-	t.Key2, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Key2: %w", err)
-	}
-
-	t.Value, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Value: %w", err)
-	}
-
-	t.Key2Hasher, err = DecodeStorageHasher(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Key2Hasher: %w", err)
-	}
-
-	return t, nil
-}
-
 type StorageHasher int
 
 const (
@@ -424,51 +452,23 @@ func DecodeStorageHasher(reader *scale.Reader) (StorageHasher, error) {
 	}
 }
 
-type StorageEntryMap struct {
-	Hasher StorageHasher
-	Key    string
-	Value  string
-	Linked bool
+type StorageMetadata struct {
+	Prefix string
+	Items  []StorageEntryMetadata
 }
 
-func DecodeStorageEntryMap(reader *scale.Reader) (StorageEntryMap, error) {
-	var t StorageEntryMap
+func DecodeStorageMetadata(reader *scale.Reader) (StorageMetadata, error) {
+	var t StorageMetadata
 	var err error
 
-	t.Hasher, err = DecodeStorageHasher(reader)
+	t.Prefix, err = scale.DecodeText(reader)
 	if err != nil {
-		return t, fmt.Errorf("field Hasher: %w", err)
+		return t, fmt.Errorf("field Prefix: %w", err)
 	}
 
-	t.Key, err = scale.DecodeText(reader)
+	t.Items, err = scale.DecodeVec(reader, func(reader *scale.Reader) (StorageEntryMetadata, error) { return DecodeStorageEntryMetadata(reader) })
 	if err != nil {
-		return t, fmt.Errorf("field Key: %w", err)
-	}
-
-	t.Value, err = scale.DecodeText(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Value: %w", err)
-	}
-
-	t.Linked, err = scale.DecodeBool(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Linked: %w", err)
-	}
-
-	return t, nil
-}
-
-type Metadata struct {
-	Modules []ModuleMetadata
-}
-
-func DecodeMetadata(reader *scale.Reader) (Metadata, error) {
-	var t Metadata
-	var err error
-
-	t.Modules, err = scale.DecodeVec(reader, func(reader *scale.Reader) (ModuleMetadata, error) { return DecodeModuleMetadata(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Modules: %w", err)
+		return t, fmt.Errorf("field Items: %w", err)
 	}
 
 	return t, nil

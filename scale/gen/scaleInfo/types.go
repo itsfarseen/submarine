@@ -6,30 +6,42 @@ import (
 	"submarine/scale"
 )
 
-type Si1Variant struct {
-	Name   string
-	Fields []Si1Field
-	Index  uint8
-	Docs   []string
+type Si0Path = string
+
+func DecodeSi0Path(reader *scale.Reader) (Si0Path, error) {
+	return scale.DecodeText(reader)
 }
 
-func DecodeSi1Variant(reader *scale.Reader) (Si1Variant, error) {
-	var t Si1Variant
+type Si0TypeDefPrimitive = string
+
+func DecodeSi0TypeDefPrimitive(reader *scale.Reader) (Si0TypeDefPrimitive, error) {
+	return scale.DecodeText(reader)
+}
+
+type Si1Field struct {
+	Name     *string
+	Type     big.Int
+	TypeName *string
+	Docs     []string
+}
+
+func DecodeSi1Field(reader *scale.Reader) (Si1Field, error) {
+	var t Si1Field
 	var err error
 
-	t.Name, err = scale.DecodeText(reader)
+	t.Name, err = scale.DecodeOption(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
 	if err != nil {
 		return t, fmt.Errorf("field Name: %w", err)
 	}
 
-	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (Si1Field, error) { return DecodeSi1Field(reader) })
+	t.Type, err = DecodeSi1LookupTypeId(reader)
 	if err != nil {
-		return t, fmt.Errorf("field Fields: %w", err)
+		return t, fmt.Errorf("field Type: %w", err)
 	}
 
-	t.Index, err = scale.DecodeU8(reader)
+	t.TypeName, err = scale.DecodeOption(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
 	if err != nil {
-		return t, fmt.Errorf("field Index: %w", err)
+		return t, fmt.Errorf("field TypeName: %w", err)
 	}
 
 	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
@@ -40,67 +52,47 @@ func DecodeSi1Variant(reader *scale.Reader) (Si1Variant, error) {
 	return t, nil
 }
 
-type Si1TypeDefBitSequence struct {
-	BitStoreType big.Int
-	BitOrderType big.Int
+type Si1LookupTypeId = big.Int
+
+func DecodeSi1LookupTypeId(reader *scale.Reader) (Si1LookupTypeId, error) {
+	return scale.DecodeCompact(reader)
 }
 
-func DecodeSi1TypeDefBitSequence(reader *scale.Reader) (Si1TypeDefBitSequence, error) {
-	var t Si1TypeDefBitSequence
+type Si1Path = string
+
+func DecodeSi1Path(reader *scale.Reader) (Si1Path, error) {
+	return DecodeSi0Path(reader)
+}
+
+type Si1Type struct {
+	Path   string
+	Params []Si1TypeParameter
+	Def    Si1TypeDef
+	Docs   []string
+}
+
+func DecodeSi1Type(reader *scale.Reader) (Si1Type, error) {
+	var t Si1Type
 	var err error
 
-	t.BitStoreType, err = DecodeSi1LookupTypeId(reader)
+	t.Path, err = DecodeSi1Path(reader)
 	if err != nil {
-		return t, fmt.Errorf("field BitStoreType: %w", err)
+		return t, fmt.Errorf("field Path: %w", err)
 	}
 
-	t.BitOrderType, err = DecodeSi1LookupTypeId(reader)
+	t.Params, err = scale.DecodeVec(reader, func(reader *scale.Reader) (Si1TypeParameter, error) { return DecodeSi1TypeParameter(reader) })
 	if err != nil {
-		return t, fmt.Errorf("field BitOrderType: %w", err)
+		return t, fmt.Errorf("field Params: %w", err)
 	}
 
-	return t, nil
-}
-
-type Si1TypeDefPrimitive = string
-
-func DecodeSi1TypeDefPrimitive(reader *scale.Reader) (Si1TypeDefPrimitive, error) {
-	return DecodeSi0TypeDefPrimitive(reader)
-}
-
-type Si1TypeDefSequence struct {
-	Type big.Int
-}
-
-func DecodeSi1TypeDefSequence(reader *scale.Reader) (Si1TypeDefSequence, error) {
-	var t Si1TypeDefSequence
-	var err error
-
-	t.Type, err = DecodeSi1LookupTypeId(reader)
+	t.Def, err = DecodeSi1TypeDef(reader)
 	if err != nil {
-		return t, fmt.Errorf("field Type: %w", err)
+		return t, fmt.Errorf("field Def: %w", err)
 	}
 
-	return t, nil
-}
-
-type Si0Path = string
-
-func DecodeSi0Path(reader *scale.Reader) (Si0Path, error) {
-	return scale.DecodeText(reader)
-}
-
-type Si1TypeDefCompact struct {
-	Type big.Int
-}
-
-func DecodeSi1TypeDefCompact(reader *scale.Reader) (Si1TypeDefCompact, error) {
-	var t Si1TypeDefCompact
-	var err error
-
-	t.Type, err = DecodeSi1LookupTypeId(reader)
+	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
 	if err != nil {
-		return t, fmt.Errorf("field Type: %w", err)
+		return t, fmt.Errorf("field Docs: %w", err)
 	}
 
 	return t, nil
@@ -221,56 +213,6 @@ func DecodeSi1TypeDef(reader *scale.Reader) (Si1TypeDef, error) {
 	}
 }
 
-type Si1Field struct {
-	Name     *string
-	Type     big.Int
-	TypeName *string
-	Docs     []string
-}
-
-func DecodeSi1Field(reader *scale.Reader) (Si1Field, error) {
-	var t Si1Field
-	var err error
-
-	t.Name, err = scale.DecodeOption(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Name: %w", err)
-	}
-
-	t.Type, err = DecodeSi1LookupTypeId(reader)
-	if err != nil {
-		return t, fmt.Errorf("field Type: %w", err)
-	}
-
-	t.TypeName, err = scale.DecodeOption(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field TypeName: %w", err)
-	}
-
-	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Docs: %w", err)
-	}
-
-	return t, nil
-}
-
-type Si1TypeDefComposite struct {
-	Fields []Si1Field
-}
-
-func DecodeSi1TypeDefComposite(reader *scale.Reader) (Si1TypeDefComposite, error) {
-	var t Si1TypeDefComposite
-	var err error
-
-	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (Si1Field, error) { return DecodeSi1Field(reader) })
-	if err != nil {
-		return t, fmt.Errorf("field Fields: %w", err)
-	}
-
-	return t, nil
-}
-
 type Si1TypeDefArray struct {
 	Len  uint32
 	Type big.Int
@@ -293,35 +235,77 @@ func DecodeSi1TypeDefArray(reader *scale.Reader) (Si1TypeDefArray, error) {
 	return t, nil
 }
 
-type Si1Type struct {
-	Path   string
-	Params []Si1TypeParameter
-	Def    Si1TypeDef
-	Docs   []string
+type Si1TypeDefBitSequence struct {
+	BitStoreType big.Int
+	BitOrderType big.Int
 }
 
-func DecodeSi1Type(reader *scale.Reader) (Si1Type, error) {
-	var t Si1Type
+func DecodeSi1TypeDefBitSequence(reader *scale.Reader) (Si1TypeDefBitSequence, error) {
+	var t Si1TypeDefBitSequence
 	var err error
 
-	t.Path, err = DecodeSi1Path(reader)
+	t.BitStoreType, err = DecodeSi1LookupTypeId(reader)
 	if err != nil {
-		return t, fmt.Errorf("field Path: %w", err)
+		return t, fmt.Errorf("field BitStoreType: %w", err)
 	}
 
-	t.Params, err = scale.DecodeVec(reader, func(reader *scale.Reader) (Si1TypeParameter, error) { return DecodeSi1TypeParameter(reader) })
+	t.BitOrderType, err = DecodeSi1LookupTypeId(reader)
 	if err != nil {
-		return t, fmt.Errorf("field Params: %w", err)
+		return t, fmt.Errorf("field BitOrderType: %w", err)
 	}
 
-	t.Def, err = DecodeSi1TypeDef(reader)
+	return t, nil
+}
+
+type Si1TypeDefCompact struct {
+	Type big.Int
+}
+
+func DecodeSi1TypeDefCompact(reader *scale.Reader) (Si1TypeDefCompact, error) {
+	var t Si1TypeDefCompact
+	var err error
+
+	t.Type, err = DecodeSi1LookupTypeId(reader)
 	if err != nil {
-		return t, fmt.Errorf("field Def: %w", err)
+		return t, fmt.Errorf("field Type: %w", err)
 	}
 
-	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
+	return t, nil
+}
+
+type Si1TypeDefComposite struct {
+	Fields []Si1Field
+}
+
+func DecodeSi1TypeDefComposite(reader *scale.Reader) (Si1TypeDefComposite, error) {
+	var t Si1TypeDefComposite
+	var err error
+
+	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (Si1Field, error) { return DecodeSi1Field(reader) })
 	if err != nil {
-		return t, fmt.Errorf("field Docs: %w", err)
+		return t, fmt.Errorf("field Fields: %w", err)
+	}
+
+	return t, nil
+}
+
+type Si1TypeDefPrimitive = string
+
+func DecodeSi1TypeDefPrimitive(reader *scale.Reader) (Si1TypeDefPrimitive, error) {
+	return DecodeSi0TypeDefPrimitive(reader)
+}
+
+type Si1TypeDefSequence struct {
+	Type big.Int
+}
+
+func DecodeSi1TypeDefSequence(reader *scale.Reader) (Si1TypeDefSequence, error) {
+	var t Si1TypeDefSequence
+	var err error
+
+	t.Type, err = DecodeSi1LookupTypeId(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Type: %w", err)
 	}
 
 	return t, nil
@@ -349,24 +333,6 @@ func DecodeSi1TypeDefVariant(reader *scale.Reader) (Si1TypeDefVariant, error) {
 	return t, nil
 }
 
-type Si0TypeDefPrimitive = string
-
-func DecodeSi0TypeDefPrimitive(reader *scale.Reader) (Si0TypeDefPrimitive, error) {
-	return scale.DecodeText(reader)
-}
-
-type Si1Path = string
-
-func DecodeSi1Path(reader *scale.Reader) (Si1Path, error) {
-	return DecodeSi0Path(reader)
-}
-
-type Si1LookupTypeId = big.Int
-
-func DecodeSi1LookupTypeId(reader *scale.Reader) (Si1LookupTypeId, error) {
-	return scale.DecodeCompact(reader)
-}
-
 type Si1TypeParameter struct {
 	Name string
 	Type *big.Int
@@ -384,6 +350,40 @@ func DecodeSi1TypeParameter(reader *scale.Reader) (Si1TypeParameter, error) {
 	t.Type, err = scale.DecodeOption(reader, func(reader *scale.Reader) (big.Int, error) { return DecodeSi1LookupTypeId(reader) })
 	if err != nil {
 		return t, fmt.Errorf("field Type: %w", err)
+	}
+
+	return t, nil
+}
+
+type Si1Variant struct {
+	Name   string
+	Fields []Si1Field
+	Index  uint8
+	Docs   []string
+}
+
+func DecodeSi1Variant(reader *scale.Reader) (Si1Variant, error) {
+	var t Si1Variant
+	var err error
+
+	t.Name, err = scale.DecodeText(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Name: %w", err)
+	}
+
+	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (Si1Field, error) { return DecodeSi1Field(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Fields: %w", err)
+	}
+
+	t.Index, err = scale.DecodeU8(reader)
+	if err != nil {
+		return t, fmt.Errorf("field Index: %w", err)
+	}
+
+	t.Docs, err = scale.DecodeVec(reader, func(reader *scale.Reader) (string, error) { return scale.DecodeText(reader) })
+	if err != nil {
+		return t, fmt.Errorf("field Docs: %w", err)
 	}
 
 	return t, nil

@@ -12,10 +12,85 @@ func DecodeSi0Path(reader *scale.Reader) (Si0Path, error) {
 	return scale.DecodeText(reader)
 }
 
-type Si0TypeDefPrimitive = string
+type Si0TypeDefPrimitive int
+
+const (
+	Si0TypeDefPrimitiveBool Si0TypeDefPrimitive = 0
+	Si0TypeDefPrimitiveChar Si0TypeDefPrimitive = 1
+	Si0TypeDefPrimitiveStr  Si0TypeDefPrimitive = 2
+	Si0TypeDefPrimitiveU8   Si0TypeDefPrimitive = 3
+	Si0TypeDefPrimitiveU16  Si0TypeDefPrimitive = 4
+	Si0TypeDefPrimitiveU32  Si0TypeDefPrimitive = 5
+	Si0TypeDefPrimitiveU64  Si0TypeDefPrimitive = 6
+	Si0TypeDefPrimitiveU128 Si0TypeDefPrimitive = 7
+	Si0TypeDefPrimitiveU256 Si0TypeDefPrimitive = 8
+	Si0TypeDefPrimitiveI8   Si0TypeDefPrimitive = 9
+	Si0TypeDefPrimitiveI16  Si0TypeDefPrimitive = 10
+	Si0TypeDefPrimitiveI32  Si0TypeDefPrimitive = 11
+	Si0TypeDefPrimitiveI64  Si0TypeDefPrimitive = 12
+	Si0TypeDefPrimitiveI128 Si0TypeDefPrimitive = 13
+	Si0TypeDefPrimitiveI256 Si0TypeDefPrimitive = 14
+)
 
 func DecodeSi0TypeDefPrimitive(reader *scale.Reader) (Si0TypeDefPrimitive, error) {
-	return scale.DecodeText(reader)
+
+	tag, err := reader.ReadByte()
+	if err != nil {
+		var t Si0TypeDefPrimitive
+		return t, fmt.Errorf("enum tag: %w", err)
+	}
+
+	switch tag {
+
+	case 0:
+		return Si0TypeDefPrimitiveBool, nil
+
+	case 1:
+		return Si0TypeDefPrimitiveChar, nil
+
+	case 2:
+		return Si0TypeDefPrimitiveStr, nil
+
+	case 3:
+		return Si0TypeDefPrimitiveU8, nil
+
+	case 4:
+		return Si0TypeDefPrimitiveU16, nil
+
+	case 5:
+		return Si0TypeDefPrimitiveU32, nil
+
+	case 6:
+		return Si0TypeDefPrimitiveU64, nil
+
+	case 7:
+		return Si0TypeDefPrimitiveU128, nil
+
+	case 8:
+		return Si0TypeDefPrimitiveU256, nil
+
+	case 9:
+		return Si0TypeDefPrimitiveI8, nil
+
+	case 10:
+		return Si0TypeDefPrimitiveI16, nil
+
+	case 11:
+		return Si0TypeDefPrimitiveI32, nil
+
+	case 12:
+		return Si0TypeDefPrimitiveI64, nil
+
+	case 13:
+		return Si0TypeDefPrimitiveI128, nil
+
+	case 14:
+		return Si0TypeDefPrimitiveI256, nil
+
+	default:
+		var t Si0TypeDefPrimitive
+		return t, fmt.Errorf("unknown tag: %d", tag)
+	}
 }
 
 type Si1Field struct {

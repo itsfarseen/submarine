@@ -60,14 +60,10 @@ func parseModule(file string) (Module, error) {
 			return Module{}, fmt.Errorf("parsing type '%s' in file '%s': %w", typeName, file, err)
 		}
 		module.Types[typeName] = parsedType
+		module.TypeNames = append(module.TypeNames, typeName)
 	}
 
-	typeNames := make([]string, 0, len(module.Types))
-	for name := range module.Types {
-		typeNames = append(typeNames, name)
-	}
-	sort.Strings(typeNames)
-	module.TypeNames = typeNames
+	sort.Strings(module.TypeNames)
 
 	return module, nil
 }

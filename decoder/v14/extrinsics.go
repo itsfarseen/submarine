@@ -1,10 +1,8 @@
 package v14
 
 import (
-	"encoding/binary"
 	"fmt"
 	"log"
-	"math/big"
 	. "submarine/decoder/models"
 	. "submarine/scale"
 	"submarine/scale/base"
@@ -255,8 +253,8 @@ func DecodeArg(metadata *v14.Metadata, r *Reader, typeID scaleInfo.Si1LookupType
 
 	case scaleInfo.Si1TypeDefKindTuple:
 		// For a tuple, decode each item.
-		slice := make([]any, len(typ.Def.Tuple.Fields))
-		for i, fieldTypeID := range typ.Def.Tuple.Fields {
+		slice := make([]any, len(*typ.Def.Tuple))
+		for i, fieldTypeID := range *typ.Def.Tuple {
 			elem, err := DecodeArg(metadata, r, fieldTypeID)
 			if err != nil {
 				return nil, err
@@ -271,41 +269,28 @@ func DecodeArg(metadata *v14.Metadata, r *Reader, typeID scaleInfo.Si1LookupType
 
 	case scaleInfo.Si1TypeDefKindPrimitive:
 		// For a primitive type, use the corresponding decoder.
-		switch typ.Def.Primitive.Kind {
-		case scaleInfo.Si1TypeDefPrimitiveKindBool: // Bool
+		switch *typ.Def.Primitive {
+		case scaleInfo.Si0TypeDefPrimitiveBool: // Bool
 			return DecodeBool(r)
-		case scaleInfo.Si1TypeDefPrimitiveKindChar: // Char (decode as string of len 1)
+		case scaleInfo.Si0TypeDefPrimitiveChar: // Char (decode as string of len 1)
 			b, err := r.ReadBytes(1)
 			return string(b), err
-		case scaleInfo.Si1TypeDefPrimitiveKindStr: // Str
+		case scaleInfo.Si0TypeDefPrimitiveStr: // Str
 			return DecodeText(r)
-		case scaleInfo.Si1TypeDefPrimitiveKindU8: // U8
+		case scaleInfo.Si0TypeDefPrimitiveU8: // U8
 			return DecodeU8(r)
-		case scaleInfo.Si1TypeDefPrimitiveKindU16: // U16
-			b, err := r.ReadBytes(2)
-			return binary.LittleEndian.Uint16(b), err
-		case scaleInfo.Si1TypeDefPrimitiveKindU32: // U32
+		case scaleInfo.Si0TypeDefPrimitiveU16: // U16
+			return DecodeU16(r)
+		case scaleInfo.Si0TypeDefPrimitiveU32: // U32
 			return DecodeU32(r)
-		case scaleInfo.Si1TypeDefPrimitiveKindU64: // U64
-			b, err := r.ReadBytes(8)
-			return binary.LittleEndian.Uint64(b), err
-		case scaleInfo.Si1TypeDefPrimitiveKindU128: // U128
-			b, err := r.ReadBytes(16)
-			// Reverse for big.Int
-			for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
-				b[i], b[j] = b[j], b[i]
-			}
-			return new(big.Int).SetBytes(b), err
-		case scaleInfo.Si1TypeDefPrimitiveKindU256: // U256
-			b, err := r.ReadBytes(32)
-			// Reverse for big.Int
-			for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
-				b[i], b[j] = b[j], b[i]
-			}
-			return new(big.Int).SetBytes(b), err
-		// Note: Signed integers (I8, I16, etc.) would follow a similar pattern.
+		case scaleInfo.Si0TypeDefPrimitiveU64: // U64
+			return DecodeU64(r)
+		case scaleInfo.Si0TypeDefPrimitiveU128: // U128
+			return DecodeU128(r)
+		case scaleInfo.Si0TypeDefPrimitiveU256: // U256
+			return DecodeU256(r)
 		default:
-			return nil, fmt.Errorf("unsupported primitive type: %d", typ.Def.Primitive.Kind)
+			return nil, fmt.Errorf("unsupported primitive type: %d", typ.Def.Primitive)
 		}
 
 	case scaleInfo.Si1TypeDefKindBitSequence:

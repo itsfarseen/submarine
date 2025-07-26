@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 	. "submarine/scale"
-	"submarine/scale/system"
 	"submarine/scale/gen/v10"
+	// "submarine/scale/system"
 )
 
 // DecodeArgFromString recursively decodes an argument based on its type string.
@@ -111,30 +111,30 @@ func DecodeArgFromString(metadata *v10.Metadata, r *Reader, typeName string) (an
 		return r.ReadBytes(32)
 	case "H256", "Hash": // 32-byte hash
 		return r.ReadBytes(32)
-	case "AccountInfo":
-		return system.DecodeAccountInfoWithTripleRefCount(r)
-	case "DispatchResult":
-		return system.DecodeDispatchOutcome(r)
-	case "Weight":
-		return system.DecodeWeight(r)
-	case "Phase":
-		return system.DecodePhase(r)
-	case "EventRecord":
-		return system.DecodeEventRecord(r)
-	case "LastRuntimeUpgradeInfo":
-		return system.DecodeLastRuntimeUpgradeInfo(r)
-	case "BlockLength":
-		return system.DecodeBlockLength(r)
-	case "BlockWeights":
-		return system.DecodeBlockWeights(r)
-	case "DispatchInfo":
-		return system.DecodeDispatchInfo(r)
-	case "DispatchError":
-		return system.DecodeDispatchError(r)
-	case "DispatchResultOf":
-		return system.DecodeDispatchOutcome(r)
-	case "RawOrigin":
-		return system.DecodeRawOrigin(r)
+	// case "AccountInfo":
+	// 	return system.DecodeAccountInfoWithTripleRefCount(r)
+	// case "DispatchResult":
+	// 	return system.DecodeDispatchOutcome(r)
+	// case "Weight":
+	// 	return system.DecodeWeight(r)
+	// case "Phase":
+	// 	return system.DecodePhase(r)
+	// case "EventRecord":
+	// 	return system.DecodeEventRecord(r)
+	// case "LastRuntimeUpgradeInfo":
+	// 	return system.DecodeLastRuntimeUpgradeInfo(r)
+	// case "BlockLength":
+	// 	return system.DecodeBlockLength(r)
+	// case "BlockWeights":
+	// 	return system.DecodeBlockWeights(r)
+	// case "DispatchInfo":
+	// 	return system.DecodeDispatchInfo(r)
+	// case "DispatchError":
+	// 	return system.DecodeDispatchError(r)
+	// case "DispatchResultOf":
+	// 	return system.DecodeDispatchOutcome(r)
+	// case "RawOrigin":
+	// 	return system.DecodeRawOrigin(r)
 	default:
 		// This is where it gets tricky. We might have `T::AccountId` or other complex types.
 		// A proper implementation would need to look up these types in the runtime,

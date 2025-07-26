@@ -3,12 +3,12 @@ package v9
 import (
 	"fmt"
 	. "submarine/decoder/models"
-	. "submarine/scale"
+	"submarine/scale"
 	"submarine/scale/gen/v9"
 )
 
 // DecodeCall decodes the pallet index, call index, and the corresponding arguments.
-func DecodeCall(metadata *v9.Metadata, r *Reader) (*DecodedPalletVariant, error) {
+func DecodeCall(metadata *v9.Metadata, r *scale.Reader) (*DecodedPalletVariant, error) {
 	// The call starts with the pallet index.
 	palletIndex, err := r.ReadByte()
 	if err != nil {

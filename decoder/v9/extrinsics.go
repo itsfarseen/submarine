@@ -3,14 +3,14 @@ package v9
 import (
 	"fmt"
 	. "submarine/decoder/models"
-	. "submarine/scale"
+	"submarine/scale"
 	"submarine/scale/base"
 	"submarine/scale/gen/v9"
 )
 
 // DecodeExtrinsic is the main entry point for decoding an extrinsic.
 func DecodeExtrinsic(metadata *v9.Metadata, extrinsicBytes []byte) (*DecodedExtrinsic, error) {
-	r := NewReader(extrinsicBytes)
+	r := scale.NewReader(extrinsicBytes)
 
 	// In V9, the extrinsic format is simpler and doesn't have the version byte
 	// or signed extensions defined in the same way as later versions.
@@ -33,3 +33,4 @@ func DecodeExtrinsic(metadata *v9.Metadata, extrinsicBytes []byte) (*DecodedExtr
 		Call:      *call,
 	}, nil
 }
+

@@ -66,4 +66,3 @@ func DecodeCall(metadata *v12.Metadata, r *Reader) (*DecodedPalletVariant, error
 		Args:        decodedArgs,
 	}, nil
 }
-

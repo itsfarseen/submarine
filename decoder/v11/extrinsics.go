@@ -52,3 +52,4 @@ func DecodeExtrinsic(metadata *v11.Metadata, extrinsicBytes []byte) (*DecodedExt
 		Call:      *call,
 	}, nil
 }
+

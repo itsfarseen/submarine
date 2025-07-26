@@ -1,7 +1,6 @@
 package models
 
 import (
-	"submarine/scale"
 	"submarine/scale/base"
 )
 

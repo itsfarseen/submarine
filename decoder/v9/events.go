@@ -3,16 +3,16 @@ package v9
 import (
 	"fmt"
 	. "submarine/decoder/models"
-	. "submarine/scale"
+	"submarine/scale"
 	"submarine/scale/gen/v9"
 )
 
 // DecodeEvents is the main entry point for decoding the raw bytes from System.Events.
 func DecodeEvents(metadata *v9.Metadata, eventBytes []byte) ([]EventRecord, error) {
-	r := NewReader(eventBytes)
+	r := scale.NewReader(eventBytes)
 
 	// The event bytes are a Vec<EventRecord>. First, decode the length.
-	numEvents, err := DecodeCompact(r)
+	numEvents, err := scale.DecodeCompact(r)
 	if err != nil {
 		return nil, fmt.Errorf("events.len: %w", err)
 	}
@@ -30,7 +30,7 @@ func DecodeEvents(metadata *v9.Metadata, eventBytes []byte) ([]EventRecord, erro
 }
 
 // DecodeEventRecord decodes a single EventRecord from the byte stream.
-func DecodeEventRecord(metadata *v9.Metadata, r *Reader) (EventRecord, error) {
+func DecodeEventRecord(metadata *v9.Metadata, r *scale.Reader) (EventRecord, error) {
 	var record EventRecord
 
 	// --- 1. Decode the Phase ---
@@ -41,7 +41,7 @@ func DecodeEventRecord(metadata *v9.Metadata, r *Reader) (EventRecord, error) {
 
 	switch phaseIndex {
 	case 0: // ApplyExtrinsic
-		extrinsicIndex, err := DecodeU32(r)
+		extrinsicIndex, err := scale.DecodeU32(r)
 		if err != nil {
 			return record, fmt.Errorf("extrinsic index for phase: %w", err)
 		}
@@ -71,7 +71,7 @@ func DecodeEventRecord(metadata *v9.Metadata, r *Reader) (EventRecord, error) {
 
 	// --- 3. Decode and Skip Topics ---
 	// Topics are a Vec<Hash> (Vec<[u8; 32]>).
-	numTopics, err := DecodeCompact(r)
+	numTopics, err := scale.DecodeCompact(r)
 	if err != nil {
 		return record, fmt.Errorf("failed to decode topics vector length: %w", err)
 	}
@@ -86,7 +86,7 @@ func DecodeEventRecord(metadata *v9.Metadata, r *Reader) (EventRecord, error) {
 }
 
 // DecodePalletEvent decodes an event.
-func DecodePalletEvent(metadata *v9.Metadata, r *Reader) (*DecodedPalletVariant, error) {
+func DecodePalletEvent(metadata *v9.Metadata, r *scale.Reader) (*DecodedPalletVariant, error) {
 	// The payload starts with the pallet index.
 	palletIndex, err := r.ReadByte()
 	if err != nil {

@@ -165,18 +165,6 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 		}
 		moduleCodegen.Body.WriteString(fmt.Sprintf(funcTemplate, typeName, typeName, innerDecodeFunc))
 		return nil
-	case KindImport:
-		importLine := fmt.Sprintf("%s/%s", c.RootModulePath, type_.Import.Module)
-		moduleCodegen.appendImport(importLine)
-
-		moduleCodegen.Body.WriteString(fmt.Sprintf("type %s = %s.%s\n", typeName, type_.Import.Module, type_.Import.Item))
-		const funcTemplate string = `
-		func Decode%s(reader *scale.Reader) (%s, error) {
-			return %s.Decode%s(reader)
-		}
-		`
-		moduleCodegen.Body.WriteString(fmt.Sprintf(funcTemplate, typeName, typeName, type_.Import.Module, type_.Import.Item))
-		return nil
 	case KindStruct:
 		struct_ := type_.Struct
 		fields := make([]FieldOrVariant, len(struct_.Fields))
@@ -242,6 +230,10 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 		`
 		moduleCodegen.Body.WriteString(fmt.Sprintf(funcTemplate, typeName, typeName, decodeFunc))
 		return nil
+	case KindImport:
+		// Don't generate any code for imports.
+		// Instead resolve it to the source type at use sites.
+		return nil
 	default:
 		return fmt.Errorf("unknown type kind: %s", type_.Kind)
 	}
@@ -254,12 +246,27 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 }
 
 type ResolvedInfo struct {
-	Type       *Type
 	ModuleName string
 	TypeName   string
+	Type       *Type
+}
+
+func (c *Codegen) resolveImport(moduleName, typeName string) (ResolvedInfo, error) {
+	module := c.Modules[moduleName]
+	type_ := module.Types[typeName]
+	if type_.Kind == KindImport {
+		return c.resolveImport(type_.Import.Module, type_.Import.Item)
+	}
+	return ResolvedInfo{
+		ModuleName: moduleName,
+		TypeName:   typeName,
+		Type:       type_,
+	}, nil
 }
 
 func (c *Codegen) getDecodeFuncForTypeName(moduleName string, typeName string) (string, error) {
+	moduleCodegen := c.Generated[moduleName]
+
 	// handle primitives
 	switch typeName {
 	case "text", "type":
@@ -279,9 +286,18 @@ func (c *Codegen) getDecodeFuncForTypeName(moduleName string, typeName string) (
 	}
 
 	module := c.Modules[moduleName]
-	_, ok := module.Types[typeName]
+	type_, ok := module.Types[typeName]
 	if !ok {
 		return "", fmt.Errorf("Type %s not found in module %s", typeName, moduleName)
+	}
+	if type_.Kind == KindImport {
+		resolvedType, err := c.resolveImport(type_.Import.Module, type_.Import.Item)
+		if err != nil {
+			return "", err
+		}
+		importLine := fmt.Sprintf("%s/%s", c.RootModulePath, resolvedType.ModuleName)
+		moduleCodegen.appendImport(importLine)
+		return fmt.Sprintf("%s.Decode%s(reader)", resolvedType.ModuleName, resolvedType.TypeName), nil
 	}
 	return fmt.Sprintf("Decode%s(reader)", typeName), nil
 }
@@ -340,9 +356,18 @@ func (c *Codegen) getGoTypeForTypename(moduleName string, typeName string) (stri
 		moduleCodegen.appendImport("math/big")
 		return "big.Int", nil
 	default:
-		_, ok := module.Types[typeName]
+		type_, ok := module.Types[typeName]
 		if !ok {
 			return "", fmt.Errorf("Type %s not found in module %s", typeName, moduleName)
+		}
+		if type_.Kind == KindImport {
+			resolvedType, err := c.resolveImport(type_.Import.Module, type_.Import.Item)
+			if err != nil {
+				return "", err
+			}
+			importLine := fmt.Sprintf("%s/%s", c.RootModulePath, resolvedType.ModuleName)
+			moduleCodegen.appendImport(importLine)
+			return fmt.Sprintf("%s.%s", resolvedType.ModuleName, resolvedType.TypeName), nil
 		}
 		return typeName, nil
 	}
@@ -371,10 +396,13 @@ func (c *Codegen) getGoTypeForType(moduleName string, type_ *Type) (string, erro
 		}
 		return "[]" + itemGoType, nil
 	case KindImport:
-		importType := type_.Import
-		importLine := fmt.Sprintf("%s/%s", c.RootModulePath, importType.Module)
+		resolvedType, err := c.resolveImport(type_.Import.Module, type_.Import.Item)
+		if err != nil {
+			return "", err
+		}
+		importLine := fmt.Sprintf("%s/%s", c.RootModulePath, resolvedType.ModuleName)
 		moduleCodegen.appendImport(importLine)
-		return fmt.Sprintf("%s.%s", importType.Module, importType.Item), nil
+		return fmt.Sprintf("%s.%s", resolvedType.ModuleName, resolvedType.TypeName), nil
 	default:
 		panic("unreachable: we should exhaustively handle all kinds")
 	}

@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"submarine/scale"
 	"submarine/scale/gen/scaleInfo"
-	"submarine/scale/gen/v13"
+	"submarine/scale/gen/v11"
+	"submarine/scale/gen/v9"
 )
 
 type ErrorMetadata struct {
 	Name   string
-	Fields []Si1Field
+	Fields []scaleInfo.Si1Field
 	Index  uint8
 	Docs   []string
 	Args   []string
@@ -24,7 +25,7 @@ func DecodeErrorMetadata(reader *scale.Reader) (ErrorMetadata, error) {
 		return t, fmt.Errorf("field Name: %w", err)
 	}
 
-	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (Si1Field, error) { return DecodeSi1Field(reader) })
+	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (scaleInfo.Si1Field, error) { return scaleInfo.DecodeSi1Field(reader) })
 	if err != nil {
 		return t, fmt.Errorf("field Fields: %w", err)
 	}
@@ -49,7 +50,7 @@ func DecodeErrorMetadata(reader *scale.Reader) (ErrorMetadata, error) {
 
 type EventMetadata struct {
 	Name   string
-	Fields []Si1Field
+	Fields []scaleInfo.Si1Field
 	Index  uint8
 	Docs   []string
 	Args   []string
@@ -64,7 +65,7 @@ func DecodeEventMetadata(reader *scale.Reader) (EventMetadata, error) {
 		return t, fmt.Errorf("field Name: %w", err)
 	}
 
-	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (Si1Field, error) { return DecodeSi1Field(reader) })
+	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (scaleInfo.Si1Field, error) { return scaleInfo.DecodeSi1Field(reader) })
 	if err != nil {
 		return t, fmt.Errorf("field Fields: %w", err)
 	}
@@ -88,7 +89,7 @@ func DecodeEventMetadata(reader *scale.Reader) (EventMetadata, error) {
 }
 
 type ExtrinsicMetadata struct {
-	Type             Si1LookupTypeId
+	Type             scaleInfo.Si1LookupTypeId
 	Version          uint8
 	SignedExtensions []SignedExtensionMetadata
 }
@@ -97,7 +98,7 @@ func DecodeExtrinsicMetadata(reader *scale.Reader) (ExtrinsicMetadata, error) {
 	var t ExtrinsicMetadata
 	var err error
 
-	t.Type, err = DecodeSi1LookupTypeId(reader)
+	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Type: %w", err)
 	}
@@ -147,7 +148,7 @@ func DecodeFunctionArgumentMetadata(reader *scale.Reader) (FunctionArgumentMetad
 
 type FunctionMetadata struct {
 	Name   string
-	Fields []Si1Field
+	Fields []scaleInfo.Si1Field
 	Index  uint8
 	Docs   []string
 	Args   []FunctionArgumentMetadata
@@ -162,7 +163,7 @@ func DecodeFunctionMetadata(reader *scale.Reader) (FunctionMetadata, error) {
 		return t, fmt.Errorf("field Name: %w", err)
 	}
 
-	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (Si1Field, error) { return DecodeSi1Field(reader) })
+	t.Fields, err = scale.DecodeVec(reader, func(reader *scale.Reader) (scaleInfo.Si1Field, error) { return scaleInfo.DecodeSi1Field(reader) })
 	if err != nil {
 		return t, fmt.Errorf("field Fields: %w", err)
 	}
@@ -191,7 +192,7 @@ type Metadata struct {
 	Lookup    PortableRegistry
 	Pallets   []PalletMetadata
 	Extrinsic ExtrinsicMetadata
-	Type      Si1LookupTypeId
+	Type      scaleInfo.Si1LookupTypeId
 }
 
 func DecodeMetadata(reader *scale.Reader) (Metadata, error) {
@@ -213,7 +214,7 @@ func DecodeMetadata(reader *scale.Reader) (Metadata, error) {
 		return t, fmt.Errorf("field Extrinsic: %w", err)
 	}
 
-	t.Type, err = DecodeSi1LookupTypeId(reader)
+	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Type: %w", err)
 	}
@@ -222,14 +223,14 @@ func DecodeMetadata(reader *scale.Reader) (Metadata, error) {
 }
 
 type PalletCallMetadata struct {
-	Type Si1LookupTypeId
+	Type scaleInfo.Si1LookupTypeId
 }
 
 func DecodePalletCallMetadata(reader *scale.Reader) (PalletCallMetadata, error) {
 	var t PalletCallMetadata
 	var err error
 
-	t.Type, err = DecodeSi1LookupTypeId(reader)
+	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Type: %w", err)
 	}
@@ -239,7 +240,7 @@ func DecodePalletCallMetadata(reader *scale.Reader) (PalletCallMetadata, error) 
 
 type PalletConstantMetadata struct {
 	Name  string
-	Type  Si1LookupTypeId
+	Type  scaleInfo.Si1LookupTypeId
 	Value []byte
 	Docs  []string
 }
@@ -253,7 +254,7 @@ func DecodePalletConstantMetadata(reader *scale.Reader) (PalletConstantMetadata,
 		return t, fmt.Errorf("field Name: %w", err)
 	}
 
-	t.Type, err = DecodeSi1LookupTypeId(reader)
+	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Type: %w", err)
 	}
@@ -272,14 +273,14 @@ func DecodePalletConstantMetadata(reader *scale.Reader) (PalletConstantMetadata,
 }
 
 type PalletErrorMetadata struct {
-	Type Si1LookupTypeId
+	Type scaleInfo.Si1LookupTypeId
 }
 
 func DecodePalletErrorMetadata(reader *scale.Reader) (PalletErrorMetadata, error) {
 	var t PalletErrorMetadata
 	var err error
 
-	t.Type, err = DecodeSi1LookupTypeId(reader)
+	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Type: %w", err)
 	}
@@ -288,14 +289,14 @@ func DecodePalletErrorMetadata(reader *scale.Reader) (PalletErrorMetadata, error
 }
 
 type PalletEventMetadata struct {
-	Type Si1LookupTypeId
+	Type scaleInfo.Si1LookupTypeId
 }
 
 func DecodePalletEventMetadata(reader *scale.Reader) (PalletEventMetadata, error) {
 	var t PalletEventMetadata
 	var err error
 
-	t.Type, err = DecodeSi1LookupTypeId(reader)
+	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Type: %w", err)
 	}
@@ -396,20 +397,20 @@ func DecodePortableRegistry(reader *scale.Reader) (PortableRegistry, error) {
 }
 
 type PortableType struct {
-	Id   Si1LookupTypeId
-	Type Si1Type
+	Id   scaleInfo.Si1LookupTypeId
+	Type scaleInfo.Si1Type
 }
 
 func DecodePortableType(reader *scale.Reader) (PortableType, error) {
 	var t PortableType
 	var err error
 
-	t.Id, err = DecodeSi1LookupTypeId(reader)
+	t.Id, err = scaleInfo.DecodeSi1LookupTypeId(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Id: %w", err)
 	}
 
-	t.Type, err = DecodeSi1Type(reader)
+	t.Type, err = scaleInfo.DecodeSi1Type(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Type: %w", err)
 	}
@@ -417,28 +418,10 @@ func DecodePortableType(reader *scale.Reader) (PortableType, error) {
 	return t, nil
 }
 
-type Si1Field = scaleInfo.Si1Field
-
-func DecodeSi1Field(reader *scale.Reader) (Si1Field, error) {
-	return scaleInfo.DecodeSi1Field(reader)
-}
-
-type Si1LookupTypeId = scaleInfo.Si1LookupTypeId
-
-func DecodeSi1LookupTypeId(reader *scale.Reader) (Si1LookupTypeId, error) {
-	return scaleInfo.DecodeSi1LookupTypeId(reader)
-}
-
-type Si1Type = scaleInfo.Si1Type
-
-func DecodeSi1Type(reader *scale.Reader) (Si1Type, error) {
-	return scaleInfo.DecodeSi1Type(reader)
-}
-
 type SignedExtensionMetadata struct {
 	Identifier       string
-	Type             Si1LookupTypeId
-	AdditionalSigned Si1LookupTypeId
+	Type             scaleInfo.Si1LookupTypeId
+	AdditionalSigned scaleInfo.Si1LookupTypeId
 }
 
 func DecodeSignedExtensionMetadata(reader *scale.Reader) (SignedExtensionMetadata, error) {
@@ -450,12 +433,12 @@ func DecodeSignedExtensionMetadata(reader *scale.Reader) (SignedExtensionMetadat
 		return t, fmt.Errorf("field Identifier: %w", err)
 	}
 
-	t.Type, err = DecodeSi1LookupTypeId(reader)
+	t.Type, err = scaleInfo.DecodeSi1LookupTypeId(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Type: %w", err)
 	}
 
-	t.AdditionalSigned, err = DecodeSi1LookupTypeId(reader)
+	t.AdditionalSigned, err = scaleInfo.DecodeSi1LookupTypeId(reader)
 	if err != nil {
 		return t, fmt.Errorf("field AdditionalSigned: %w", err)
 	}
@@ -464,26 +447,26 @@ func DecodeSignedExtensionMetadata(reader *scale.Reader) (SignedExtensionMetadat
 }
 
 type StorageEntryMap struct {
-	Hashers []StorageHasher
-	Key     Si1LookupTypeId
-	Value   Si1LookupTypeId
+	Hashers []v11.StorageHasher
+	Key     scaleInfo.Si1LookupTypeId
+	Value   scaleInfo.Si1LookupTypeId
 }
 
 func DecodeStorageEntryMap(reader *scale.Reader) (StorageEntryMap, error) {
 	var t StorageEntryMap
 	var err error
 
-	t.Hashers, err = scale.DecodeVec(reader, func(reader *scale.Reader) (StorageHasher, error) { return DecodeStorageHasher(reader) })
+	t.Hashers, err = scale.DecodeVec(reader, func(reader *scale.Reader) (v11.StorageHasher, error) { return v11.DecodeStorageHasher(reader) })
 	if err != nil {
 		return t, fmt.Errorf("field Hashers: %w", err)
 	}
 
-	t.Key, err = DecodeSi1LookupTypeId(reader)
+	t.Key, err = scaleInfo.DecodeSi1LookupTypeId(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Key: %w", err)
 	}
 
-	t.Value, err = DecodeSi1LookupTypeId(reader)
+	t.Value, err = scaleInfo.DecodeSi1LookupTypeId(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Value: %w", err)
 	}
@@ -493,7 +476,7 @@ func DecodeStorageEntryMap(reader *scale.Reader) (StorageEntryMap, error) {
 
 type StorageEntryMetadata struct {
 	Name     string
-	Modifier StorageEntryModifier
+	Modifier v9.StorageEntryModifier
 	Type     StorageEntryType
 	Fallback []byte
 	Docs     []string
@@ -508,7 +491,7 @@ func DecodeStorageEntryMetadata(reader *scale.Reader) (StorageEntryMetadata, err
 		return t, fmt.Errorf("field Name: %w", err)
 	}
 
-	t.Modifier, err = DecodeStorageEntryModifier(reader)
+	t.Modifier, err = v9.DecodeStorageEntryModifier(reader)
 	if err != nil {
 		return t, fmt.Errorf("field Modifier: %w", err)
 	}
@@ -531,12 +514,6 @@ func DecodeStorageEntryMetadata(reader *scale.Reader) (StorageEntryMetadata, err
 	return t, nil
 }
 
-type StorageEntryModifier = v13.StorageEntryModifier
-
-func DecodeStorageEntryModifier(reader *scale.Reader) (StorageEntryModifier, error) {
-	return v13.DecodeStorageEntryModifier(reader)
-}
-
 type StorageEntryTypeKind byte
 
 const (
@@ -546,7 +523,7 @@ const (
 
 type StorageEntryType struct {
 	Kind  StorageEntryTypeKind
-	Plain *Si1LookupTypeId
+	Plain *scaleInfo.Si1LookupTypeId
 	Map   *StorageEntryMap
 }
 
@@ -560,15 +537,13 @@ func DecodeStorageEntryType(reader *scale.Reader) (StorageEntryType, error) {
 
 	t.Kind = StorageEntryTypeKind(tag)
 	switch t.Kind {
-
 	case StorageEntryTypeKindPlain:
-		value, err := DecodeSi1LookupTypeId(reader)
+		value, err := scaleInfo.DecodeSi1LookupTypeId(reader)
 		if err != nil {
 			return t, fmt.Errorf("field Plain: %w", err)
 		}
 		t.Plain = &value
 		return t, nil
-
 	case StorageEntryTypeKindMap:
 		value, err := DecodeStorageEntryMap(reader)
 		if err != nil {
@@ -580,10 +555,4 @@ func DecodeStorageEntryType(reader *scale.Reader) (StorageEntryType, error) {
 	default:
 		return t, fmt.Errorf("unknown tag: %d", tag)
 	}
-}
-
-type StorageHasher = v13.StorageHasher
-
-func DecodeStorageHasher(reader *scale.Reader) (StorageHasher, error) {
-	return v13.DecodeStorageHasher(reader)
 }

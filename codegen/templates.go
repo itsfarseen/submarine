@@ -72,8 +72,7 @@ func Decode{{.Name}}(reader *scale.Reader) ({{.Name}}, error) {
 	}
 
 	switch tag {
-	{{range $i, $v := .Variants}}
-	case {{$i}}:
+	{{range $i, $v := .Variants}}case {{$i}}:
 		return {{$.Name}}{{$v}}, nil
 	{{end}}
 	default:
@@ -107,8 +106,7 @@ func Decode{{.Name}}(reader *scale.Reader) ({{.Name}}, error) {
 
 	t.Kind = {{.Name}}Kind(tag)
 	switch t.Kind {
-	{{range .Variants}}
-	case {{$.Name}}Kind{{.Name}}:
+	{{range .Variants}}case {{$.Name}}Kind{{.Name}}:
 		value, err := {{.DecodeFunc}}
 		if err != nil {
 			return t, fmt.Errorf("field {{.Name}}: %w", err)

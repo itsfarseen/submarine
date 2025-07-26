@@ -41,49 +41,34 @@ func DecodeSi0TypeDefPrimitive(reader *scale.Reader) (Si0TypeDefPrimitive, error
 	}
 
 	switch tag {
-
 	case 0:
 		return Si0TypeDefPrimitiveBool, nil
-
 	case 1:
 		return Si0TypeDefPrimitiveChar, nil
-
 	case 2:
 		return Si0TypeDefPrimitiveStr, nil
-
 	case 3:
 		return Si0TypeDefPrimitiveU8, nil
-
 	case 4:
 		return Si0TypeDefPrimitiveU16, nil
-
 	case 5:
 		return Si0TypeDefPrimitiveU32, nil
-
 	case 6:
 		return Si0TypeDefPrimitiveU64, nil
-
 	case 7:
 		return Si0TypeDefPrimitiveU128, nil
-
 	case 8:
 		return Si0TypeDefPrimitiveU256, nil
-
 	case 9:
 		return Si0TypeDefPrimitiveI8, nil
-
 	case 10:
 		return Si0TypeDefPrimitiveI16, nil
-
 	case 11:
 		return Si0TypeDefPrimitiveI32, nil
-
 	case 12:
 		return Si0TypeDefPrimitiveI64, nil
-
 	case 13:
 		return Si0TypeDefPrimitiveI128, nil
-
 	case 14:
 		return Si0TypeDefPrimitiveI256, nil
 
@@ -210,7 +195,6 @@ func DecodeSi1TypeDef(reader *scale.Reader) (Si1TypeDef, error) {
 
 	t.Kind = Si1TypeDefKind(tag)
 	switch t.Kind {
-
 	case Si1TypeDefKindComposite:
 		value, err := DecodeSi1TypeDefComposite(reader)
 		if err != nil {
@@ -218,7 +202,6 @@ func DecodeSi1TypeDef(reader *scale.Reader) (Si1TypeDef, error) {
 		}
 		t.Composite = &value
 		return t, nil
-
 	case Si1TypeDefKindVariant:
 		value, err := DecodeSi1TypeDefVariant(reader)
 		if err != nil {
@@ -226,7 +209,6 @@ func DecodeSi1TypeDef(reader *scale.Reader) (Si1TypeDef, error) {
 		}
 		t.Variant = &value
 		return t, nil
-
 	case Si1TypeDefKindSequence:
 		value, err := DecodeSi1TypeDefSequence(reader)
 		if err != nil {
@@ -234,7 +216,6 @@ func DecodeSi1TypeDef(reader *scale.Reader) (Si1TypeDef, error) {
 		}
 		t.Sequence = &value
 		return t, nil
-
 	case Si1TypeDefKindArray:
 		value, err := DecodeSi1TypeDefArray(reader)
 		if err != nil {
@@ -242,7 +223,6 @@ func DecodeSi1TypeDef(reader *scale.Reader) (Si1TypeDef, error) {
 		}
 		t.Array = &value
 		return t, nil
-
 	case Si1TypeDefKindTuple:
 		value, err := DecodeSi1TypeDefTuple(reader)
 		if err != nil {
@@ -250,7 +230,6 @@ func DecodeSi1TypeDef(reader *scale.Reader) (Si1TypeDef, error) {
 		}
 		t.Tuple = &value
 		return t, nil
-
 	case Si1TypeDefKindPrimitive:
 		value, err := DecodeSi1TypeDefPrimitive(reader)
 		if err != nil {
@@ -258,7 +237,6 @@ func DecodeSi1TypeDef(reader *scale.Reader) (Si1TypeDef, error) {
 		}
 		t.Primitive = &value
 		return t, nil
-
 	case Si1TypeDefKindCompact:
 		value, err := DecodeSi1TypeDefCompact(reader)
 		if err != nil {
@@ -266,7 +244,6 @@ func DecodeSi1TypeDef(reader *scale.Reader) (Si1TypeDef, error) {
 		}
 		t.Compact = &value
 		return t, nil
-
 	case Si1TypeDefKindBitSequence:
 		value, err := DecodeSi1TypeDefBitSequence(reader)
 		if err != nil {
@@ -274,7 +251,6 @@ func DecodeSi1TypeDef(reader *scale.Reader) (Si1TypeDef, error) {
 		}
 		t.BitSequence = &value
 		return t, nil
-
 	case Si1TypeDefKindHistoricMetaCompat:
 		value, err := scale.DecodeText(reader)
 		if err != nil {

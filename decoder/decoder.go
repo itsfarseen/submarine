@@ -6,14 +6,12 @@ import (
 	v10 "submarine/decoder/v10"
 	v11 "submarine/decoder/v11"
 	v12 "submarine/decoder/v12"
-	// v13 "submarine/decoder/v13"
 	v14 "submarine/decoder/v14"
 	v9 "submarine/decoder/v9"
 	"submarine/scale"
 	scale_v10 "submarine/scale/gen/v10"
 	scale_v11 "submarine/scale/gen/v11"
 	scale_v12 "submarine/scale/gen/v12"
-	scale_v13 "submarine/scale/gen/v13"
 	scale_v14 "submarine/scale/gen/v14"
 	scale_v9 "submarine/scale/gen/v9"
 )
@@ -38,16 +36,10 @@ func DecodeMetadata(version uint, r *scale.Reader) (any, error) {
 			return nil, fmt.Errorf("v11: %w", err)
 		}
 		return &meta, nil
-	case 12:
+	case 12, 13:
 		meta, err := scale_v12.DecodeMetadata(r)
 		if err != nil {
 			return nil, fmt.Errorf("v12: %w", err)
-		}
-		return &meta, nil
-	case 13:
-		meta, err := scale_v13.DecodeMetadata(r)
-		if err != nil {
-			return nil, fmt.Errorf("v13: %w", err)
 		}
 		return &meta, nil
 	case 14:
@@ -65,9 +57,6 @@ func DecodeExtrinsic(metadata any, extrinsicBytes []byte) (*DecodedExtrinsic, er
 	switch meta := metadata.(type) {
 	case *scale_v14.Metadata:
 		return v14.DecodeExtrinsic(meta, extrinsicBytes)
-	// v13 metadata is an alias to v12 metadata
-	// case *scale_v13.Metadata:
-	// 	return v13.DecodeExtrinsic(meta, extrinsicBytes)
 	case *scale_v12.Metadata:
 		return v12.DecodeExtrinsic(meta, extrinsicBytes)
 	case *scale_v11.Metadata:
@@ -85,9 +74,6 @@ func DecodeEvents(metadata any, eventBytes []byte) ([]EventRecord, error) {
 	switch meta := metadata.(type) {
 	case *scale_v14.Metadata:
 		return v14.DecodeEvents(meta, eventBytes)
-	// v13 metadata is an alias to v12 metadata
-	// case *scale_v13.Metadata:
-	// return v13.DecodeEvents(meta, eventBytes)
 	case *scale_v12.Metadata:
 		return v12.DecodeEvents(meta, eventBytes)
 	case *scale_v11.Metadata:

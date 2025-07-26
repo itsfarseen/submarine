@@ -340,13 +340,10 @@ func DecodeStorageEntryModifier(reader *scale.Reader) (StorageEntryModifier, err
 	}
 
 	switch tag {
-
 	case 0:
 		return StorageEntryModifierOptional, nil
-
 	case 1:
 		return StorageEntryModifierDefault, nil
-
 	case 2:
 		return StorageEntryModifierRequired, nil
 
@@ -381,7 +378,6 @@ func DecodeStorageEntryType(reader *scale.Reader) (StorageEntryType, error) {
 
 	t.Kind = StorageEntryTypeKind(tag)
 	switch t.Kind {
-
 	case StorageEntryTypeKindPlain:
 		value, err := scale.DecodeText(reader)
 		if err != nil {
@@ -389,7 +385,6 @@ func DecodeStorageEntryType(reader *scale.Reader) (StorageEntryType, error) {
 		}
 		t.Plain = &value
 		return t, nil
-
 	case StorageEntryTypeKindMap:
 		value, err := DecodeStorageEntryMap(reader)
 		if err != nil {
@@ -397,7 +392,6 @@ func DecodeStorageEntryType(reader *scale.Reader) (StorageEntryType, error) {
 		}
 		t.Map = &value
 		return t, nil
-
 	case StorageEntryTypeKindDoubleMap:
 		value, err := DecodeStorageEntryDoubleMap(reader)
 		if err != nil {
@@ -430,19 +424,14 @@ func DecodeStorageHasher(reader *scale.Reader) (StorageHasher, error) {
 	}
 
 	switch tag {
-
 	case 0:
 		return StorageHasherBlake2_128, nil
-
 	case 1:
 		return StorageHasherBlake2_256, nil
-
 	case 2:
 		return StorageHasherTwox128, nil
-
 	case 3:
 		return StorageHasherTwox256, nil
-
 	case 4:
 		return StorageHasherTwox64Concat, nil
 

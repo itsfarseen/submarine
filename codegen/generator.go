@@ -149,7 +149,7 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 
 	switch type_.Kind {
 	case KindRef:
-		innerTypeName, err := c.getGoType(moduleName, "UNKNOWN_", type_)
+		innerTypeName, err := c.getGoTypeForType(moduleName, type_)
 		if err != nil {
 			return err
 		}
@@ -182,7 +182,7 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 		fields := make([]FieldOrVariant, len(struct_.Fields))
 		for i, field := range struct_.Fields {
 			fieldName := toPascalCase(field.Name)
-			fieldType, err := c.getGoType(moduleName, fieldName, field.Type)
+			fieldType, err := c.getGoTypeForType(moduleName, field.Type)
 			if err != nil {
 				return fmt.Errorf("struct field %s: %w", fieldName, err)
 			}
@@ -209,7 +209,7 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 		variants := make([]FieldOrVariant, len(enumComplex.Variants))
 		for i, variant := range enumComplex.Variants {
 			variantName := toPascalCase(variant.Name)
-			variantType, err := c.getGoType(moduleName, variantName, variant.Type)
+			variantType, err := c.getGoTypeForType(moduleName, variant.Type)
 			if err != nil {
 				return fmt.Errorf("enum variant %s: %w", variantName, err)
 			}
@@ -226,7 +226,7 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 		templateName = "enum_complex"
 		templateData = EnumComplexTemplate{Name: typeName, Variants: variants}
 	case KindVec, KindOption:
-		innerType, err := c.getGoType(moduleName, "UNKNOWN_", type_)
+		innerType, err := c.getGoTypeForType(moduleName, type_)
 		if err != nil {
 			return err
 		}
@@ -292,7 +292,7 @@ func (c *Codegen) getDecodeFuncForType(moduleName string, type_ *Type) (string, 
 		return c.getDecodeFuncForTypeName(moduleName, type_.Ref.Name)
 	case KindOption:
 		option := type_.Option
-		itemTypeName, err := c.getGoType(moduleName, "UNKNOWN_", option.Type)
+		itemTypeName, err := c.getGoTypeForType(moduleName, option.Type)
 		if err != nil {
 			return "", fmt.Errorf("option item name: %w", err)
 		}
@@ -303,7 +303,7 @@ func (c *Codegen) getDecodeFuncForType(moduleName string, type_ *Type) (string, 
 		return fmt.Sprintf("scale.DecodeOption(reader, func(reader *scale.Reader) (%s, error) { return %s })", itemTypeName, itemDecodeFunc), nil
 	case KindVec:
 		vec := type_.Vec
-		itemTypeName, err := c.getGoType(moduleName, "UNKNOWN_", vec.Type)
+		itemTypeName, err := c.getGoTypeForType(moduleName, vec.Type)
 		if err != nil {
 			return "", fmt.Errorf("vec item name: %w", err)
 		}
@@ -313,65 +313,69 @@ func (c *Codegen) getDecodeFuncForType(moduleName string, type_ *Type) (string, 
 		}
 		return fmt.Sprintf("scale.DecodeVec(reader, func(reader *scale.Reader) (%s, error) { return %s })", itemTypeName, itemDecodeFunc), nil
 	default:
-		return "UNKNOWN_()", fmt.Errorf("unknown type kind: %s", type_.Kind)
+		return "", fmt.Errorf("unknown type kind: %s", type_.Kind)
 	}
 }
 
-func (c *Codegen) getGoType(moduleName string, typeName string, type_ *Type) (string, error) {
+func (c *Codegen) getGoTypeForTypename(moduleName string, typeName string) (string, error) {
 	moduleCodegen := c.Generated[moduleName]
 
 	module := c.Modules[moduleName]
 
-	var goTypeName string
+	// handle primitives
+	switch typeName {
+	case "text", "type":
+		return "string", nil
+	case "bytes":
+		return "[]byte", nil
+	case "u8":
+		return "uint8", nil
+	case "u32":
+		return "uint32", nil
+	case "u64":
+		return "uint64", nil
+	case "bool":
+		return "bool", nil
+	case "compact":
+		moduleCodegen.appendImport("math/big")
+		return "big.Int", nil
+	default:
+		_, ok := module.Types[typeName]
+		if !ok {
+			return "", fmt.Errorf("Type %s not found in module %s", typeName, moduleName)
+		}
+		return typeName, nil
+	}
+}
+
+func (c *Codegen) getGoTypeForType(moduleName string, type_ *Type) (string, error) {
+	moduleCodegen := c.Generated[moduleName]
+
 	switch type_.Kind {
 	case KindRef:
-		switch type_.Ref.Name {
-		case "text", "type":
-			goTypeName = "string"
-		case "bytes":
-			goTypeName = "[]byte"
-		case "u8":
-			goTypeName = "uint8"
-		case "u32":
-			goTypeName = "uint32"
-		case "u64":
-			goTypeName = "uint64"
-		case "bool":
-			goTypeName = "bool"
-		case "compact":
-			moduleCodegen.appendImport("math/big")
-			goTypeName = "big.Int"
-		default:
-			refType_ := module.Types[type_.Ref.Name]
-			if refType_ == nil {
-				return "MISSING_" + type_.Ref.Name, nil
-			}
-			return c.getGoType(moduleName, type_.Ref.Name, refType_)
-		}
+		return c.getGoTypeForTypename(moduleName, type_.Ref.Name)
 	case KindStruct, KindEnumComplex, KindEnumSimple:
-		return typeName, nil
+		return "", fmt.Errorf("Illegal complex nested type")
 	case KindOption:
 		option := type_.Option
-		itemGoType, err := c.getGoType(moduleName, "UNKNOWN_", option.Type)
+		itemGoType, err := c.getGoTypeForType(moduleName, option.Type)
 		if err != nil {
-			return "", fmt.Errorf("option item: %w", err)
+			return "", fmt.Errorf("option: %w", err)
 		}
-		goTypeName = "*" + itemGoType
+		return "*" + itemGoType, nil
 	case KindVec:
 		vec := type_.Vec
-		itemGoType, err := c.getGoType(moduleName, "UNKNOWN_", vec.Type)
+		itemGoType, err := c.getGoTypeForType(moduleName, vec.Type)
 		if err != nil {
-			return "", fmt.Errorf("vec item: %w", err)
+			return "", fmt.Errorf("vec: %w", err)
 		}
-		goTypeName = "[]" + itemGoType
+		return "[]" + itemGoType, nil
 	case KindImport:
 		importType := type_.Import
 		importLine := fmt.Sprintf("%s/%s", c.RootModulePath, importType.Module)
 		moduleCodegen.appendImport(importLine)
-		goTypeName = fmt.Sprintf("%s.%s", importType.Module, importType.Item)
+		return fmt.Sprintf("%s.%s", importType.Module, importType.Item), nil
 	default:
-		fmt.Printf("Kind ERR %s\n", type_.Kind)
 		panic("unreachable: we should exhaustively handle all kinds")
 	}
-	return goTypeName, nil
 }

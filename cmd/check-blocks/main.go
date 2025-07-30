@@ -8,10 +8,10 @@ import (
 	"submarine/decoder"
 	"submarine/rpc"
 	"submarine/scale"
-	"submarine/scale/gen/v9"
 	"submarine/scale/gen/v10"
 	"submarine/scale/gen/v11"
 	"submarine/scale/gen/v12"
+	"submarine/scale/gen/v9"
 )
 
 func main() {

@@ -31,14 +31,16 @@ const templates = `
 package {{.PackageName}}
 
 import (
-	{{range $import := .Imports}}"{{$import}}"
+	{{range $import := .Imports -}}
+	"{{$import}}"
 	{{end}}
 )
 {{end}}
 
 {{define "struct"}}
 type {{.Name}} struct {
-	{{range .Fields}}{{.Name}} {{.Type}}
+	{{range .Fields -}}
+	{{.Name}} {{.Type}}
 	{{end}}
 }
 
@@ -59,7 +61,8 @@ func Decode{{.Name}}(reader *scale.Reader) ({{.Name}}, error) {
 type {{.Name}} int
 
 const (
-	{{range $i, $v := .Variants}}{{$.Name}}{{$v}} {{$.Name}} = {{$i}}
+	{{range $i, $v := .Variants -}}
+	{{$.Name}}{{$v}} {{$.Name}} = {{$i}}
 	{{end}}
 )
 
@@ -72,7 +75,8 @@ func Decode{{.Name}}(reader *scale.Reader) ({{.Name}}, error) {
 	}
 
 	switch tag {
-	{{range $i, $v := .Variants}}case {{$i}}:
+	{{range $i, $v := .Variants -}}
+	case {{$i}}:
 		return {{$.Name}}{{$v}}, nil
 	{{end}}
 	default:
@@ -86,13 +90,17 @@ func Decode{{.Name}}(reader *scale.Reader) ({{.Name}}, error) {
 type {{.Name}}Kind byte
 
 const (
-	{{range $i, $v := .Variants}} {{$.Name}}Kind{{$v.Name}} {{$.Name}}Kind = {{$i}}
+	{{range $i, $v := .Variants -}} 
+	{{$.Name}}Kind{{$v.Name}} {{$.Name}}Kind = {{$i}}
 	{{end}}
 )
 
 type {{.Name}} struct {
 	Kind {{.Name}}Kind
-	{{range .Variants}}{{.Name}} *{{.Type}}
+	{{range .Variants -}}
+	{{ if .Type -}}
+	{{.Name}} *{{.Type}}
+	{{- end}}
 	{{end}}
 }
 
@@ -106,12 +114,15 @@ func Decode{{.Name}}(reader *scale.Reader) ({{.Name}}, error) {
 
 	t.Kind = {{.Name}}Kind(tag)
 	switch t.Kind {
-	{{range .Variants}}case {{$.Name}}Kind{{.Name}}:
+	{{range .Variants -}}
+	case {{$.Name}}Kind{{.Name}}:
+		{{ if .Type -}}
 		value, err := {{.DecodeFunc}}
 		if err != nil {
 			return t, fmt.Errorf("field {{.Name}}: %w", err)
 		}
 		t.{{.Name}} = &value
+		{{- end}}
 		return t, nil
 	{{end}}
 	default:

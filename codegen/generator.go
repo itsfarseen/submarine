@@ -137,6 +137,7 @@ func (c *Codegen) generateModule(moduleName string) error {
 }
 
 func (c *Codegen) generateType(moduleName string, typeName string) error {
+	var err error
 	fmt.Printf("  %s\n", typeName)
 
 	moduleCodegen := c.Generated[moduleName]
@@ -197,13 +198,16 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 		variants := make([]FieldOrVariant, len(enumComplex.Variants))
 		for i, variant := range enumComplex.Variants {
 			variantName := toPascalCase(variant.Name)
-			variantType, err := c.getGoTypeForType(moduleName, variant.Type)
-			if err != nil {
-				return fmt.Errorf("enum variant %s: %w", variantName, err)
-			}
-			decodeFunc, err := c.getDecodeFuncForType(moduleName, variant.Type)
-			if err != nil {
-				return fmt.Errorf("struct field %s: %w", variantName, err)
+			var variantType, decodeFunc string
+			if variant.Type != nil {
+				variantType, err = c.getGoTypeForType(moduleName, variant.Type)
+				if err != nil {
+					return fmt.Errorf("enum variant %s: %w", variantName, err)
+				}
+				decodeFunc, err = c.getDecodeFuncForType(moduleName, variant.Type)
+				if err != nil {
+					return fmt.Errorf("struct field %s: %w", variantName, err)
+				}
 			}
 			variants[i] = FieldOrVariant{
 				Name:       variantName,

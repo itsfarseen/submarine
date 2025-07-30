@@ -82,7 +82,7 @@ func parseType(rawDef any) (*Type, error) {
 func parseTypeFromMap(def map[string]any) (*Type, error) {
 	rawType, ok := def["type"].(string)
 	if !ok {
-		return nil, fmt.Errorf("type definition must contain a 'type' field as a string")
+		return nil, nil
 	}
 
 	t := &Type{}

@@ -80,7 +80,9 @@ func walkAndValidateRefs(allModules *AllModules, moduleName, currentTypeName str
 		}
 	case KindEnumComplex:
 		for _, variant := range typeDef.EnumComplex.Variants {
-			walkAndValidateRefs(allModules, moduleName, variant.Name, variant.Type, visited)
+			if variant.Type != nil {
+				walkAndValidateRefs(allModules, moduleName, variant.Name, variant.Type, visited)
+			}
 		}
 	case KindVec, KindOption:
 		var innerType *Type

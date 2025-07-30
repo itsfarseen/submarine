@@ -8,18 +8,56 @@ import (
 	v9 "submarine/scale/gen/v9"
 )
 
-type MetadataIndexKind int
-
-const (
-	MetadataIndexKindV9  = 9
-	MetadataIndexKindV12 = 12
-)
-
 type Metadata struct {
-	Modules   []Module
-	IndexKind MetadataIndexKind
-	IndexV9   *MetadataIndexV9
-	IndexV12  *MetadataIndexV12
+	Version  int
+	Modules  []ModuleMetadata
+	IndexV9  *MetadataIndexV9
+	IndexV12 *MetadataIndexV12
+}
+
+func (m *Metadata) GetModuleForExtrinsic(index int) (ModuleMetadata, error) {
+	var actualIndex int
+	var ok bool
+
+	if m.Version >= 12 {
+		indexMap := m.IndexV12.IndexedModules
+		actualIndex, ok = indexMap[index]
+		if !ok {
+			return ModuleMetadata{}, fmt.Errorf("index not found (IndexV12): %d", index)
+		}
+	} else if m.Version >= 9 {
+		indexList := m.IndexV9.CallfulModules
+		if index >= len(indexList) {
+			return ModuleMetadata{}, fmt.Errorf("index not found (CallfulModules): %d", index)
+		}
+		actualIndex = indexList[index]
+	} else {
+		return ModuleMetadata{}, fmt.Errorf("unreachable")
+	}
+
+	return m.Modules[actualIndex], nil
+}
+
+func (m *Metadata) GetModuleForEvent(index int) (ModuleMetadata, error) {
+	var actualIndex int
+	var ok bool
+	if m.Version >= 12 {
+		indexMap := m.IndexV12.IndexedModules
+		actualIndex, ok = indexMap[index]
+		if !ok {
+			return ModuleMetadata{}, fmt.Errorf("index not found (IndexV12): %d", index)
+		}
+	} else if m.Version >= 9 {
+		indexList := m.IndexV9.EventfulModules
+		if index >= len(indexList) {
+			return ModuleMetadata{}, fmt.Errorf("index not found (EventfulModules): %d", index)
+		}
+		actualIndex = indexList[index]
+	} else {
+		return ModuleMetadata{}, fmt.Errorf("unreachable")
+	}
+
+	return m.Modules[actualIndex], nil
 }
 
 type MetadataIndexV9 struct {
@@ -31,11 +69,11 @@ type MetadataIndexV12 struct {
 	IndexedModules map[int]int
 }
 
-type Module struct {
+type ModuleMetadata struct {
 	Name   string
 	Index  int // only available in v12+
 	Calls  []Call
-	Events []Event
+	Events []EventMetadata
 }
 
 type Call struct {
@@ -49,38 +87,38 @@ type CallArgument struct {
 	Type string
 }
 
-type Event struct {
+type EventMetadata struct {
 	Name string
 	Args []string
 	Docs []string
 }
 
 func MakeMetadataFromAny(m any) (Metadata, error) {
-	var modules []Module
-	var indexKind MetadataIndexKind
+	var modules []ModuleMetadata
+	var version int
 
 	switch v := m.(type) {
 	case v9.Metadata:
-		indexKind = MetadataIndexKindV9
-		modules := make([]Module, len(v.Modules))
+		version = 9
+		modules := make([]ModuleMetadata, len(v.Modules))
 		for i, module := range v.Modules {
 			modules[i] = MakeModuleFromV9Parts(module.Name, module.Calls, module.Events)
 		}
 	case v10.Metadata:
-		indexKind = MetadataIndexKindV9
-		modules := make([]Module, len(v.Modules))
+		version = 10
+		modules := make([]ModuleMetadata, len(v.Modules))
 		for i, module := range v.Modules {
 			modules[i] = MakeModuleFromV9Parts(module.Name, module.Calls, module.Events)
 		}
 	case v11.Metadata:
-		indexKind = MetadataIndexKindV9
-		modules := make([]Module, len(v.Modules))
+		version = 11
+		modules := make([]ModuleMetadata, len(v.Modules))
 		for i, module := range v.Modules {
 			modules[i] = MakeModuleFromV9Parts(module.Name, module.Calls, module.Events)
 		}
 	case v12.Metadata:
-		indexKind = MetadataIndexKindV12
-		modules := make([]Module, len(v.Modules))
+		version = 12
+		modules := make([]ModuleMetadata, len(v.Modules))
 		for i, module := range v.Modules {
 			modules[i] = MakeModuleFromV9Parts(module.Name, module.Calls, module.Events)
 			modules[i].Index = int(module.Index)
@@ -88,16 +126,24 @@ func MakeMetadataFromAny(m any) (Metadata, error) {
 	default:
 		return Metadata{}, fmt.Errorf("not a valid v9-v12 metadata struct")
 	}
-	return MakeMetadataFromModules(modules, indexKind), nil
+	return MakeMetadataFromModules(modules, version), nil
 }
 
-func MakeMetadataFromModules(modules []Module, indexKind MetadataIndexKind) Metadata {
+func MakeMetadataFromModules(modules []ModuleMetadata, version int) Metadata {
 	var metadata Metadata
 	metadata.Modules = modules
-	metadata.IndexKind = indexKind
+	metadata.Version = version
 
-	switch indexKind {
-	case MetadataIndexKindV9:
+	if metadata.Version >= 14 {
+		panic("not a legacy version")
+	} else if metadata.Version >= 12 {
+		var index MetadataIndexV12
+		metadata.IndexV12 = &index
+		for i, module := range metadata.Modules {
+			metadata.Modules = append(metadata.Modules, module)
+			index.IndexedModules[module.Index] = i
+		}
+	} else if metadata.Version >= 9 {
 		var index MetadataIndexV9
 		metadata.IndexV9 = &index
 		for i, module := range metadata.Modules {
@@ -109,22 +155,15 @@ func MakeMetadataFromModules(modules []Module, indexKind MetadataIndexKind) Meta
 				index.CallfulModules = append(index.CallfulModules, i)
 			}
 		}
-	case MetadataIndexKindV12:
-		var index MetadataIndexV12
-		metadata.IndexV12 = &index
-		for i, module := range metadata.Modules {
-			metadata.Modules = append(metadata.Modules, module)
-			index.IndexedModules[module.Index] = i
-		}
-	default:
-		panic("must be exhaustive")
+	} else {
+		panic("unsupported version")
 	}
 
 	return metadata
 }
 
-func MakeModuleFromV9Parts(name string, calls *[]v9.FunctionMetadata, events *[]v9.EventMetadata) Module {
-	var module Module
+func MakeModuleFromV9Parts(name string, calls *[]v9.FunctionMetadata, events *[]v9.EventMetadata) ModuleMetadata {
+	var module ModuleMetadata
 
 	module.Name = name
 
@@ -156,6 +195,6 @@ func MakeCallArgFromV9(m v9.FunctionArgumentMetadata) CallArgument {
 	return CallArgument(m)
 }
 
-func MakeEventFromV9(m v9.EventMetadata) Event {
-	return Event(m)
+func MakeEventFromV9(m v9.EventMetadata) EventMetadata {
+	return EventMetadata(m)
 }

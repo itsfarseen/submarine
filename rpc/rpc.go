@@ -100,7 +100,6 @@ func NewRPC(url string) (*RPC, error) {
 }
 
 func (r *RPC) readLoop() {
-	defer r.conn.Close()
 	for {
 		select {
 		case <-r.ctx.Done():

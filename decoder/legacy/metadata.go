@@ -2,6 +2,7 @@ package legacy
 
 import (
 	"fmt"
+	"reflect"
 	v10 "submarine/scale/gen/v10"
 	v11 "submarine/scale/gen/v11"
 	v12 "submarine/scale/gen/v12"
@@ -98,33 +99,33 @@ func MakeMetadataFromAny(m any) (Metadata, error) {
 	var version int
 
 	switch v := m.(type) {
-	case v9.Metadata:
+	case *v9.Metadata:
 		version = 9
-		modules := make([]ModuleMetadata, len(v.Modules))
+		modules = make([]ModuleMetadata, len(v.Modules))
 		for i, module := range v.Modules {
 			modules[i] = MakeModuleFromV9Parts(module.Name, module.Calls, module.Events)
 		}
-	case v10.Metadata:
+	case *v10.Metadata:
 		version = 10
-		modules := make([]ModuleMetadata, len(v.Modules))
+		modules = make([]ModuleMetadata, len(v.Modules))
 		for i, module := range v.Modules {
 			modules[i] = MakeModuleFromV9Parts(module.Name, module.Calls, module.Events)
 		}
-	case v11.Metadata:
+	case *v11.Metadata:
 		version = 11
-		modules := make([]ModuleMetadata, len(v.Modules))
+		modules = make([]ModuleMetadata, len(v.Modules))
 		for i, module := range v.Modules {
 			modules[i] = MakeModuleFromV9Parts(module.Name, module.Calls, module.Events)
 		}
-	case v12.Metadata:
+	case *v12.Metadata:
 		version = 12
-		modules := make([]ModuleMetadata, len(v.Modules))
+		modules = make([]ModuleMetadata, len(v.Modules))
 		for i, module := range v.Modules {
 			modules[i] = MakeModuleFromV9Parts(module.Name, module.Calls, module.Events)
 			modules[i].Index = int(module.Index)
 		}
 	default:
-		return Metadata{}, fmt.Errorf("not a valid v9-v12 metadata struct")
+		return Metadata{}, fmt.Errorf("not a valid v9-v12 metadata struct: %v", reflect.TypeOf(m))
 	}
 	return MakeMetadataFromModules(modules, version), nil
 }
@@ -167,14 +168,18 @@ func MakeModuleFromV9Parts(name string, calls *[]v9.FunctionMetadata, events *[]
 
 	module.Name = name
 
-	for _, call := range *calls {
-		call_ := MakeCallFromV9(call)
-		module.Calls = append(module.Calls, call_)
+	if calls != nil {
+		for _, call := range *calls {
+			call_ := MakeCallFromV9(call)
+			module.Calls = append(module.Calls, call_)
+		}
 	}
 
-	for _, event := range *events {
-		event_ := MakeEventFromV9(event)
-		module.Events = append(module.Events, event_)
+	if events != nil {
+		for _, event := range *events {
+			event_ := MakeEventFromV9(event)
+			module.Events = append(module.Events, event_)
+		}
 	}
 
 	return module

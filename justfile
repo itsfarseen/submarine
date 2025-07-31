@@ -2,7 +2,7 @@ run:
 	go run app/main.go
 
 codegen:
-	go run cmd/codegen.go
+	go run cmd/codegen/main.go
 
-check-blocks:
-	go run cmd/check-blocks.go
+scan-spec-versions:
+	go run cmd/scan-spec-versions/main.go

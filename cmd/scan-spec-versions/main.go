@@ -81,7 +81,7 @@ func getBlockHashes(client *rpc.RPC, blockNumbers []int) ([]string, error) {
 		args[i] = []any{n}
 	}
 
-	return doParallelRequests(
+	return rpc.SendMany(
 		client,
 		"chain_getBlockHash",
 		args,
@@ -97,7 +97,7 @@ func getRuntimeVersions(client *rpc.RPC, blockHashes []string) ([]rpc.RuntimeVer
 		args[i] = []any{n}
 	}
 
-	return doParallelRequests(
+	return rpc.SendMany(
 		client,
 		"state_getRuntimeVersion",
 		args,
@@ -128,30 +128,6 @@ func getSpecVersions(client *rpc.RPC, blockNumbers []int) ([]SpecVersionInfo, er
 		}
 	}
 	return specVersions, nil
-}
-
-func doParallelRequests[T any](
-	client *rpc.RPC,
-	method string,
-	argsList [][]any,
-	fun func(*rpc.PendingRequest) (T, error),
-) ([]T, error) {
-	var err error
-
-	requests := make([]*rpc.PendingRequest, len(argsList))
-	for i, args := range argsList {
-		requests[i] = client.Send(method, args)
-	}
-
-	results := make([]T, len(argsList))
-	for i, req := range requests {
-		results[i], err = fun(req)
-		if err != nil {
-			return nil, fmt.Errorf("fun(raw msg): %w", err)
-		}
-	}
-
-	return results, nil
 }
 
 type SpecFinder struct {
@@ -193,7 +169,7 @@ func (sf *SpecFinder) findSpecVersions(
 		blockHashesArgsList = append(blockHashesArgsList, []any{n})
 	}
 
-	blockHashes, err := doParallelRequests(
+	blockHashes, err := rpc.SendMany(
 		sf.client,
 		"chain_getBlockHash",
 		blockHashesArgsList,
@@ -210,7 +186,7 @@ func (sf *SpecFinder) findSpecVersions(
 		runtimeVersionsArgsList = append(runtimeVersionsArgsList, []any{hash})
 	}
 
-	runtimeVersions, err := doParallelRequests(
+	runtimeVersions, err := rpc.SendMany(
 		sf.client,
 		"state_getRuntimeVersion",
 		runtimeVersionsArgsList,

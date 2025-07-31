@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"sync"
 	"sync/atomic"
@@ -172,6 +173,30 @@ func (r *RPC) Send(method string, params []any) *PendingRequest {
 	}
 
 	return &PendingRequest{ch: respChan}
+}
+
+func SendMany[T any](
+	client *RPC,
+	method string,
+	paramsList [][]any,
+	fun func(*PendingRequest) (T, error),
+) ([]T, error) {
+	var err error
+
+	requests := make([]*PendingRequest, len(paramsList))
+	for i, params := range paramsList {
+		requests[i] = client.Send(method, params)
+	}
+
+	results := make([]T, len(paramsList))
+	for i, req := range requests {
+		results[i], err = fun(req)
+		if err != nil {
+			return nil, fmt.Errorf("SendMany[%d]: %w", i, err)
+		}
+	}
+
+	return results, nil
 }
 
 func (r *RPC) Close() {

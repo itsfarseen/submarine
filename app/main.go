@@ -51,7 +51,8 @@ func main() {
 	latestHeaderReq := client.Send("chain_getHeader", nil)
 	finalizedHashReq := client.Send("chain_getFinalizedHead", nil)
 
-	latestHeader, err := latestHeaderReq.AsBlockHeader()
+	var latestHeader BlockHeader
+	err = latestHeaderReq.As(&latestHeader)
 	if err != nil {
 		log.Fatalf("Failed to get latest header: %v", err)
 	}
@@ -64,7 +65,8 @@ func main() {
 	}
 
 	finalizedHeaderReq := client.Send("chain_getHeader", []any{finalizedHash})
-	finalizedHeader, err := finalizedHeaderReq.AsBlockHeader()
+	var finalizedHeader BlockHeader
+	err = finalizedHeaderReq.As(&finalizedHeader)
 	if err != nil {
 		log.Fatalf("Failed to get finalized header: %v", err)
 	}
@@ -84,7 +86,8 @@ func main() {
 	log.Printf("✅ Hash for block #%d: %s", blockNumberToQuery, blockHash)
 
 	signedBlockReq := client.Send("chain_getBlock", []any{blockHash})
-	signedBlock, err := signedBlockReq.AsSignedBlock()
+	var signedBlock SignedBlock
+	err = signedBlockReq.As(&signedBlock)
 	if err != nil {
 		log.Fatalf("Failed to get signed block: %v", err)
 	}

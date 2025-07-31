@@ -18,3 +18,7 @@ type Block struct {
 	Header     BlockHeader `json:"header"`
 	Extrinsics []string    `json:"extrinsics"`
 }
+
+type RuntimeVersion struct {
+	SpecVersion int `json:"specVersion"`
+}

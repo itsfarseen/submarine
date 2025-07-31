@@ -51,27 +51,31 @@ type PendingRequest struct {
 }
 
 func (p *PendingRequest) AsString() (string, error) {
-	rawResult, ok := <-p.ch
-	if !ok || rawResult == nil {
-		return "", errors.New("request failed or connection closed")
-	}
 	var res string
-	if err := json.Unmarshal(*rawResult, &res); err != nil {
+	err := p.As(&res)
+	if err != nil {
 		return "", err
 	}
 	return res, nil
 }
 
-func (p *PendingRequest) AsBlockHeader() (*BlockHeader, error) {
+func (p *PendingRequest) RawMessage() (*json.RawMessage, error) {
 	rawResult, ok := <-p.ch
 	if !ok || rawResult == nil {
 		return nil, errors.New("request failed or connection closed")
 	}
-	var res BlockHeader
-	if err := json.Unmarshal(*rawResult, &res); err != nil {
-		return nil, err
+	return rawResult, nil
+}
+
+func (p *PendingRequest) As(value any) error {
+	rawResult, err := p.RawMessage()
+	if err != nil {
+		return err
 	}
-	return &res, nil
+	if err := json.Unmarshal(*rawResult, value); err != nil {
+		return err
+	}
+	return nil
 }
 
 func NewRPC(url string) (*RPC, error) {
@@ -93,17 +97,6 @@ func NewRPC(url string) (*RPC, error) {
 	go client.readLoop()
 
 	return client, nil
-}
-func (p *PendingRequest) AsSignedBlock() (*SignedBlock, error) {
-	rawResult, ok := <-p.ch
-	if !ok || rawResult == nil {
-		return nil, errors.New("request failed or connection closed")
-	}
-	var res SignedBlock
-	if err := json.Unmarshal(*rawResult, &res); err != nil {
-		return nil, err
-	}
-	return &res, nil
 }
 
 func (r *RPC) readLoop() {
@@ -170,15 +163,13 @@ func (r *RPC) Send(method string, params []any) *PendingRequest {
 	respChan := make(chan *json.RawMessage, 1)
 
 	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.pending[id] = respChan
-	r.mu.Unlock()
 
 	if err := r.conn.WriteMessage(websocket.TextMessage, jsonReq); err != nil {
 		log.Printf("write error: %v", err)
-		r.mu.Lock()
 		delete(r.pending, id)
 		close(respChan)
-		r.mu.Unlock()
 	}
 
 	return &PendingRequest{ch: respChan}

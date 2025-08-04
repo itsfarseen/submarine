@@ -1,10 +1,93 @@
 package rust_types_test
 
 import (
-	"reflect"
+	"fmt"
 	. "submarine/rust_types"
 	"testing"
 )
+
+// deepEqual compares two RustType values for structural equality
+// Returns nil if equal, or a string describing the first difference found
+func deepEqual(a, b RustType) *string {
+	return deepEqualPath(a, b, "")
+}
+
+func deepEqualPath(a, b RustType, path string) *string {
+	if a == nil && b == nil {
+		return nil
+	}
+	if a == nil {
+		diff := fmt.Sprintf("%s: nil vs %T", path, b)
+		return &diff
+	}
+	if b == nil {
+		diff := fmt.Sprintf("%s: %T vs nil", path, a)
+		return &diff
+	}
+
+	switch at := a.(type) {
+	case Ident:
+		if bt, ok := b.(Ident); ok {
+			if at.Name != bt.Name {
+				diff := fmt.Sprintf("%s.Name: %q vs %q", path, at.Name, bt.Name)
+				return &diff
+			}
+			return nil
+		}
+		diff := fmt.Sprintf("%s: type mismatch Ident vs %T", path, b)
+		return &diff
+
+	case Generic:
+		if bt, ok := b.(Generic); ok {
+			if at.Outer != bt.Outer {
+				diff := fmt.Sprintf("%s.Outer: %q vs %q", path, at.Outer, bt.Outer)
+				return &diff
+			}
+			if len(at.Params) != len(bt.Params) {
+				diff := fmt.Sprintf("%s.Params: length %d vs %d", path, len(at.Params), len(bt.Params))
+				return &diff
+			}
+			for i := range at.Params {
+				paramPath := fmt.Sprintf("%s.Params[%d]", path, i)
+				if diff := deepEqualPath(at.Params[i], bt.Params[i], paramPath); diff != nil {
+					return diff
+				}
+			}
+			return nil
+		}
+		diff := fmt.Sprintf("%s: type mismatch Generic vs %T", path, b)
+		return &diff
+
+	case Assoc:
+		if bt, ok := b.(Assoc); ok {
+			if diff := deepEqualPath(at.Outer, bt.Outer, path+".Outer"); diff != nil {
+				return diff
+			}
+			if diff := deepEqualPath(at.Next, bt.Next, path+".Next"); diff != nil {
+				return diff
+			}
+			return nil
+		}
+		diff := fmt.Sprintf("%s: type mismatch Assoc vs %T", path, b)
+		return &diff
+
+	case AsTrait:
+		if bt, ok := b.(AsTrait); ok {
+			if diff := deepEqualPath(at.Src, bt.Src, path+".Src"); diff != nil {
+				return diff
+			}
+			if diff := deepEqualPath(at.Target, bt.Target, path+".Target"); diff != nil {
+				return diff
+			}
+			return nil
+		}
+		diff := fmt.Sprintf("%s: type mismatch AsTrait vs %T", path, b)
+		return &diff
+	}
+
+	diff := fmt.Sprintf("%s: unknown type %T", path, a)
+	return &diff
+}
 
 func TestRustTypesParser(t *testing.T) {
 	tests := []struct {
@@ -182,8 +265,8 @@ func TestRustTypesParser(t *testing.T) {
 			}
 
 			// Test AST deep equality
-			if !reflect.DeepEqual(result, tt.expectedAST) {
-				t.Errorf("AST mismatch:\nGot:      %+v\nExpected: %+v", result, tt.expectedAST)
+			if diff := deepEqual(result, tt.expectedAST); diff != nil {
+				t.Errorf("AST mismatch: %s", *diff)
 			}
 
 			// Test string reconstruction

@@ -13,80 +13,101 @@ func deepEqual(a, b RustType) *string {
 }
 
 func deepEqualPath(a, b RustType, path string) *string {
-	if a == nil && b == nil {
+	if a.Kind != b.Kind {
+		diff := fmt.Sprintf("%s: kind mismatch %d vs %d", path, a.Kind, b.Kind)
+		return &diff
+	}
+
+	switch a.Kind {
+	case KindBase:
+		if a.Base == nil && b.Base == nil {
+			return nil
+		}
+		if a.Base == nil {
+			diff := fmt.Sprintf("%s.Base: nil vs non-nil", path)
+			return &diff
+		}
+		if b.Base == nil {
+			diff := fmt.Sprintf("%s.Base: non-nil vs nil", path)
+			return &diff
+		}
+
+		if len(a.Base.Path) != len(b.Base.Path) {
+			diff := fmt.Sprintf("%s.Base.Path: length %d vs %d", path, len(a.Base.Path), len(b.Base.Path))
+			return &diff
+		}
+		for i := range a.Base.Path {
+			if a.Base.Path[i] != b.Base.Path[i] {
+				diff := fmt.Sprintf("%s.Base.Path[%d]: %q vs %q", path, i, a.Base.Path[i], b.Base.Path[i])
+				return &diff
+			}
+		}
+
+		if len(a.Base.Generics) != len(b.Base.Generics) {
+			diff := fmt.Sprintf("%s.Base.Generics: length %d vs %d", path, len(a.Base.Generics), len(b.Base.Generics))
+			return &diff
+		}
+		for i := range a.Base.Generics {
+			genericPath := fmt.Sprintf("%s.Base.Generics[%d]", path, i)
+			if diff := deepEqualPath(a.Base.Generics[i], b.Base.Generics[i], genericPath); diff != nil {
+				return diff
+			}
+		}
 		return nil
-	}
-	if a == nil {
-		diff := fmt.Sprintf("%s: nil vs %T", path, b)
-		return &diff
-	}
-	if b == nil {
-		diff := fmt.Sprintf("%s: %T vs nil", path, a)
-		return &diff
-	}
 
-	switch at := a.(type) {
-	case Ident:
-		if bt, ok := b.(Ident); ok {
-			if at.Name != bt.Name {
-				diff := fmt.Sprintf("%s.Name: %q vs %q", path, at.Name, bt.Name)
-				return &diff
-			}
+	case KindTuple:
+		if a.Tuple == nil && b.Tuple == nil {
 			return nil
 		}
-		diff := fmt.Sprintf("%s: type mismatch Ident vs %T", path, b)
-		return &diff
+		if a.Tuple == nil {
+			diff := fmt.Sprintf("%s.Tuple: nil vs non-nil", path)
+			return &diff
+		}
+		if b.Tuple == nil {
+			diff := fmt.Sprintf("%s.Tuple: non-nil vs nil", path)
+			return &diff
+		}
 
-	case Generic:
-		if bt, ok := b.(Generic); ok {
-			if at.Outer != bt.Outer {
-				diff := fmt.Sprintf("%s.Outer: %q vs %q", path, at.Outer, bt.Outer)
-				return &diff
+		if len(*a.Tuple) != len(*b.Tuple) {
+			diff := fmt.Sprintf("%s.Tuple: length %d vs %d", path, len(*a.Tuple), len(*b.Tuple))
+			return &diff
+		}
+		for i := range *a.Tuple {
+			tuplePath := fmt.Sprintf("%s.Tuple[%d]", path, i)
+			if diff := deepEqualPath((*a.Tuple)[i], (*b.Tuple)[i], tuplePath); diff != nil {
+				return diff
 			}
-			if len(at.Params) != len(bt.Params) {
-				diff := fmt.Sprintf("%s.Params: length %d vs %d", path, len(at.Params), len(bt.Params))
-				return &diff
-			}
-			for i := range at.Params {
-				paramPath := fmt.Sprintf("%s.Params[%d]", path, i)
-				if diff := deepEqualPath(at.Params[i], bt.Params[i], paramPath); diff != nil {
-					return diff
-				}
-			}
+		}
+		return nil
+
+	case KindArray:
+		if a.Array == nil && b.Array == nil {
 			return nil
 		}
-		diff := fmt.Sprintf("%s: type mismatch Generic vs %T", path, b)
-		return &diff
-
-	case Assoc:
-		if bt, ok := b.(Assoc); ok {
-			if diff := deepEqualPath(at.Outer, bt.Outer, path+".Outer"); diff != nil {
-				return diff
-			}
-			if diff := deepEqualPath(at.Next, bt.Next, path+".Next"); diff != nil {
-				return diff
-			}
-			return nil
+		if a.Array == nil {
+			diff := fmt.Sprintf("%s.Array: nil vs non-nil", path)
+			return &diff
 		}
-		diff := fmt.Sprintf("%s: type mismatch Assoc vs %T", path, b)
-		return &diff
-
-	case AsTrait:
-		if bt, ok := b.(AsTrait); ok {
-			if diff := deepEqualPath(at.Src, bt.Src, path+".Src"); diff != nil {
-				return diff
-			}
-			if diff := deepEqualPath(at.Target, bt.Target, path+".Target"); diff != nil {
-				return diff
-			}
-			return nil
+		if b.Array == nil {
+			diff := fmt.Sprintf("%s.Array: non-nil vs nil", path)
+			return &diff
 		}
-		diff := fmt.Sprintf("%s: type mismatch AsTrait vs %T", path, b)
+
+		if a.Array.Len != b.Array.Len {
+			diff := fmt.Sprintf("%s.Array.Len: %d vs %d", path, a.Array.Len, b.Array.Len)
+			return &diff
+		}
+
+		basePath := fmt.Sprintf("%s.Array.Base", path)
+		if diff := deepEqualPath(a.Array.Base, b.Array.Base, basePath); diff != nil {
+			return diff
+		}
+		return nil
+
+	default:
+		diff := fmt.Sprintf("%s: unknown kind %d", path, a.Kind)
 		return &diff
 	}
-
-	diff := fmt.Sprintf("%s: unknown type %T", path, a)
-	return &diff
 }
 
 func TestRustTypesParser(t *testing.T) {
@@ -95,162 +116,268 @@ func TestRustTypesParser(t *testing.T) {
 		expectedAST RustType
 		expectedStr string
 	}{
+		// Simple identifiers
 		{
 			"String",
-			Ident{Name: "String"},
+			Base([]string{"String"}, nil),
 			"String",
 		},
 		{
+			"u32",
+			Base([]string{"u32"}, nil),
+			"u32",
+		},
+
+		// Simple paths
+		{
+			"std::String",
+			Base([]string{"std", "String"}, nil),
+			"std::String",
+		},
+		{
+			"foo::bar::Baz",
+			Base([]string{"foo", "bar", "Baz"}, nil),
+			"foo::bar::Baz",
+		},
+
+		// Generics with single parameter
+		{
 			"Box<T>",
-			Generic{Outer: "Box", Params: []RustType{Ident{Name: "T"}}},
+			Base([]string{"Box"}, []RustType{
+				Base([]string{"T"}, nil),
+			}),
 			"Box<T>",
 		},
 		{
-			"Option<Vec<u32>>",
-			Generic{
-				Outer: "Option",
-				Params: []RustType{
-					Generic{
-						Outer:  "Vec",
-						Params: []RustType{Ident{Name: "u32"}},
-					},
-				},
-			},
-			"Option<Vec<u32>>",
+			"Vec<u32>",
+			Base([]string{"Vec"}, []RustType{
+				Base([]string{"u32"}, nil),
+			}),
+			"Vec<u32>",
 		},
+
+		// Generics with multiple parameters
 		{
 			"HashMap<String, i32>",
-			Generic{
-				Outer:  "HashMap",
-				Params: []RustType{Ident{Name: "String"}, Ident{Name: "i32"}},
-			},
+			Base([]string{"HashMap"}, []RustType{
+				Base([]string{"String"}, nil),
+				Base([]string{"i32"}, nil),
+			}),
 			"HashMap<String, i32>",
 		},
 		{
 			"Result<T, E>",
-			Generic{
-				Outer:  "Result",
-				Params: []RustType{Ident{Name: "T"}, Ident{Name: "E"}},
-			},
+			Base([]string{"Result"}, []RustType{
+				Base([]string{"T"}, nil),
+				Base([]string{"E"}, nil),
+			}),
 			"Result<T, E>",
 		},
+
+		// Nested generics
 		{
-			"Foo::Bar",
-			Assoc{
-				Outer: Ident{Name: "Foo"},
-				Next:  Ident{Name: "Bar"},
-			},
-			"Foo::Bar",
-		},
-		{
-			"std::collections::HashMap",
-			Assoc{
-				Outer: Ident{Name: "std"},
-				Next: Assoc{
-					Outer: Ident{Name: "collections"},
-					Next:  Ident{Name: "HashMap"},
-				},
-			},
-			"std::collections::HashMap",
-		},
-		{
-			"<Foo as Bar>",
-			AsTrait{
-				Src:    Ident{Name: "Foo"},
-				Target: Ident{Name: "Bar"},
-			},
-			"<Foo as Bar>",
-		},
-		{
-			"<Foo as Bar::Baz>",
-			AsTrait{
-				Src: Ident{Name: "Foo"},
-				Target: Assoc{
-					Outer: Ident{Name: "Bar"},
-					Next:  Ident{Name: "Baz"},
-				},
-			},
-			"<Foo as Bar::Baz>",
-		},
-		{
-			"<Vec<T> as IntoIterator>",
-			AsTrait{
-				Src: Generic{
-					Outer:  "Vec",
-					Params: []RustType{Ident{Name: "T"}},
-				},
-				Target: Ident{Name: "IntoIterator"},
-			},
-			"<Vec<T> as IntoIterator>",
+			"Option<Vec<u32>>",
+			Base([]string{"Option"}, []RustType{
+				Base([]string{"Vec"}, []RustType{
+					Base([]string{"u32"}, nil),
+				}),
+			}),
+			"Option<Vec<u32>>",
 		},
 		{
 			"Arc<Mutex<Vec<u8>>>",
-			Generic{
-				Outer: "Arc",
-				Params: []RustType{
-					Generic{
-						Outer: "Mutex",
-						Params: []RustType{
-							Generic{
-								Outer:  "Vec",
-								Params: []RustType{Ident{Name: "u8"}},
-							},
-						},
-					},
-				},
-			},
+			Base([]string{"Arc"}, []RustType{
+				Base([]string{"Mutex"}, []RustType{
+					Base([]string{"Vec"}, []RustType{
+						Base([]string{"u8"}, nil),
+					}),
+				}),
+			}),
 			"Arc<Mutex<Vec<u8>>>",
 		},
-		// Whitespace normalization test cases
+
+		// Paths with generics
+		{
+			"std::collections::HashMap<String, i32>",
+			Base([]string{"std", "collections", "HashMap"}, []RustType{
+				Base([]string{"String"}, nil),
+				Base([]string{"i32"}, nil),
+			}),
+			"std::collections::HashMap<String, i32>",
+		},
+		{
+			"foo::Foo<bar::baz::Baa<Boo>, Bee::Goo>",
+			Base([]string{"foo", "Foo"}, []RustType{
+				Base([]string{"bar", "baz", "Baa"}, []RustType{
+					Base([]string{"Boo"}, nil),
+				}),
+				Base([]string{"Bee", "Goo"}, nil),
+			}),
+			"foo::Foo<bar::baz::Baa<Boo>, Bee::Goo>",
+		},
+		{
+			"T::Faa<T>",
+			Base([]string{"T", "Faa"}, []RustType{
+				Base([]string{"T"}, nil),
+			}),
+			"T::Faa<T>",
+		},
+
+		// Tuples
+		{
+			"()",
+			Tuple([]RustType{}),
+			"()",
+		},
+		{
+			"(u32)",
+			Tuple([]RustType{
+				Base([]string{"u32"}, nil),
+			}),
+			"(u32)",
+		},
+		{
+			"(String, i32)",
+			Tuple([]RustType{
+				Base([]string{"String"}, nil),
+				Base([]string{"i32"}, nil),
+			}),
+			"(String, i32)",
+		},
+		{
+			"(T, U, V)",
+			Tuple([]RustType{
+				Base([]string{"T"}, nil),
+				Base([]string{"U"}, nil),
+				Base([]string{"V"}, nil),
+			}),
+			"(T, U, V)",
+		},
+		{
+			"(Vec<u32>, HashMap<String, i32>)",
+			Tuple([]RustType{
+				Base([]string{"Vec"}, []RustType{
+					Base([]string{"u32"}, nil),
+				}),
+				Base([]string{"HashMap"}, []RustType{
+					Base([]string{"String"}, nil),
+					Base([]string{"i32"}, nil),
+				}),
+			}),
+			"(Vec<u32>, HashMap<String, i32>)",
+		},
+
+		// Arrays
+		{
+			"[u8; 32]",
+			Array(Base([]string{"u8"}, nil), 32),
+			"[u8; 32]",
+		},
+		{
+			"[i32; 10]",
+			Array(Base([]string{"i32"}, nil), 10),
+			"[i32; 10]",
+		},
+		{
+			"[String; 5]",
+			Array(Base([]string{"String"}, nil), 5),
+			"[String; 5]",
+		},
+		{
+			"[Vec<u32>; 3]",
+			Array(
+				Base([]string{"Vec"}, []RustType{
+					Base([]string{"u32"}, nil),
+				}),
+				3,
+			),
+			"[Vec<u32>; 3]",
+		},
+		{
+			"[foo::Foo<Bar>; 12]",
+			Array(
+				Base([]string{"foo", "Foo"}, []RustType{
+					Base([]string{"Bar"}, nil),
+				}),
+				12,
+			),
+			"[foo::Foo<Bar>; 12]",
+		},
+
+		// Complex nested combinations
+		{
+			"Vec<(String, i32)>",
+			Base([]string{"Vec"}, []RustType{
+				Tuple([]RustType{
+					Base([]string{"String"}, nil),
+					Base([]string{"i32"}, nil),
+				}),
+			}),
+			"Vec<(String, i32)>",
+		},
+		{
+			"HashMap<String, [u8; 32]>",
+			Base([]string{"HashMap"}, []RustType{
+				Base([]string{"String"}, nil),
+				Array(Base([]string{"u8"}, nil), 32),
+			}),
+			"HashMap<String, [u8; 32]>",
+		},
+		{
+			"[(String, i32); 10]",
+			Array(
+				Tuple([]RustType{
+					Base([]string{"String"}, nil),
+					Base([]string{"i32"}, nil),
+				}),
+				10,
+			),
+			"[(String, i32); 10]",
+		},
+		{
+			"Option<[Vec<(u32, String)>; 5]>",
+			Base([]string{"Option"}, []RustType{
+				Array(
+					Base([]string{"Vec"}, []RustType{
+						Tuple([]RustType{
+							Base([]string{"u32"}, nil),
+							Base([]string{"String"}, nil),
+						}),
+					}),
+					5,
+				),
+			}),
+			"Option<[Vec<(u32, String)>; 5]>",
+		},
+
+		// Whitespace normalization
 		{
 			" Box < T > ",
-			Generic{Outer: "Box", Params: []RustType{Ident{Name: "T"}}},
+			Base([]string{"Box"}, []RustType{
+				Base([]string{"T"}, nil),
+			}),
 			"Box<T>",
 		},
 		{
 			" HashMap < String ,  i32 > ",
-			Generic{
-				Outer:  "HashMap",
-				Params: []RustType{Ident{Name: "String"}, Ident{Name: "i32"}},
-			},
+			Base([]string{"HashMap"}, []RustType{
+				Base([]string{"String"}, nil),
+				Base([]string{"i32"}, nil),
+			}),
 			"HashMap<String, i32>",
 		},
-		// Complex type demonstrating all parser features
 		{
-			"std::sync::Arc<Mutex<HashMap<String, <Vec<T> as IntoIterator>::Item>>>",
-			Assoc{
-				Outer: Ident{Name: "std"},
-				Next: Assoc{
-					Outer: Ident{Name: "sync"},
-					Next: Generic{
-						Outer: "Arc",
-						Params: []RustType{
-							Generic{
-								Outer: "Mutex",
-								Params: []RustType{
-									Generic{
-										Outer: "HashMap",
-										Params: []RustType{
-											Ident{Name: "String"},
-											Assoc{
-												Outer: AsTrait{
-													Src: Generic{
-														Outer:  "Vec",
-														Params: []RustType{Ident{Name: "T"}},
-													},
-													Target: Ident{Name: "IntoIterator"},
-												},
-												Next: Ident{Name: "Item"},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			"std::sync::Arc<Mutex<HashMap<String, <Vec<T> as IntoIterator>::Item>>>",
+			" ( String , i32 ) ",
+			Tuple([]RustType{
+				Base([]string{"String"}, nil),
+				Base([]string{"i32"}, nil),
+			}),
+			"(String, i32)",
+		},
+		{
+			" [ u8 ; 32 ] ",
+			Array(Base([]string{"u8"}, nil), 32),
+			"[u8; 32]",
 		},
 	}
 

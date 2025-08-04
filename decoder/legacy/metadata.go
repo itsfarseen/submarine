@@ -138,14 +138,14 @@ func MakeMetadataFromModules(modules []ModuleMetadata, version int) Metadata {
 	if metadata.Version >= 14 {
 		panic("not a legacy version")
 	} else if metadata.Version >= 12 {
-		var index MetadataIndexV12
+		index := MetadataIndexV12{make(map[int]int)}
 		metadata.IndexV12 = &index
 		for i, module := range metadata.Modules {
 			metadata.Modules = append(metadata.Modules, module)
 			index.IndexedModules[module.Index] = i
 		}
 	} else if metadata.Version >= 9 {
-		var index MetadataIndexV9
+		index := MetadataIndexV9{}
 		metadata.IndexV9 = &index
 		for i, module := range metadata.Modules {
 			metadata.Modules = append(metadata.Modules, module)

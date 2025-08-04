@@ -16,34 +16,38 @@ type ChainMetadata struct {
 
 func (client *RPC) GetMetadata(blockHash string) ChainMetadata {
 	metadataReq := client.Send("state_getMetadata", []any{blockHash})
-
-	metadataHex, err := metadataReq.AsString()
+	metadata, err := DecodeChainMetadata(metadataReq)
 	if err != nil {
-		log.Fatalf("Failed to get metadata: %v", err)
+		log.Fatalf("get metadata: %v", err)
+	}
+	return metadata
+}
+
+func DecodeChainMetadata(pr *PendingRequest) (ChainMetadata, error) {
+	var metadata ChainMetadata
+
+	metadataHex, err := pr.AsString()
+	if err != nil {
+		return metadata, fmt.Errorf("metadata hex: %v", err)
 	}
 
 	// Remove the '0x' prefix and decode the hex string into bytes.
 	cleanHex := strings.TrimPrefix(metadataHex, "0x")
 	metadataBytes, err := hex.DecodeString(cleanHex)
 	if err != nil {
-		log.Fatalf("Failed to decode metadata hex: %v", err)
+		return metadata, fmt.Errorf("decode metadata hex: %v", err)
 	}
-
-	var version uint = 0
 
 	// The version is the 5th byte (index 4) after the 4-byte magic number ('meta').
 	if len(metadataBytes) < 5 {
-		log.Fatalf("Metadata is too short to contain a version number.")
+		return metadata, fmt.Errorf("Metadata is too short to contain a version number.")
 	} else {
-		version = uint(metadataBytes[4])
+		metadata.Version = uint(metadataBytes[4])
 	}
 
-	data := metadataBytes[5:]
+	metadata.Data = metadataBytes[5:]
 
-	return ChainMetadata{
-		Version: version,
-		Data:    data,
-	}
+	return metadata, nil
 }
 
 func (client *RPC) GetEvents(blockHash string) []byte {

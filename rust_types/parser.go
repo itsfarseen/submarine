@@ -2,6 +2,7 @@ package rust_types
 
 import (
 	"fmt"
+	"strings"
 	"unicode"
 )
 
@@ -18,12 +19,21 @@ func (i Ident) String() string {
 }
 
 type Generic struct {
-	Outer string
-	Inner RustType
+	Outer  string
+	Params []RustType
 }
 
 func (g Generic) String() string {
-	return fmt.Sprintf("%s<%s>", g.Outer, g.Inner.String())
+	if len(g.Params) == 0 {
+		return g.Outer
+	}
+
+	var params []string
+	for _, param := range g.Params {
+		params = append(params, param.String())
+	}
+
+	return fmt.Sprintf("%s<%s>", g.Outer, strings.Join(params, ", "))
 }
 
 type Assoc struct {
@@ -146,7 +156,7 @@ func (p *RustTypesParser) parseBasicType() (RustType, error) {
 		p.Advance() // consume '<'
 		p.skipWhitespace()
 
-		inner, err := p.parseType()
+		params, err := p.parseGenericParams()
 		if err != nil {
 			return nil, err
 		}
@@ -157,10 +167,33 @@ func (p *RustTypesParser) parseBasicType() (RustType, error) {
 		}
 		p.Advance() // consume '>'
 
-		return Generic{Outer: ident, Inner: inner}, nil
+		return Generic{Outer: ident, Params: params}, nil
 	}
 
 	return Ident{Name: ident}, nil
+}
+
+func (p *RustTypesParser) parseGenericParams() ([]RustType, error) {
+	var params []RustType
+
+	for {
+		param, err := p.parseType()
+		if err != nil {
+			return nil, err
+		}
+		params = append(params, param)
+
+		p.skipWhitespace()
+
+		if p.Peek() == ',' {
+			p.Advance() // consume ','
+			p.skipWhitespace()
+		} else {
+			break
+		}
+	}
+
+	return params, nil
 }
 
 func (p *RustTypesParser) parseAssoc(outer RustType) (RustType, error) {
@@ -199,7 +232,7 @@ func (p *RustTypesParser) parseAsTrait() (RustType, error) {
 	p.Skip(2) // consume "as"
 	p.skipWhitespace()
 
-	target, err := p.parseType()
+	target, err := p.parseTypeInAsTrait()
 	if err != nil {
 		return nil, err
 	}
@@ -211,4 +244,23 @@ func (p *RustTypesParser) parseAsTrait() (RustType, error) {
 	p.Advance() // consume '>'
 
 	return AsTrait{Src: src, Target: target}, nil
+}
+
+func (p *RustTypesParser) parseTypeInAsTrait() (RustType, error) {
+	p.skipWhitespace()
+
+	// Parse basic type (identifier or generic) - but no AsTrait recursion
+	typ, err := p.parseBasicType()
+	if err != nil {
+		return nil, err
+	}
+
+	p.skipWhitespace()
+
+	// Check for association (::)
+	if p.Matches("::") {
+		return p.parseAssoc(typ)
+	}
+
+	return typ, nil
 }

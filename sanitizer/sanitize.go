@@ -8,10 +8,19 @@ import (
 
 var identRe *regexp.Regexp = regexp.MustCompile("[a-zA-Z0-9_]")
 
-func Sanitize(typeName string) string {
+func ParseAndSanitize(typeName string) rust_types.RustType {
+	// We need to normalize spaces here, even though the Parser does normalize spaces, for RemoveAsTrait() to work.
 	typeName = NormalizeSpaces(typeName)
+
+	// This is done outside of the AST because the as trait syntax makes parsing way more complicated.
+	// If we make as trait a type, we'd have to change RustTypeBase.Path from []string to []RustType
+	// This makes parsing ambiguous. We'd have to introduce associativity to fix it, but then it makes the code more complex.
+	// The current parser is very simple, and the parser output is really easy to manipulate.
 	typeName = RemoveAsTrait(typeName)
-	return SanitizeByAST(typeName)
+
+	rust_type := ParseRustType(typeName)
+	rust_type = SanitizeRustType(rust_type)
+	return rust_type
 }
 
 // 'Foo\nBar  Baz' -> 'Foo Bar Baz'
@@ -49,14 +58,13 @@ func RemoveAsTrait(s string) string {
 	return s
 }
 
-func SanitizeByAST(s string) string {
+func ParseRustType(s string) rust_types.RustType {
 	rust_type, err := rust_types.NewRustTypesParser(s).Parse()
 	if err != nil {
 		panic(err)
 	}
+	return rust_type
 
-	rust_type = SanitizeRustType(rust_type)
-	return rust_type.String()
 }
 
 func SanitizeRustType(rust_type rust_types.RustType) rust_types.RustType {

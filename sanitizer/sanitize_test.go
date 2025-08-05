@@ -82,7 +82,7 @@ func TestRemoveAsTrait(t *testing.T) {
 	}
 }
 
-func TestSanitizeByAST(t *testing.T) {
+func TestParseAndSanitizeRustType(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
@@ -127,9 +127,10 @@ func TestSanitizeByAST(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := sanitizer.SanitizeByAST(tt.input)
-			if result != tt.expected {
-				t.Errorf("SanitizeByAST(%q) = %q, want %q", tt.input, result, tt.expected)
+			rust_type := sanitizer.ParseRustType(tt.input)
+			result := sanitizer.SanitizeRustType(rust_type)
+			if result.String() != tt.expected {
+				t.Errorf("SanitizeRustType(%q).String() = %q, want %q", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -214,9 +215,9 @@ func TestSanitize(t *testing.T) {
 					t.Errorf("Sanitize(%q) panicked: %v", tt.input, r)
 				}
 			}()
-			output := sanitizer.Sanitize(tt.input)
-			if output != tt.output {
-				t.Errorf("Sanitize(%v) = %q, want %q", tt.input, output, tt.output)
+			output := sanitizer.ParseAndSanitize(tt.input)
+			if output.String() != tt.output {
+				t.Errorf("ParseAndSanitize(%v).String() = %q, want %q", tt.input, output, tt.output)
 			}
 		})
 	}
@@ -378,7 +379,7 @@ var GOLDEN_TESTS []struct{ input, output string } = []struct {
 	{"u64", "u64"},
 }
 
-func TestSanitizeGolden(t *testing.T) {
+func TestParseAndSanitizeGolden(t *testing.T) {
 	for _, tt := range GOLDEN_TESTS {
 		t.Run(tt.input, func(t *testing.T) {
 			// Since Sanitize doesn't return anything, we just test that it doesn't panic
@@ -387,9 +388,9 @@ func TestSanitizeGolden(t *testing.T) {
 					t.Errorf("Sanitize(%q) panicked: %v", tt.input, r)
 				}
 			}()
-			output := sanitizer.Sanitize(tt.input)
-			if output != tt.output {
-				t.Errorf("Sanitize(%v) = %q, want %q", tt.input, output, tt.output)
+			output := sanitizer.ParseAndSanitize(tt.input)
+			if output.String() != tt.output {
+				t.Errorf("ParseAndSanitize(%v).String() = %q, want %q", tt.input, output, tt.output)
 			}
 		})
 	}

@@ -2,7 +2,7 @@ package rust_types_test
 
 import (
 	"fmt"
-	. "submarine/rust_types"
+	. "submarine/sanitizer/rust_types"
 	"testing"
 )
 

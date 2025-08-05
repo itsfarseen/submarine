@@ -20,5 +20,9 @@ type Block struct {
 }
 
 type RuntimeVersion struct {
-	SpecVersion int `json:"specVersion"`
+	SpecName    string `json:"specName"`
+	ImplName    string `json:"implName"`
+	Apis        []any  `json:"apis"`
+	SpecVersion int    `json:"specVersion"`
 }
+

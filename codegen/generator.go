@@ -160,7 +160,7 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 			return %s
 		}
 		`
-		innerDecodeFunc, err := c.getDecodeFuncForTypeName(moduleName, type_.Ref.Name)
+		innerDecodeFunc, err := c.getDecodeFuncForTypeName(moduleName, *type_.Ref)
 		if err != nil {
 			return err
 		}
@@ -309,7 +309,7 @@ func (c *Codegen) getDecodeFuncForTypeName(moduleName string, typeName string) (
 func (c *Codegen) getDecodeFuncForType(moduleName string, type_ *Type) (string, error) {
 	switch type_.Kind {
 	case KindRef:
-		return c.getDecodeFuncForTypeName(moduleName, type_.Ref.Name)
+		return c.getDecodeFuncForTypeName(moduleName, *type_.Ref)
 	case KindOption:
 		option := type_.Option
 		itemTypeName, err := c.getGoTypeForType(moduleName, option.Type)
@@ -382,7 +382,7 @@ func (c *Codegen) getGoTypeForType(moduleName string, type_ *Type) (string, erro
 
 	switch type_.Kind {
 	case KindRef:
-		return c.getGoTypeForTypename(moduleName, type_.Ref.Name)
+		return c.getGoTypeForTypename(moduleName, *type_.Ref)
 	case KindStruct, KindEnumComplex, KindEnumSimple:
 		return "", fmt.Errorf("Illegal complex nested type")
 	case KindOption:

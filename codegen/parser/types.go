@@ -20,7 +20,7 @@ type Type struct {
 	Import      *Import
 	Vec         *Vec
 	Option      *Option
-	Ref         *Ref
+	Ref         *string
 }
 
 type Struct struct {
@@ -51,8 +51,4 @@ type Vec struct {
 
 type Option struct {
 	Type *Type
-}
-
-type Ref struct {
-	Name string
 }

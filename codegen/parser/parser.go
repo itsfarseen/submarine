@@ -71,7 +71,7 @@ func parseModule(file string) (Module, error) {
 func parseType(rawDef any) (*Type, error) {
 	switch v := rawDef.(type) {
 	case string:
-		return &Type{Kind: KindRef, Ref: &Ref{Name: v}}, nil
+		return &Type{Kind: KindRef, Ref: &v}, nil
 	case map[string]any:
 		return parseTypeFromMap(v)
 	default:
@@ -144,7 +144,7 @@ func parseTypeFromMap(def map[string]any) (*Type, error) {
 
 	default:
 		t.Kind = KindRef
-		t.Ref = &Ref{Name: rawType}
+		t.Ref = &rawType
 	}
 
 	return t, nil

@@ -64,7 +64,7 @@ func walkAndValidateRefs(allModules *AllModules, moduleName, currentTypeName str
 
 	switch typeDef.Kind {
 	case KindRef:
-		refName := typeDef.Ref.Name
+		refName := *typeDef.Ref
 		// Check if the reference is a primitive.
 		if _, isPrimitive := primitives[refName]; isPrimitive {
 			return

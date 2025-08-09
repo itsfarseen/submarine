@@ -1,5 +1,15 @@
 package parser
 
+type AllModules struct {
+	ModuleNames []string // for preserving order
+	Modules     map[string]Module
+}
+
+type Module struct {
+	Types     map[string]*Type
+	TypeNames []string
+}
+
 type TypeKind string
 
 const (

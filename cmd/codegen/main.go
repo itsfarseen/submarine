@@ -29,7 +29,7 @@ func main() {
 	}
 
 	// Parse all the YAML files into a structured format.
-	allModules, err := parser.Parse(files)
+	allModules, err := parser.ParseModuleFiles(files)
 	if err != nil {
 		log.Fatalf("Error parsing modules from %s: %v", yamlDir, err)
 	}

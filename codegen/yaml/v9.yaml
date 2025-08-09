@@ -5,8 +5,7 @@ ErrorMetadata:
       type: "text"
     - name: "docs"
       type: "vec"
-      item: 
-        type: "text"
+      item: "text"
 
 EventMetadata:
   type: "struct"
@@ -19,8 +18,7 @@ EventMetadata:
         type: "type"
     - name: "docs"
       type: "vec"
-      item: 
-        type: "text"
+      item: "text"
 
 FunctionArgumentMetadata:
   type: "struct"
@@ -37,20 +35,17 @@ FunctionMetadata:
       type: "text"
     - name: "args"
       type: "vec"
-      item:
-        type: "FunctionArgumentMetadata"
+      item: "FunctionArgumentMetadata"
     - name: "docs"
       type: "vec"
-      item:
-        type: "text"
+      item: "text"
 
 Metadata:
   type: "struct"
   fields:
     - name: "modules"
       type: "vec"
-      item:
-        type: "ModuleMetadata"
+      item: "ModuleMetadata"
 
 ModuleConstantMetadata:
   type: "struct"
@@ -63,8 +58,7 @@ ModuleConstantMetadata:
       type: "bytes"
     - name: "docs"
       type: "vec"
-      item:
-        type: "text"
+      item: "text"
 
 ModuleMetadata:
   type: "struct"
@@ -79,22 +73,18 @@ ModuleMetadata:
       type: "option"
       item:
         type: "vec"
-        item:
-          type: "FunctionMetadata"
+        item: "FunctionMetadata"
     - name: "events"
       type: "option"
       item:
         type: "vec"
-        item:
-          type: "EventMetadata"
+        item: "EventMetadata"
     - name: "constants"
       type: "vec"
-      item:
-        type: "ModuleConstantMetadata"
+      item: "ModuleConstantMetadata"
     - name: "errors"
       type: "vec"
-      item:
-        type: "ErrorMetadata"
+      item: "ErrorMetadata"
 
 StorageEntryMetadata:
   type: "struct"
@@ -109,8 +99,7 @@ StorageEntryMetadata:
       type: "bytes"
     - name: "docs"
       type: "vec"
-      item:
-        type: "text"
+      item: "text"
 
 StorageEntryModifier:
   type: "enum_simple"
@@ -171,5 +160,4 @@ StorageMetadata:
       type: "text"
     - name: "items"
       type: "vec"
-      item:
-        type: "StorageEntryMetadata"
+      item: "StorageEntryMetadata"

@@ -17,32 +17,26 @@ Si0TypeDefPrimitive:
     - 'I128'
     - 'I256'
 
-Si0Path:
-  type: "text"
+Si0Path: "text"
 
-Si1LookupTypeId:
-  type: "compact"
+Si1LookupTypeId: "compact"
 
 Si1Field:
   type: "struct"
   fields:
     - name: "name"
       type: "option"
-      item:
-        type: "text"
+      item: "text"
     - name: "type"
       type: "Si1LookupTypeId"
     - name: "typeName"
       type: "option"
-      item:
-        type: "text"
+      item: "text"
     - name: "docs"
       type: "vec"
-      item:
-        type: "text"
+      item: "text"
 
-Si1Path:
-  type: "Si0Path"
+Si1Path: "Si0Path"
 
 Si1Type:
   type: "struct"
@@ -51,14 +45,12 @@ Si1Type:
       type: "Si1Path"
     - name: "params"
       type: "vec"
-      item:
-        type: "Si1TypeParameter"
+      item: "Si1TypeParameter"
     - name: "def"
       type: "Si1TypeDef"
     - name: "docs"
       type: "vec"
-      item:
-        type: "text"
+      item: "text"
 
 Si1TypeDef:
   type: "enum_complex"
@@ -109,8 +101,7 @@ Si1TypeDefComposite:
   fields:
     - name: "fields"
       type: "vec"
-      item:
-        type: "Si1Field"
+      item: "Si1Field"
 
 Si1TypeDefPrimitive:
   type: "Si0TypeDefPrimitive"
@@ -123,8 +114,7 @@ Si1TypeDefSequence:
 
 Si1TypeDefTuple:
   type: "vec"
-  item:
-    type: "Si1LookupTypeId"
+  item: "Si1LookupTypeId"
 
 Si1TypeParameter:
   type: "struct"
@@ -133,16 +123,14 @@ Si1TypeParameter:
       type: "text"
     - name: "type"
       type: "option"
-      item:
-        type: "Si1LookupTypeId"
+      item: "Si1LookupTypeId"
 
 Si1TypeDefVariant:
   type: "struct"
   fields:
     - name: "variants"
       type: "vec"
-      item:
-        type: "Si1Variant"
+      item: "Si1Variant"
 
 Si1Variant:
   type: "struct"
@@ -151,11 +139,9 @@ Si1Variant:
       type: "text"
     - name: "fields"
       type: "vec"
-      item:
-        type: "Si1Field"
+      item: "Si1Field"
     - name: "index"
       type: "u8"
     - name: "docs"
       type: "vec"
-      item:
-        type: "text"
+      item: "text"

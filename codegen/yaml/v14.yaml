@@ -45,18 +45,15 @@ ErrorMetadata:
       type: "text"
     - name: "fields"
       type: "vec"
-      item:
-        type: "Si1Field"
+      item: "Si1Field"
     - name: "index"
       type: "u8"
     - name: "docs"
       type: "vec"
-      item:
-        type: "text"
+      item: "text"
     - name: "args"
       type: "vec"
-      item:
-        type: "type"
+      item: "type"
 
 EventMetadata:
   type: "struct"
@@ -65,18 +62,15 @@ EventMetadata:
       type: "text"
     - name: "fields"
       type: "vec"
-      item:
-        type: "Si1Field"
+      item: "Si1Field"
     - name: "index"
       type: "u8"
     - name: "docs"
       type: "vec"
-      item:
-        type: "text"
+      item: "text"
     - name: "args"
       type: "vec"
-      item:
-        type: "type"
+      item: "type"
 
 FunctionArgumentMetadata:
   type: "struct"
@@ -97,18 +91,15 @@ FunctionMetadata:
       type: "text"
     - name: "fields"
       type: "vec"
-      item:
-        type: "Si1Field"
+      item: "Si1Field"
     - name: "index"
       type: "u8"
     - name: "docs"
       type: "vec"
-      item:
-        type: "text"
+      item: "text"
     - name: "args"
       type: "vec"
-      item:
-        type: "FunctionArgumentMetadata"
+      item: "FunctionArgumentMetadata"
 
 ExtrinsicMetadata:
   type: "struct"
@@ -119,8 +110,7 @@ ExtrinsicMetadata:
       type: "u8"
     - name: "signedExtensions"
       type: "vec"
-      item:
-        type: "SignedExtensionMetadata"
+      item: "SignedExtensionMetadata"
 
 Metadata:
   type: "struct"
@@ -129,8 +119,7 @@ Metadata:
       type: "PortableRegistry"
     - name: "pallets"
       type: "vec"
-      item:
-        type: "PalletMetadata"
+      item: "PalletMetadata"
     - name: "extrinsic"
       type: "ExtrinsicMetadata"
     - name: "type"
@@ -153,8 +142,7 @@ PalletConstantMetadata:
       type: "bytes"
     - name: "docs"
       type: "vec"
-      item:
-        type: "text"
+      item: "text"
 
 PalletErrorMetadata:
   type: "struct"
@@ -187,8 +175,7 @@ PalletMetadata:
         type: "PalletEventMetadata"
     - name: "constants"
       type: "vec"
-      item:
-        type: "PalletConstantMetadata"
+      item: "PalletConstantMetadata"
     - name: "errors"
       type: "option"
       item:
@@ -203,8 +190,7 @@ PalletStorageMetadata:
       type: "text"
     - name: "items"
       type: "vec"
-      item:
-        type: "StorageEntryMetadata"
+      item: "StorageEntryMetadata"
 
 SignedExtensionMetadata:
   type: "struct"
@@ -229,8 +215,7 @@ StorageEntryMetadata:
       type: "bytes"
     - name: "docs"
       type: "vec"
-      item:
-        type: "text"
+      item: "text"
 
 StorageEntryType:
   type: "enum_complex"
@@ -245,8 +230,7 @@ StorageEntryMap:
   fields:
     - name: "hashers"
       type: "vec"
-      item:
-        type: "StorageHasher"
+      item: "StorageHasher"
     - name: "key"
       type: "Si1LookupTypeId"
     - name: "value"

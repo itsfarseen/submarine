@@ -61,8 +61,7 @@ StorageEntryMetadata:
       type: "bytes"
     - name: "docs"
       type: "vec"
-      item:
-        type: "text"
+      item: "text"
 
 StorageEntryType:
   type: "enum_complex"
@@ -107,12 +106,10 @@ StorageEntryNMap:
   fields:
     - name: "keyVec"
       type: "vec"
-      item:
-        type: "type"
+      item: "type"
     - name: "hashers"
       type: "vec"
-      item:
-        type: "StorageHasher"
+      item: "StorageHasher"
     - name: "value"
       type: "type"
 
@@ -123,5 +120,4 @@ StorageMetadata:
       type: "text"
     - name: "items"
       type: "vec"
-      item:
-        type: "StorageEntryMetadata"
+      item: "StorageEntryMetadata"

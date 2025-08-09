@@ -58,8 +58,7 @@ Metadata:
   fields:
     - name: "modules"
       type: "vec"
-      item:
-        type: "ModuleMetadata"
+      item: "ModuleMetadata"
     - name: "extrinsic"
       type: "ExtrinsicMetadata"
 
@@ -76,21 +75,17 @@ ModuleMetadata:
       type: "option"
       item:
         type: "vec"
-        item:
-          type: "FunctionMetadata"
+        item: "FunctionMetadata"
     - name: "events"
       type: "option"
       item:
         type: "vec"
-        item:
-          type: "EventMetadata"
+        item: "EventMetadata"
     - name: "constants"
       type: "vec"
-      item:
-        type: "ModuleConstantMetadata"
+      item: "ModuleConstantMetadata"
     - name: "errors"
       type: "vec"
-      item:
-        type: "ErrorMetadata"
+      item: "ErrorMetadata"
     - name: "index"
       type: "u8"

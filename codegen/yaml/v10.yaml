@@ -33,8 +33,7 @@ Metadata:
   fields:
     - name: "modules"
       type: "vec"
-      item:
-        type: "ModuleMetadata"
+      item: "ModuleMetadata"
 
 ModuleMetadata:
   type: "struct"
@@ -49,22 +48,18 @@ ModuleMetadata:
       type: "option"
       item:
         type: "vec"
-        item:
-          type: "FunctionMetadata"
+        item: "FunctionMetadata"
     - name: "events"
       type: "option"
       item:
         type: "vec"
-        item:
-          type: "EventMetadata"
+        item: "EventMetadata"
     - name: "constants"
       type: "vec"
-      item:
-        type: "ModuleConstantMetadata"
+      item: "ModuleConstantMetadata"
     - name: "errors"
       type: "vec"
-      item:
-        type: "ErrorMetadata"
+      item: "ErrorMetadata"
 
 StorageEntryMetadata:
   type: "struct"
@@ -79,8 +74,7 @@ StorageEntryMetadata:
       type: "bytes"
     - name: "docs"
       type: "vec"
-      item:
-        type: "text"
+      item: "text"
 
 StorageEntryType:
   type: "enum_complex"
@@ -125,8 +119,7 @@ StorageMetadata:
       type: "text"
     - name: "items"
       type: "vec"
-      item:
-        type: "StorageEntryMetadata"
+      item: "StorageEntryMetadata"
 
 StorageHasher:
   type: "enum_simple"

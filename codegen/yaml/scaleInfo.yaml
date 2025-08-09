@@ -25,16 +25,19 @@ Si1Field:
   type: "struct"
   fields:
     - name: "name"
-      type: "option"
-      item: "text"
+      type: 
+        type: "option"
+        item: "text"
     - name: "type"
       type: "Si1LookupTypeId"
     - name: "typeName"
-      type: "option"
-      item: "text"
+      type: 
+        type: "option"
+        item: "text"
     - name: "docs"
-      type: "vec"
-      item: "text"
+      type: 
+        type: "vec"
+        item: "text"
 
 Si1Path: "Si0Path"
 
@@ -44,13 +47,15 @@ Si1Type:
     - name: "path"
       type: "Si1Path"
     - name: "params"
-      type: "vec"
-      item: "Si1TypeParameter"
+      type: 
+        type: "vec"
+        item: "Si1TypeParameter"
     - name: "def"
       type: "Si1TypeDef"
     - name: "docs"
-      type: "vec"
-      item: "text"
+      type: 
+        type: "vec"
+        item: "text"
 
 Si1TypeDef:
   type: "enum_complex"
@@ -100,11 +105,11 @@ Si1TypeDefComposite:
   type: "struct"
   fields:
     - name: "fields"
-      type: "vec"
-      item: "Si1Field"
+      type: 
+        type: "vec"
+        item: "Si1Field"
 
-Si1TypeDefPrimitive:
-  type: "Si0TypeDefPrimitive"
+Si1TypeDefPrimitive: "Si0TypeDefPrimitive"
 
 Si1TypeDefSequence:
   type: "struct"
@@ -122,15 +127,17 @@ Si1TypeParameter:
     - name: "name"
       type: "text"
     - name: "type"
-      type: "option"
-      item: "Si1LookupTypeId"
+      type: 
+        type: "option"
+        item: "Si1LookupTypeId"
 
 Si1TypeDefVariant:
   type: "struct"
   fields:
     - name: "variants"
-      type: "vec"
-      item: "Si1Variant"
+      type: 
+        type: "vec"
+        item: "Si1Variant"
 
 Si1Variant:
   type: "struct"
@@ -138,10 +145,12 @@ Si1Variant:
     - name: "name"
       type: "text"
     - name: "fields"
-      type: "vec"
-      item: "Si1Field"
+      type: 
+        type: "vec"
+        item: "Si1Field"
     - name: "index"
       type: "u8"
     - name: "docs"
-      type: "vec"
-      item: "text"
+      type: 
+        type: "vec"
+        item: "text"

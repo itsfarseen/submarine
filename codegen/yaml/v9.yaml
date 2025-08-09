@@ -4,8 +4,9 @@ ErrorMetadata:
     - name: "name"
       type: "text"
     - name: "docs"
-      type: "vec"
-      item: "text"
+      type: 
+        type: "vec"
+        item: "text"
 
 EventMetadata:
   type: "struct"
@@ -13,12 +14,13 @@ EventMetadata:
     - name: "name"
       type: "text"
     - name: "args"
-      type: "vec"
-      item: 
-        type: "type"
+      type: 
+        type: "vec"
+        item: "type"
     - name: "docs"
-      type: "vec"
-      item: "text"
+      type: 
+        type: "vec"
+        item: "text"
 
 FunctionArgumentMetadata:
   type: "struct"
@@ -34,18 +36,21 @@ FunctionMetadata:
     - name: "name"
       type: "text"
     - name: "args"
-      type: "vec"
-      item: "FunctionArgumentMetadata"
+      type: 
+        type: "vec"
+        item: "FunctionArgumentMetadata"
     - name: "docs"
-      type: "vec"
-      item: "text"
+      type: 
+        type: "vec"
+        item: "text"
 
 Metadata:
   type: "struct"
   fields:
     - name: "modules"
-      type: "vec"
-      item: "ModuleMetadata"
+      type: 
+        type: "vec"
+        item: "ModuleMetadata"
 
 ModuleConstantMetadata:
   type: "struct"
@@ -57,8 +62,9 @@ ModuleConstantMetadata:
     - name: "value"
       type: "bytes"
     - name: "docs"
-      type: "vec"
-      item: "text"
+      type: 
+        type: "vec"
+        item: "text"
 
 ModuleMetadata:
   type: "struct"
@@ -66,25 +72,29 @@ ModuleMetadata:
     - name: "name"
       type: "text"
     - name: "storage"
-      type: "option"
-      item:
-        type: "StorageMetadata"
+      type: 
+        type: "option"
+        item: "StorageMetadata"
     - name: "calls"
-      type: "option"
-      item:
-        type: "vec"
-        item: "FunctionMetadata"
+      type: 
+        type: "option"
+        item:
+          type: "vec"
+          item: "FunctionMetadata"
     - name: "events"
-      type: "option"
-      item:
-        type: "vec"
-        item: "EventMetadata"
+      type: 
+        type: "option"
+        item:
+          type: "vec"
+          item: "EventMetadata"
     - name: "constants"
-      type: "vec"
-      item: "ModuleConstantMetadata"
+      type: 
+        type: "vec"
+        item: "ModuleConstantMetadata"
     - name: "errors"
-      type: "vec"
-      item: "ErrorMetadata"
+      type: 
+        type: "vec"
+        item: "ErrorMetadata"
 
 StorageEntryMetadata:
   type: "struct"
@@ -98,8 +108,9 @@ StorageEntryMetadata:
     - name: "fallback"
       type: "bytes"
     - name: "docs"
-      type: "vec"
-      item: "text"
+      type: 
+        type: "vec"
+        item: "text"
 
 StorageEntryModifier:
   type: "enum_simple"
@@ -159,5 +170,6 @@ StorageMetadata:
     - name: "prefix"
       type: "text"
     - name: "items"
-      type: "vec"
-      item: "StorageEntryMetadata"
+      type: 
+        type: "vec"
+        item: "StorageEntryMetadata"

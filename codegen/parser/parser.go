@@ -143,8 +143,7 @@ func parseTypeFromMap(def map[string]any) (*Type, error) {
 		}
 
 	default:
-		t.Kind = KindRef
-		t.Ref = &rawType
+		return nil, fmt.Errorf("unknown type: %s", rawType)
 	}
 
 	return t, nil
@@ -158,9 +157,9 @@ func parseNamedMembersFromList(l []any) ([]NamedMember, error) {
 			return nil, fmt.Errorf("list item is not a map")
 		}
 		name, _ := itemMap["name"].(string)
+		type_, _ := itemMap["type"]
 
-		// Pass the whole map to parseType. It can handle nested structs, vecs, etc.
-		memberType, err := parseType(itemMap)
+		memberType, err := parseType(type_)
 		if err != nil {
 			return nil, fmt.Errorf("parsing member '%s': %w", name, err)
 		}

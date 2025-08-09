@@ -57,8 +57,9 @@ Metadata:
   type: "struct"
   fields:
     - name: "modules"
-      type: "vec"
-      item: "ModuleMetadata"
+      type: 
+        type: "vec"
+        item: "ModuleMetadata"
     - name: "extrinsic"
       type: "ExtrinsicMetadata"
 
@@ -68,24 +69,28 @@ ModuleMetadata:
     - name: "name"
       type: "text"
     - name: "storage"
-      type: "option"
-      item:
-        type: "StorageMetadata"
+      type: 
+        type: "option"
+        item: "StorageMetadata"
     - name: "calls"
-      type: "option"
-      item:
-        type: "vec"
-        item: "FunctionMetadata"
+      type: 
+        type: "option"
+        item:
+          type: "vec"
+          item: "FunctionMetadata"
     - name: "events"
-      type: "option"
-      item:
-        type: "vec"
-        item: "EventMetadata"
+      type: 
+        type: "option"
+        item:
+          type: "vec"
+          item: "EventMetadata"
     - name: "constants"
-      type: "vec"
-      item: "ModuleConstantMetadata"
+      type: 
+        type: "vec"
+        item: "ModuleConstantMetadata"
     - name: "errors"
-      type: "vec"
-      item: "ErrorMetadata"
+      type: 
+        type: "vec"
+        item: "ErrorMetadata"
     - name: "index"
       type: "u8"

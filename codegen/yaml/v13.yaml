@@ -60,8 +60,9 @@ StorageEntryMetadata:
     - name: "fallback"
       type: "bytes"
     - name: "docs"
-      type: "vec"
-      item: "text"
+      type: 
+        type: "vec"
+        item: "text"
 
 StorageEntryType:
   type: "enum_complex"
@@ -105,11 +106,13 @@ StorageEntryNMap:
   type: "struct"
   fields:
     - name: "keyVec"
-      type: "vec"
-      item: "type"
+      type: 
+        type: "vec"
+        item: "type"
     - name: "hashers"
-      type: "vec"
-      item: "StorageHasher"
+      type: 
+        type: "vec"
+        item: "StorageHasher"
     - name: "value"
       type: "type"
 
@@ -119,5 +122,6 @@ StorageMetadata:
     - name: "prefix"
       type: "text"
     - name: "items"
-      type: "vec"
-      item: "StorageEntryMetadata"
+      type: 
+        type: "vec"
+        item: "StorageEntryMetadata"

@@ -8,8 +8,10 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	. "submarine/scale_schema"
 	"text/template"
+
+	. "submarine/metadata/schema_parser"
+	. "submarine/scale_schema"
 )
 
 func Generate(allModules *AllModules, rootModulePath string, outputDir string) error {

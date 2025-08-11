@@ -1,15 +1,5 @@
 package scale_schema
 
-type AllModules struct {
-	ModuleNames []string // for preserving order
-	Modules     map[string]Module
-}
-
-type Module struct {
-	Types     map[string]*Type
-	TypeNames []string
-}
-
 type TypeKind string
 
 const (
@@ -20,6 +10,7 @@ const (
 	KindImport      TypeKind = "import"
 	KindVec         TypeKind = "vec"
 	KindOption      TypeKind = "option"
+	KindArray       TypeKind = "array"
 	KindRef         TypeKind = "ref"
 )
 
@@ -32,6 +23,7 @@ type Type struct {
 	Import      *Import
 	Vec         *Vec
 	Option      *Option
+	Array       *Array
 	Ref         *string
 }
 
@@ -67,4 +59,9 @@ type Vec struct {
 
 type Option struct {
 	Type *Type
+}
+
+type Array struct {
+	Type *Type
+	Len  int
 }

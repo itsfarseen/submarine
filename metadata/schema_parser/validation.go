@@ -1,6 +1,9 @@
-package scale_schema
+package schema_parser
 
-import "fmt"
+import (
+	"fmt"
+	. "submarine/scale_schema"
+)
 
 // a set of known primitive types that are valid references.
 var primitives = map[string]struct{}{

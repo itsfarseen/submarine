@@ -5,7 +5,7 @@ import (
 	"log"
 	"path/filepath"
 	"submarine/metadata/codegen"
-	"submarine/scale_schema"
+	"submarine/metadata/schema_parser"
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 	}
 
 	// Parse all the YAML files into a structured format.
-	allModules, err := scale_schema.ParseModuleFiles(files)
+	allModules, err := schema_parser.ParseModuleFiles(files)
 	if err != nil {
 		log.Fatalf("Error parsing modules from %s: %v", yamlDir, err)
 	}
@@ -37,7 +37,7 @@ func main() {
 	fmt.Println("Successfully parsed all modules. Starting validation...")
 
 	// Validate the parsed modules to check for broken references or imports.
-	scale_schema.Validate(allModules)
+	schema_parser.Validate(allModules)
 
 	fmt.Println("Validation complete. Starting code generation...")
 

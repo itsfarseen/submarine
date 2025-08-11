@@ -238,6 +238,8 @@ func (c *Codegen) generateType(moduleName string, typeName string) error {
 		// Don't generate any code for imports.
 		// Instead resolve it to the source type at use sites.
 		return nil
+	case KindTuple:
+		return fmt.Errorf("tuples are not supported")
 	default:
 		return fmt.Errorf("unknown type kind: %s", type_.Kind)
 	}
@@ -383,7 +385,7 @@ func (c *Codegen) getGoTypeForType(moduleName string, type_ *Type) (string, erro
 	switch type_.Kind {
 	case KindRef:
 		return c.getGoTypeForTypename(moduleName, *type_.Ref)
-	case KindStruct, KindEnumComplex, KindEnumSimple:
+	case KindStruct, KindEnumComplex, KindEnumSimple, KindTuple:
 		return "", fmt.Errorf("Illegal complex nested type")
 	case KindOption:
 		option := type_.Option

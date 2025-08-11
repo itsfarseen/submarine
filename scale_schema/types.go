@@ -14,6 +14,7 @@ type TypeKind string
 
 const (
 	KindStruct      TypeKind = "struct"
+	KindTuple       TypeKind = "tuple"
 	KindEnumSimple  TypeKind = "enum_simple"
 	KindEnumComplex TypeKind = "enum_complex"
 	KindImport      TypeKind = "import"
@@ -25,6 +26,7 @@ const (
 type Type struct {
 	Kind        TypeKind
 	Struct      *Struct
+	Tuple       *Tuple
 	EnumSimple  *EnumSimple
 	EnumComplex *EnumComplex
 	Import      *Import
@@ -35,6 +37,10 @@ type Type struct {
 
 type Struct struct {
 	Fields []NamedMember
+}
+
+type Tuple struct {
+	Fields []Type
 }
 
 type EnumSimple struct {

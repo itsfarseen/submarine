@@ -95,11 +95,23 @@ func ParseComplexType(def map[string]any) (*Type, *ErrorSpan) {
 			return nil, NewErrorSpan("missing 'fields' or not a list").WithPath("struct")
 		}
 
-		members, err := ParsedNamedMembers(rawFields)
+		members, err := ParseNamedMembers(rawFields)
 		if err != nil {
 			return nil, err.WithPath("struct.fields")
 		}
 		t.Struct = &Struct{Fields: members}
+	case "tuple":
+		t.Kind = KindTuple
+		rawFields, ok := def["fields"].([]any)
+		if !ok {
+			return nil, NewErrorSpan("missing 'fields' or not a list").WithPath("tuple")
+		}
+
+		members, err := ParseTupleMembers(rawFields)
+		if err != nil {
+			return nil, err.WithPath("tuple.fields")
+		}
+		t.Tuple = &Tuple{Fields: members}
 
 	case "enum_simple":
 		t.Kind = KindEnumSimple
@@ -125,7 +137,7 @@ func ParseComplexType(def map[string]any) (*Type, *ErrorSpan) {
 		if !ok {
 			return nil, NewErrorSpan("missing 'variants' or not a list").WithPath("enum_complex")
 		}
-		variants, err := ParsedNamedMembers(rawVariants)
+		variants, err := ParseNamedMembers(rawVariants)
 		if err != nil {
 			return nil, err.WithPath("enum_complex.variants")
 		}
@@ -169,7 +181,7 @@ func ParseComplexType(def map[string]any) (*Type, *ErrorSpan) {
 	return t, nil
 }
 
-func ParsedNamedMembers(rawNamedMembers []any) ([]NamedMember, *ErrorSpan) {
+func ParseNamedMembers(rawNamedMembers []any) ([]NamedMember, *ErrorSpan) {
 	members := make([]NamedMember, len(rawNamedMembers))
 	for i, member := range rawNamedMembers {
 		memberMap, ok := member.(map[string]any)
@@ -190,6 +202,18 @@ func ParsedNamedMembers(rawNamedMembers []any) ([]NamedMember, *ErrorSpan) {
 			return nil, err.WithPathInt(i)
 		}
 		members[i] = NamedMember{Name: name, Type: memberType}
+	}
+	return members, nil
+}
+
+func ParseTupleMembers(rawTupleMembers []any) ([]Type, *ErrorSpan) {
+	members := make([]Type, len(rawTupleMembers))
+	for i, type_ := range rawTupleMembers {
+		memberType, err := ParseType(type_)
+		if err != nil {
+			return nil, err.WithPathInt(i)
+		}
+		members[i] = *memberType
 	}
 	return members, nil
 }

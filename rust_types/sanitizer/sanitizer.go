@@ -129,7 +129,7 @@ func SanitizeRustType(rust_type RustType) RustType {
 		}
 
 		if base.Path[len(base.Path)-1] == "PhantomData" {
-			return Base([]string{"null"}, nil)
+			return Base([]string{"empty"}, nil)
 		}
 
 		// foo::bar::Baz<T, U, V> becomes foo::bar::Baz

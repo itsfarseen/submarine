@@ -3,9 +3,9 @@ package v14
 import (
 	"fmt"
 	. "submarine/decoder/models"
+	"submarine/metadata/generated/scaleInfo"
+	"submarine/metadata/generated/v14"
 	. "submarine/scale"
-	"submarine/scale/gen/scaleInfo"
-	"submarine/scale/gen/v14"
 )
 
 // DecodeEvents is the main entry point for decoding the raw bytes from System.Events.

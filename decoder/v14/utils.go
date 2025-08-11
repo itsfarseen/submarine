@@ -1,8 +1,8 @@
 package v14
 
 import (
-	"submarine/scale/gen/scaleInfo"
-	"submarine/scale/gen/v14"
+	"submarine/metadata/generated/scaleInfo"
+	"submarine/metadata/generated/v14"
 )
 
 // findType is a helper to safely access the type from the lookup table.

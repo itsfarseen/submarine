@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 	"sort"
-	"submarine/decoder"
-	"submarine/decoder/legacy"
+	"submarine/metadata/decoder"
+	"submarine/metadata/decoder/legacy"
 	"submarine/rpc"
 	"submarine/scale"
 )

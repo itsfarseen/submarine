@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 	. "submarine/decoder/models"
+	"submarine/metadata/base"
+	"submarine/metadata/generated/scaleInfo"
+	"submarine/metadata/generated/v14"
 	. "submarine/scale"
-	"submarine/scale/base"
-	"submarine/scale/gen/scaleInfo"
-	"submarine/scale/gen/v14"
 )
 
 // DecodeExtrinsic is the main entry point for decoding an extrinsic.

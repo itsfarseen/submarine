@@ -6,8 +6,6 @@ import (
 	"submarine/sanitizer/rust_types"
 )
 
-var identRe *regexp.Regexp = regexp.MustCompile("[a-zA-Z0-9_]")
-
 func ParseAndSanitize(typeName string) rust_types.RustType {
 	// We need to normalize spaces here, even though the Parser does normalize spaces, for RemoveAsTrait() to work.
 	typeName = NormalizeSpaces(typeName)

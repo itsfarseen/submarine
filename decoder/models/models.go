@@ -1,7 +1,7 @@
 package models
 
 import (
-	"submarine/scale/base"
+	"submarine/metadata/base"
 )
 
 // DecodedArg holds the name and decoded value of a single extrinsic argument.

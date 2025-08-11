@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
-	"submarine/codegen"
+	"submarine/metadata/codegen"
 	"submarine/scale_schema"
 )
 
 func main() {
 	// Define the directory containing the YAML type definitions.
-	yamlDir := "codegen/yaml"
-	rootModulePath := "submarine/scale/gen"
-	outputDir := "scale/gen"
+	yamlDir := "metadata/schema_yaml"
+	rootModulePath := "submarine/metadata/generated"
+	outputDir := "metadata/generated"
 
 	files := []string{
 		"scaleInfo.yaml",

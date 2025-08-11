@@ -138,6 +138,78 @@ func DecodeU256(r *Reader) (*big.Int, error) {
 	return new(big.Int).SetBytes(b), nil
 }
 
+func DecodeI8(r *Reader) (int8, error) {
+	b, err := r.ReadByte()
+	if err != nil {
+		return 0, fmt.Errorf("i8: %w", err)
+	}
+	return int8(b), nil
+}
+
+func DecodeI16(r *Reader) (int16, error) {
+	bytes, err := r.ReadBytes(2)
+	if err != nil {
+		return 0, fmt.Errorf("i16: %w", err)
+	}
+	return int16(binary.LittleEndian.Uint16(bytes)), nil
+}
+
+func DecodeI32(r *Reader) (int32, error) {
+	bytes, err := r.ReadBytes(4)
+	if err != nil {
+		return 0, fmt.Errorf("i32: %w", err)
+	}
+	return int32(binary.LittleEndian.Uint32(bytes)), nil
+}
+
+func DecodeI64(r *Reader) (int64, error) {
+	bytes, err := r.ReadBytes(8)
+	if err != nil {
+		return 0, fmt.Errorf("i64: %w", err)
+	}
+	return int64(binary.LittleEndian.Uint64(bytes)), nil
+}
+
+func DecodeI128(r *Reader) (*big.Int, error) {
+	b, err := r.ReadBytes(16)
+	if err != nil {
+		return nil, err
+	}
+	// Reverse for big.Int which expects big-endian bytes
+	for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
+		b[i], b[j] = b[j], b[i]
+	}
+	// Two's complement conversion for signed
+	result := new(big.Int).SetBytes(b)
+	// Check if the sign bit is set (MSB of original little-endian data)
+	if b[0]&0x80 != 0 {
+		// Convert from two's complement: subtract 2^128
+		maxI128 := new(big.Int).Lsh(big.NewInt(1), 128)
+		result.Sub(result, maxI128)
+	}
+	return result, nil
+}
+
+func DecodeI256(r *Reader) (*big.Int, error) {
+	b, err := r.ReadBytes(32)
+	if err != nil {
+		return nil, err
+	}
+	// Reverse for big.Int which expects big-endian bytes
+	for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
+		b[i], b[j] = b[j], b[i]
+	}
+	// Two's complement conversion for signed
+	result := new(big.Int).SetBytes(b)
+	// Check if the sign bit is set (MSB of original little-endian data)
+	if b[0]&0x80 != 0 {
+		// Convert from two's complement: subtract 2^256
+		maxI256 := new(big.Int).Lsh(big.NewInt(1), 256)
+		result.Sub(result, maxI256)
+	}
+	return result, nil
+}
+
 func DecodeBool(r *Reader) (bool, error) {
 	b, err := r.ReadByte()
 	if err != nil {

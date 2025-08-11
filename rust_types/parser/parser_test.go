@@ -1,8 +1,8 @@
-package rust_types_test
+package parser_test
 
 import (
 	"fmt"
-	. "submarine/sanitizer/rust_types"
+	. "submarine/rust_types/parser"
 	"testing"
 )
 

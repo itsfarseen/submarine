@@ -1,8 +1,8 @@
-package sanitizer_test
+package rust_types_test
 
 import (
-	"submarine/sanitizer"
-	"submarine/sanitizer/rust_types"
+	"submarine/rust_types"
+	"submarine/rust_types/parser"
 	"testing"
 )
 
@@ -41,7 +41,7 @@ func TestNormalizeSpaces(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := sanitizer.NormalizeSpaces(tt.input)
+			result := rust_types.NormalizeSpaces(tt.input)
 			if result != tt.expected {
 				t.Errorf("NormalizeSpaces(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
@@ -74,7 +74,7 @@ func TestRemoveAsTrait(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := sanitizer.RemoveAsTrait(tt.input)
+			result := rust_types.RemoveAsTrait(tt.input)
 			if result != tt.expected {
 				t.Errorf("RemoveAsTrait(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
@@ -127,8 +127,8 @@ func TestParseAndSanitizeRustType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rust_type := sanitizer.ParseRustType(tt.input)
-			result := sanitizer.SanitizeRustType(rust_type)
+			rust_type := rust_types.ParseRustType(tt.input)
+			result := rust_types.SanitizeRustType(rust_type)
 			if result.String() != tt.expected {
 				t.Errorf("SanitizeRustType(%q).String() = %q, want %q", tt.input, result, tt.expected)
 			}
@@ -139,39 +139,39 @@ func TestParseAndSanitizeRustType(t *testing.T) {
 func TestSanitizeRustType(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    rust_types.RustType
+		input    parser.RustType
 		expected string
 	}{
 		{
 			name:     "box unwrapping",
-			input:    rust_types.Base([]string{"Box"}, []rust_types.RustType{rust_types.Base([]string{"i32"}, nil)}),
+			input:    parser.Base([]string{"Box"}, []parser.RustType{parser.Base([]string{"i32"}, nil)}),
 			expected: "i32",
 		},
 		{
 			name:     "vec with generics",
-			input:    rust_types.Base([]string{"Vec"}, []rust_types.RustType{rust_types.Base([]string{"String"}, nil)}),
+			input:    parser.Base([]string{"Vec"}, []parser.RustType{parser.Base([]string{"String"}, nil)}),
 			expected: "Vec<text>",
 		},
 		{
 			name:     "tuple sanitization",
-			input:    rust_types.Tuple([]rust_types.RustType{rust_types.Base([]string{"i32"}, nil), rust_types.Base([]string{"String"}, nil)}),
+			input:    parser.Tuple([]parser.RustType{parser.Base([]string{"i32"}, nil), parser.Base([]string{"String"}, nil)}),
 			expected: "(i32, text)",
 		},
 		{
 			name:     "array sanitization",
-			input:    rust_types.Array(rust_types.Base([]string{"u8"}, nil), 32),
+			input:    parser.Array(parser.Base([]string{"u8"}, nil), 32),
 			expected: "[u8; 32]",
 		},
 		{
 			name:     "path simplification",
-			input:    rust_types.Base([]string{"std", "collections", "HashMap"}, []rust_types.RustType{rust_types.Base([]string{"String"}, nil), rust_types.Base([]string{"i32"}, nil)}),
+			input:    parser.Base([]string{"std", "collections", "HashMap"}, []parser.RustType{parser.Base([]string{"String"}, nil), parser.Base([]string{"i32"}, nil)}),
 			expected: "std::collections::HashMap",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := sanitizer.SanitizeRustType(tt.input)
+			result := rust_types.SanitizeRustType(tt.input)
 			if result.String() != tt.expected {
 				t.Errorf("SanitizeRustType(%v).String() = %q, want %q", tt.input, result.String(), tt.expected)
 			}
@@ -215,7 +215,7 @@ func TestSanitize(t *testing.T) {
 					t.Errorf("Sanitize(%q) panicked: %v", tt.input, r)
 				}
 			}()
-			output := sanitizer.ParseAndSanitize(tt.input)
+			output := rust_types.ParseAndSanitize(tt.input)
 			if output.String() != tt.output {
 				t.Errorf("ParseAndSanitize(%v).String() = %q, want %q", tt.input, output, tt.output)
 			}
@@ -388,7 +388,7 @@ func TestParseAndSanitizeGolden(t *testing.T) {
 					t.Errorf("Sanitize(%q) panicked: %v", tt.input, r)
 				}
 			}()
-			output := sanitizer.ParseAndSanitize(tt.input)
+			output := rust_types.ParseAndSanitize(tt.input)
 			if output.String() != tt.output {
 				t.Errorf("ParseAndSanitize(%v).String() = %q, want %q", tt.input, output, tt.output)
 			}

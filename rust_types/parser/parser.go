@@ -1,4 +1,4 @@
-package rust_types
+package parser
 
 import (
 	"fmt"

@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	. "submarine/codegen/parser"
+	. "submarine/scale_schema"
 	"text/template"
 )
 

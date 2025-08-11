@@ -1,4 +1,4 @@
-package parser
+package scale_schema
 
 import "fmt"
 

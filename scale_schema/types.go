@@ -1,4 +1,4 @@
-package parser
+package scale_schema
 
 type AllModules struct {
 	ModuleNames []string // for preserving order

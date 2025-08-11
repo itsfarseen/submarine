@@ -9,7 +9,7 @@ import (
 
 	"github.com/goccy/go-yaml"
 	. "submarine/errorspan"
-	. "submarine/scale_schema"
+	. "submarine/scale/schema"
 )
 
 func ParseModuleFiles(files []string) (*AllModules, error) {

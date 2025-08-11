@@ -1,7 +1,7 @@
-package scale_schema_test
+package schema_test
 
 import (
-	. "submarine/scale_schema"
+	. "submarine/scale/schema"
 	"testing"
 )
 

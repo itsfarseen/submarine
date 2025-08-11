@@ -1,7 +1,7 @@
 package schema_parser
 
 import (
-	. "submarine/scale_schema"
+	. "submarine/scale/schema"
 )
 
 type AllModules struct {

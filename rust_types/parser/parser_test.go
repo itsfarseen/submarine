@@ -2,8 +2,10 @@ package parser_test
 
 import (
 	"fmt"
-	. "submarine/rust_types/parser"
 	"testing"
+
+	. "submarine/rust_types"
+	. "submarine/rust_types/parser"
 )
 
 // deepEqual compares two RustType values for structural equality

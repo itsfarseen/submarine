@@ -1,12 +1,14 @@
-package rust_types
+package sanitizer
 
 import (
 	"regexp"
 	"strings"
+
+	. "submarine/rust_types"
 	"submarine/rust_types/parser"
 )
 
-func ParseAndSanitize(typeName string) parser.RustType {
+func ParseAndSanitize(typeName string) RustType {
 	// We need to normalize spaces here, even though the Parser does normalize spaces, for RemoveAsTrait() to work.
 	typeName = NormalizeSpaces(typeName)
 
@@ -56,7 +58,7 @@ func RemoveAsTrait(s string) string {
 	return s
 }
 
-func ParseRustType(s string) parser.RustType {
+func ParseRustType(s string) RustType {
 	rust_type, err := parser.NewRustTypesParser(s).Parse()
 	if err != nil {
 		panic(err)
@@ -65,9 +67,9 @@ func ParseRustType(s string) parser.RustType {
 
 }
 
-func SanitizeRustType(rust_type parser.RustType) parser.RustType {
+func SanitizeRustType(rust_type RustType) RustType {
 	switch rust_type.Kind {
-	case parser.KindBase:
+	case KindBase:
 		base := rust_type.Base
 		if len(base.Path) == 1 {
 			name := base.Path[0]
@@ -75,32 +77,32 @@ func SanitizeRustType(rust_type parser.RustType) parser.RustType {
 			case "Box":
 				return SanitizeRustType(rust_type.Base.Generics[0])
 			case "Compact":
-				return parser.Base([]string{"compact"}, nil)
+				return Base([]string{"compact"}, nil)
 			}
 
 			if name == "PairOf" {
-				return parser.Tuple(base.Generics)
+				return Tuple(base.Generics)
 			}
 
 			if fixed, found := strings.CutSuffix(name, "Of"); found {
-				return parser.Base([]string{fixed}, nil)
+				return Base([]string{fixed}, nil)
 			}
 
 			if fixed, found := strings.CutPrefix(name, "Bounded"); found {
 				generics := base.Generics[0 : len(base.Generics)-1] // skip Size in BoundedVec<...,Size>
-				return parser.Base([]string{fixed}, generics)
+				return Base([]string{fixed}, generics)
 			}
 
 			if fixed, found := strings.CutPrefix(name, "Weak"); found {
-				return parser.Base([]string{fixed}, base.Generics)
+				return Base([]string{fixed}, base.Generics)
 			}
 
 			if rust_type.String() == "Vec<u8>" {
-				return parser.Base([]string{"bytes"}, nil)
+				return Base([]string{"bytes"}, nil)
 			}
 
 			if rust_type.String() == "String" {
-				return parser.Base([]string{"text"}, nil)
+				return Base([]string{"text"}, nil)
 			}
 
 			var newName string = name
@@ -111,38 +113,38 @@ func SanitizeRustType(rust_type parser.RustType) parser.RustType {
 
 			// Handle Vec<T> and Option<T>, Foo<T, U, V> becomes Foo
 			if newName == "Vec" || newName == "Option" {
-				var newGenerics []parser.RustType
-				newGenerics = make([]parser.RustType, len(base.Generics))
+				var newGenerics []RustType
+				newGenerics = make([]RustType, len(base.Generics))
 				for i := range base.Generics {
 					newGenerics[i] = SanitizeRustType(base.Generics[i])
 				}
-				return parser.Base([]string{newName}, newGenerics)
+				return Base([]string{newName}, newGenerics)
 			} else {
-				return parser.Base([]string{newName}, nil)
+				return Base([]string{newName}, nil)
 			}
 		}
 
 		if base.Path[0] == "T" {
-			return SanitizeRustType(parser.Base(base.Path[1:], base.Generics))
+			return SanitizeRustType(Base(base.Path[1:], base.Generics))
 		}
 
 		if base.Path[len(base.Path)-1] == "PhantomData" {
-			return parser.Base([]string{"null"}, nil)
+			return Base([]string{"null"}, nil)
 		}
 
 		// foo::bar::Baz<T, U, V> becomes foo::bar::Baz
-		return parser.Base(base.Path, nil)
+		return Base(base.Path, nil)
 
-	case parser.KindArray:
+	case KindArray:
 		array := rust_type.Array
-		return parser.Array(SanitizeRustType(array.Base), array.Len)
-	case parser.KindTuple:
+		return Array(SanitizeRustType(array.Base), array.Len)
+	case KindTuple:
 		tuple := rust_type.Tuple
-		newTuple := make([]parser.RustType, len(*tuple))
+		newTuple := make([]RustType, len(*tuple))
 		for i := range *tuple {
 			newTuple[i] = SanitizeRustType((*tuple)[i])
 		}
-		return parser.Tuple(newTuple)
+		return Tuple(newTuple)
 
 	default:
 		panic("exhaustive")

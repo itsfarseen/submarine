@@ -12,6 +12,16 @@ import (
 	. "submarine/scale/schema"
 )
 
+type AllModules struct {
+	ModuleNames []string // for preserving order
+	Modules     map[string]Module
+}
+
+type Module struct {
+	Types     map[string]*Type
+	TypeNames []string
+}
+
 func ParseModuleFiles(files []string) (*AllModules, error) {
 	allModules := &AllModules{
 		ModuleNames: make([]string, 0),

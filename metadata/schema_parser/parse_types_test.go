@@ -1,7 +1,8 @@
-package schema_test
+package schema_parser_test
 
 import (
-	. "submarine/scale/schema"
+	. "submarine/metadata/schema_parser"
+	. "submarine/scale"
 	"testing"
 )
 

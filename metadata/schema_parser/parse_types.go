@@ -1,8 +1,9 @@
-package schema
+package schema_parser
 
 import (
 	"fmt"
 	. "submarine/errorspan"
+	. "submarine/scale"
 )
 
 func ParseType(rawTypeDef any) (*Type, *ErrorSpan) {

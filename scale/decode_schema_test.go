@@ -3,32 +3,31 @@ package scale_test
 import (
 	"reflect"
 	. "submarine/scale"
-	s "submarine/scale/schema"
 	"testing"
 )
 
 type M = map[string]any
 type A = []any
 
-func ref(name string) *s.Type {
-	return &s.Type{Kind: s.KindRef, Ref: &name}
+func ref(name string) *Type {
+	return &Type{Kind: KindRef, Ref: &name}
 }
 
 func TestDecodeWithSchema(t *testing.T) {
 	tests := []struct {
 		name     string
 		data     []byte
-		schema   *s.Type
+		schema   *Type
 		expected any
 		wantErr  bool
 	}{
 		{
 			name: "simple struct",
 			data: []byte{0x08, 0x10},
-			schema: &s.Type{
-				Kind: s.KindStruct,
-				Struct: &s.Struct{
-					Fields: []s.NamedMember{
+			schema: &Type{
+				Kind: KindStruct,
+				Struct: &Struct{
+					Fields: []NamedMember{
 						{
 							Name: "a",
 							Type: ref("u8"),
@@ -45,10 +44,10 @@ func TestDecodeWithSchema(t *testing.T) {
 		{
 			name: "tuple",
 			data: []byte{0x0C, 0x14},
-			schema: &s.Type{
-				Kind: s.KindTuple,
-				Tuple: &s.Tuple{
-					Fields: []s.Type{
+			schema: &Type{
+				Kind: KindTuple,
+				Tuple: &Tuple{
+					Fields: []Type{
 						*ref("u8"),
 						*ref("u8"),
 					},
@@ -59,9 +58,9 @@ func TestDecodeWithSchema(t *testing.T) {
 		{
 			name: "simple enum - first variant",
 			data: []byte{0x00}, // variant index 0
-			schema: &s.Type{
-				Kind: s.KindEnumSimple,
-				EnumSimple: &s.EnumSimple{
+			schema: &Type{
+				Kind: KindEnumSimple,
+				EnumSimple: &EnumSimple{
 					Variants: []string{"Red", "Green", "Blue"},
 				},
 			},
@@ -70,9 +69,9 @@ func TestDecodeWithSchema(t *testing.T) {
 		{
 			name: "simple enum - second variant",
 			data: []byte{0x01}, // variant index 1
-			schema: &s.Type{
-				Kind: s.KindEnumSimple,
-				EnumSimple: &s.EnumSimple{
+			schema: &Type{
+				Kind: KindEnumSimple,
+				EnumSimple: &EnumSimple{
 					Variants: []string{"Red", "Green", "Blue"},
 				},
 			},
@@ -81,10 +80,10 @@ func TestDecodeWithSchema(t *testing.T) {
 		{
 			name: "complex enum",
 			data: []byte{0x01, 0x08}, // variant index 1, u8=2
-			schema: &s.Type{
-				Kind: s.KindEnumComplex,
-				EnumComplex: &s.EnumComplex{
-					Variants: []s.NamedMember{
+			schema: &Type{
+				Kind: KindEnumComplex,
+				EnumComplex: &EnumComplex{
+					Variants: []NamedMember{
 						{Name: "None", Type: ref("unit")},
 						{Name: "Some", Type: ref("u8")},
 					},
@@ -95,9 +94,9 @@ func TestDecodeWithSchema(t *testing.T) {
 		{
 			name: "vec of u8",
 			data: []byte{0x08, 0x01, 0x02}, // length=2, [1, 2]
-			schema: &s.Type{
-				Kind: s.KindVec,
-				Vec: &s.Vec{
+			schema: &Type{
+				Kind: KindVec,
+				Vec: &Vec{
 					Type: ref("u8"),
 				},
 			},
@@ -106,9 +105,9 @@ func TestDecodeWithSchema(t *testing.T) {
 		{
 			name: "empty vec",
 			data: []byte{0x00}, // length=0
-			schema: &s.Type{
-				Kind: s.KindVec,
-				Vec: &s.Vec{
+			schema: &Type{
+				Kind: KindVec,
+				Vec: &Vec{
 					Type: ref("u8"),
 				},
 			},
@@ -117,9 +116,9 @@ func TestDecodeWithSchema(t *testing.T) {
 		{
 			name: "option none",
 			data: []byte{0x00}, // has_value=false
-			schema: &s.Type{
-				Kind: s.KindOption,
-				Option: &s.Option{
+			schema: &Type{
+				Kind: KindOption,
+				Option: &Option{
 					Type: ref("u8"),
 				},
 			},
@@ -128,9 +127,9 @@ func TestDecodeWithSchema(t *testing.T) {
 		{
 			name: "option some",
 			data: []byte{0x01, 0x2A},
-			schema: &s.Type{
-				Kind: s.KindOption,
-				Option: &s.Option{
+			schema: &Type{
+				Kind: KindOption,
+				Option: &Option{
 					Type: ref("u8"),
 				},
 			},
@@ -139,9 +138,9 @@ func TestDecodeWithSchema(t *testing.T) {
 		{
 			name: "array",
 			data: []byte{0x01, 0x02, 0x03},
-			schema: &s.Type{
-				Kind: s.KindArray,
-				Array: &s.Array{
+			schema: &Type{
+				Kind: KindArray,
+				Array: &Array{
 					Type: ref("u8"),
 					Len:  3,
 				},
@@ -151,16 +150,16 @@ func TestDecodeWithSchema(t *testing.T) {
 		{
 			name: "nested struct",
 			data: []byte{0x08, 0x04, 0x10, 0x20},
-			schema: &s.Type{
-				Kind: s.KindStruct,
-				Struct: &s.Struct{
-					Fields: []s.NamedMember{
+			schema: &Type{
+				Kind: KindStruct,
+				Struct: &Struct{
+					Fields: []NamedMember{
 						{
 							Name: "inner1",
-							Type: &s.Type{
-								Kind: s.KindStruct,
-								Struct: &s.Struct{
-									Fields: []s.NamedMember{
+							Type: &Type{
+								Kind: KindStruct,
+								Struct: &Struct{
+									Fields: []NamedMember{
 										{Name: "a", Type: ref("u8")},
 										{Name: "b", Type: ref("u8")},
 									},
@@ -169,10 +168,10 @@ func TestDecodeWithSchema(t *testing.T) {
 						},
 						{
 							Name: "inner2",
-							Type: &s.Type{
-								Kind: s.KindStruct,
-								Struct: &s.Struct{
-									Fields: []s.NamedMember{
+							Type: &Type{
+								Kind: KindStruct,
+								Struct: &Struct{
+									Fields: []NamedMember{
 										{Name: "x", Type: ref("u8")},
 										{Name: "y", Type: ref("u8")},
 									},
@@ -190,9 +189,9 @@ func TestDecodeWithSchema(t *testing.T) {
 		{
 			name: "enum index out of bounds",
 			data: []byte{0x03}, // index 3, but only 3 variants (0,1,2)
-			schema: &s.Type{
-				Kind: s.KindEnumSimple,
-				EnumSimple: &s.EnumSimple{
+			schema: &Type{
+				Kind: KindEnumSimple,
+				EnumSimple: &EnumSimple{
 					Variants: []string{"A", "B", "C"},
 				},
 			},
@@ -207,9 +206,9 @@ func TestDecodeWithSchema(t *testing.T) {
 		{
 			name: "import type error",
 			data: []byte{},
-			schema: &s.Type{
-				Kind: s.KindImport,
-				Import: &s.Import{
+			schema: &Type{
+				Kind: KindImport,
+				Import: &Import{
 					Module: "std",
 					Item:   "Vec",
 				},

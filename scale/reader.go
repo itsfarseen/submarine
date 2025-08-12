@@ -1,9 +1,7 @@
 package scale
 
 import (
-	"encoding/binary"
 	"fmt"
-	"math/big"
 )
 
 // Reader helps to decode SCALE types from a byte slice.

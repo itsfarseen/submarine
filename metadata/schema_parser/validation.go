@@ -2,7 +2,7 @@ package schema_parser
 
 import (
 	"fmt"
-	. "submarine/scale/schema"
+	. "submarine/scale"
 )
 
 // a set of known primitive types that are valid references.

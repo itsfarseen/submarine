@@ -3,7 +3,7 @@ package rust_types
 import (
 	"strings"
 	. "submarine/errorspan"
-	s "submarine/scale/schema"
+	s "submarine/scale"
 )
 
 func ToScaleSchema(rust_type *RustType) (s.Type, *ErrorSpan) {

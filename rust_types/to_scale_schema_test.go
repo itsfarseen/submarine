@@ -2,7 +2,7 @@ package rust_types_test
 
 import (
 	r "submarine/rust_types"
-	s "submarine/scale/schema"
+	s "submarine/scale"
 	"testing"
 )
 

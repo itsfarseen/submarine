@@ -3,29 +3,28 @@ package scale
 import (
 	"fmt"
 	. "submarine/errorspan"
-	s "submarine/scale/schema"
 )
 
-func DecodeWithSchema(r *Reader, schema *s.Type) (any, *ErrorSpan) {
+func DecodeWithSchema(r *Reader, schema *Type) (any, *ErrorSpan) {
 	switch schema.Kind {
-	case s.KindStruct:
+	case KindStruct:
 		return decodeStruct(r, schema.Struct)
-	case s.KindTuple:
+	case KindTuple:
 		return decodeTuple(r, schema.Tuple)
-	case s.KindEnumSimple:
+	case KindEnumSimple:
 		return decodeEnumSimple(r, schema.EnumSimple)
-	case s.KindEnumComplex:
+	case KindEnumComplex:
 		return decodeEnumComplex(r, schema.EnumComplex)
-	case s.KindVec:
+	case KindVec:
 		return decodeVec(r, schema.Vec)
-	case s.KindOption:
+	case KindOption:
 		return decodeOption(r, schema.Option)
-	case s.KindArray:
+	case KindArray:
 		return decodeArray(r, schema.Array)
-	case s.KindRef:
+	case KindRef:
 		return decodeRef(r, *schema.Ref)
-	case s.KindImport:
-		return nil, NewErrorSpan(fmt.Sprintf("import types not supported: %s.%s", schema.Import.Module, schema.Import.Item))
+	case KindImport:
+		return nil, NewErrorSpan(fmt.Sprintf("import types not supported: module: %s item: %s", schema.Import.Module, schema.Import.Item))
 	default:
 		return nil, NewErrorSpan(fmt.Sprintf("unknown type kind: %s", schema.Kind))
 	}
@@ -81,7 +80,7 @@ func decodeRef(r *Reader, refType string) (any, *ErrorSpan) {
 	return val, nil
 }
 
-func decodeStruct(r *Reader, s *s.Struct) (map[string]any, *ErrorSpan) {
+func decodeStruct(r *Reader, s *Struct) (map[string]any, *ErrorSpan) {
 	result := make(map[string]any)
 	for _, field := range s.Fields {
 		value, err := DecodeWithSchema(r, field.Type)
@@ -93,7 +92,7 @@ func decodeStruct(r *Reader, s *s.Struct) (map[string]any, *ErrorSpan) {
 	return result, nil
 }
 
-func decodeTuple(r *Reader, t *s.Tuple) ([]any, *ErrorSpan) {
+func decodeTuple(r *Reader, t *Tuple) ([]any, *ErrorSpan) {
 	result := make([]any, len(t.Fields))
 	for i, fieldType := range t.Fields {
 		value, err := DecodeWithSchema(r, &fieldType)
@@ -105,7 +104,7 @@ func decodeTuple(r *Reader, t *s.Tuple) ([]any, *ErrorSpan) {
 	return result, nil
 }
 
-func decodeEnumSimple(r *Reader, e *s.EnumSimple) (string, *ErrorSpan) {
+func decodeEnumSimple(r *Reader, e *EnumSimple) (string, *ErrorSpan) {
 	index, err := DecodeU8(r)
 	if err != nil {
 		return "", NewErrorSpan(err.Error()).WithPath("index")
@@ -116,7 +115,7 @@ func decodeEnumSimple(r *Reader, e *s.EnumSimple) (string, *ErrorSpan) {
 	return e.Variants[index], nil
 }
 
-func decodeEnumComplex(r *Reader, e *s.EnumComplex) (map[string]any, *ErrorSpan) {
+func decodeEnumComplex(r *Reader, e *EnumComplex) (map[string]any, *ErrorSpan) {
 	index, err := DecodeU8(r)
 	if err != nil {
 		return nil, NewErrorSpan(err.Error()).WithPath("index")
@@ -134,9 +133,9 @@ func decodeEnumComplex(r *Reader, e *s.EnumComplex) (map[string]any, *ErrorSpan)
 	return map[string]any{variant.Name: value}, nil
 }
 
-func decodeVec(r *Reader, v *s.Vec) (any, *ErrorSpan) {
+func decodeVec(r *Reader, v *Vec) (any, *ErrorSpan) {
 	// Optimization for Vec<u8>
-	if v.Type.Kind == s.KindRef && v.Type.Ref != nil && *v.Type.Ref == "u8" {
+	if v.Type.Kind == KindRef && v.Type.Ref != nil && *v.Type.Ref == "u8" {
 		bytes, err := DecodeBytes(r)
 		if err != nil {
 			return nil, NewErrorSpan(err.Error())
@@ -160,7 +159,7 @@ func decodeVec(r *Reader, v *s.Vec) (any, *ErrorSpan) {
 	return result, nil
 }
 
-func decodeOption(r *Reader, o *s.Option) (any, *ErrorSpan) {
+func decodeOption(r *Reader, o *Option) (any, *ErrorSpan) {
 	hasValue, err := DecodeBool(r)
 	if err != nil {
 		return nil, NewErrorSpan(err.Error()).WithPath("flag")
@@ -173,9 +172,9 @@ func decodeOption(r *Reader, o *s.Option) (any, *ErrorSpan) {
 	return DecodeWithSchema(r, o.Type)
 }
 
-func decodeArray(r *Reader, a *s.Array) (any, *ErrorSpan) {
+func decodeArray(r *Reader, a *Array) (any, *ErrorSpan) {
 	// Optimization for [u8; N]
-	if a.Type.Kind == s.KindRef && a.Type.Ref != nil && *a.Type.Ref == "u8" {
+	if a.Type.Kind == KindRef && a.Type.Ref != nil && *a.Type.Ref == "u8" {
 		bytes, err := r.ReadBytes(a.Len)
 		if err != nil {
 			return nil, NewErrorSpan(err.Error())

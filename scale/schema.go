@@ -1,4 +1,4 @@
-package schema
+package scale
 
 type TypeKind string
 

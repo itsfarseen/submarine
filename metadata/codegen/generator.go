@@ -11,7 +11,7 @@ import (
 	"text/template"
 
 	. "submarine/metadata/schema_parser"
-	. "submarine/scale/schema"
+	. "submarine/scale"
 )
 
 func Generate(allModules *AllModules, rootModulePath string, outputDir string) error {

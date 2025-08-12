@@ -1,13 +1,11 @@
 package scale_test
 
 import (
+	"math/big"
 	"reflect"
 	. "submarine/scale"
 	"testing"
 )
-
-type M = map[string]any
-type A = []any
 
 func ref(name string) *Type {
 	return &Type{Kind: KindRef, Ref: &name}
@@ -18,7 +16,7 @@ func TestDecodeWithSchema(t *testing.T) {
 		name     string
 		data     []byte
 		schema   *Type
-		expected any
+		expected Value
 		wantErr  bool
 	}{
 		{
@@ -39,7 +37,10 @@ func TestDecodeWithSchema(t *testing.T) {
 					},
 				},
 			},
-			expected: M{"a": uint8(8), "b": uint8(16)},
+			expected: VStruct(map[string]Value{
+				"a": VIntFromInt64(8),
+				"b": VIntFromInt64(16),
+			}),
 		},
 		{
 			name: "tuple",
@@ -53,7 +54,10 @@ func TestDecodeWithSchema(t *testing.T) {
 					},
 				},
 			},
-			expected: A{uint8(0x0C), uint8(0x14)},
+			expected: VList([]Value{
+				VIntFromInt64(12),
+				VIntFromInt64(20),
+			}),
 		},
 		{
 			name: "simple enum - first variant",
@@ -64,7 +68,7 @@ func TestDecodeWithSchema(t *testing.T) {
 					Variants: []string{"Red", "Green", "Blue"},
 				},
 			},
-			expected: "Red",
+			expected: VText("Red"),
 		},
 		{
 			name: "simple enum - second variant",
@@ -75,21 +79,23 @@ func TestDecodeWithSchema(t *testing.T) {
 					Variants: []string{"Red", "Green", "Blue"},
 				},
 			},
-			expected: "Green",
+			expected: VText("Green"),
 		},
 		{
 			name: "complex enum",
-			data: []byte{0x01, 0x08}, // variant index 1, u8=2
+			data: []byte{0x01, 0x08}, // variant index 1, u8=8
 			schema: &Type{
 				Kind: KindEnumComplex,
 				EnumComplex: &EnumComplex{
 					Variants: []NamedMember{
-						{Name: "None", Type: ref("unit")},
+						{Name: "None", Type: ref("empty")},
 						{Name: "Some", Type: ref("u8")},
 					},
 				},
 			},
-			expected: M{"Some": uint8(0x08)},
+			expected: VStruct(map[string]Value{
+				"Some": VIntFromInt64(8),
+			}),
 		},
 		{
 			name: "vec of u8",
@@ -100,7 +106,7 @@ func TestDecodeWithSchema(t *testing.T) {
 					Type: ref("u8"),
 				},
 			},
-			expected: []uint8{uint8(1), uint8(2)},
+			expected: VBytes([]byte{1, 2}),
 		},
 		{
 			name: "empty vec",
@@ -111,7 +117,7 @@ func TestDecodeWithSchema(t *testing.T) {
 					Type: ref("u8"),
 				},
 			},
-			expected: []uint8{},
+			expected: VBytes([]byte{}),
 		},
 		{
 			name: "option none",
@@ -122,7 +128,7 @@ func TestDecodeWithSchema(t *testing.T) {
 					Type: ref("u8"),
 				},
 			},
-			expected: nil,
+			expected: VStruct(make(map[string]Value)),
 		},
 		{
 			name: "option some",
@@ -133,7 +139,7 @@ func TestDecodeWithSchema(t *testing.T) {
 					Type: ref("u8"),
 				},
 			},
-			expected: uint8(42),
+			expected: VIntFromInt64(42),
 		},
 		{
 			name: "array",
@@ -145,7 +151,7 @@ func TestDecodeWithSchema(t *testing.T) {
 					Len:  3,
 				},
 			},
-			expected: []uint8{1, 2, 3},
+			expected: VBytes([]byte{1, 2, 3}),
 		},
 		{
 			name: "nested struct",
@@ -181,10 +187,16 @@ func TestDecodeWithSchema(t *testing.T) {
 					},
 				},
 			},
-			expected: M{
-				"inner1": M{"a": uint8(0x08), "b": uint8(0x04)},
-				"inner2": M{"x": uint8(0x10), "y": uint8(0x20)},
-			},
+			expected: VStruct(map[string]Value{
+				"inner1": VStruct(map[string]Value{
+					"a": VIntFromInt64(8),
+					"b": VIntFromInt64(4),
+				}),
+				"inner2": VStruct(map[string]Value{
+					"x": VIntFromInt64(16),
+					"y": VIntFromInt64(32),
+				}),
+			}),
 		},
 		{
 			name: "enum index out of bounds",
@@ -246,13 +258,17 @@ func TestDecodeWithSchema_PrimitiveTypes(t *testing.T) {
 		name     string
 		data     []byte
 		refType  string
-		expected any
+		expected Value
 	}{
-		{"u8", []byte{0x42}, "u8", uint8(0x42)},
-		{"u16", []byte{0x34, 0x12}, "u16", uint16(0x1234)},
-		{"u32", []byte{0x78, 0x56, 0x34, 0x12}, "u32", uint32(0x12345678)},
-		{"bool_true", []byte{0x01}, "bool", true},
-		{"bool_false", []byte{0x00}, "bool", false},
+		{"u8", []byte{0x42}, "u8", VIntFromInt64(0x42)},
+		{"u16", []byte{0x34, 0x12}, "u16", VIntFromInt64(0x1234)},
+		{"u32", []byte{0x78, 0x56, 0x34, 0x12}, "u32", VIntFromInt64(0x12345678)},
+		{"u64", []byte{0x78, 0x56, 0x34, 0x12, 0x00, 0x00, 0x00, 0x00}, "u64", VInt(big.NewInt(0x12345678))},
+		{"bool_true", []byte{0x01}, "bool", VBool(true)},
+		{"bool_false", []byte{0x00}, "bool", VBool(false)},
+		{"text", []byte{0x14, 0x48, 0x65, 0x6C, 0x6C, 0x6F}, "text", VText("Hello")},
+		{"bytes", []byte{0x0C, 0x01, 0x02, 0x03}, "bytes", VBytes([]byte{1, 2, 3})},
+		{"empty", []byte{}, "empty", VNull()},
 	}
 
 	for _, tt := range primitiveTests {

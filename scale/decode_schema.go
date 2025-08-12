@@ -2,10 +2,11 @@ package scale
 
 import (
 	"fmt"
+	"math/big"
 	. "submarine/errorspan"
 )
 
-func DecodeWithSchema(r *Reader, schema *Type) (any, *ErrorSpan) {
+func DecodeWithSchema(r *Reader, schema *Type) (Value, *ErrorSpan) {
 	switch schema.Kind {
 	case KindStruct:
 		return decodeStruct(r, schema.Struct)
@@ -24,171 +25,228 @@ func DecodeWithSchema(r *Reader, schema *Type) (any, *ErrorSpan) {
 	case KindRef:
 		return decodeRef(r, *schema.Ref)
 	case KindImport:
-		return nil, NewErrorSpan(fmt.Sprintf("import types not supported: module: %s item: %s", schema.Import.Module, schema.Import.Item))
+		return Value{}, NewErrorSpan(fmt.Sprintf("import types not supported: module: %s item: %s", schema.Import.Module, schema.Import.Item))
 	default:
-		return nil, NewErrorSpan(fmt.Sprintf("unknown type kind: %s", schema.Kind))
+		return Value{}, NewErrorSpan(fmt.Sprintf("unknown type kind: %s", schema.Kind))
 	}
 }
 
-func decodeRef(r *Reader, refType string) (any, *ErrorSpan) {
-	var val any
-	var err error
-
+func decodeRef(r *Reader, refType string) (Value, *ErrorSpan) {
 	switch refType {
 	case "u8":
-		val, err = DecodeU8(r)
+		val, err := DecodeU8(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VIntFromInt64(int64(val)), nil
 	case "u16":
-		val, err = DecodeU16(r)
+		val, err := DecodeU16(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VIntFromInt64(int64(val)), nil
 	case "u32":
-		val, err = DecodeU32(r)
+		val, err := DecodeU32(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VIntFromInt64(int64(val)), nil
 	case "u64":
-		val, err = DecodeU64(r)
+		val, err := DecodeU64(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VInt(new(big.Int).SetUint64(val)), nil
 	case "u128":
-		val, err = DecodeU128(r)
+		val, err := DecodeU128(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VInt(val), nil
 	case "u256":
-		val, err = DecodeU256(r)
+		val, err := DecodeU256(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VInt(val), nil
 	case "i8":
-		val, err = DecodeI8(r)
+		val, err := DecodeI8(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VIntFromInt64(int64(val)), nil
 	case "i16":
-		val, err = DecodeI16(r)
+		val, err := DecodeI16(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VIntFromInt64(int64(val)), nil
 	case "i32":
-		val, err = DecodeI32(r)
+		val, err := DecodeI32(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VIntFromInt64(int64(val)), nil
 	case "i64":
-		val, err = DecodeI64(r)
+		val, err := DecodeI64(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VIntFromInt64(val), nil
 	case "i128":
-		val, err = DecodeI128(r)
+		val, err := DecodeI128(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VInt(val), nil
 	case "i256":
-		val, err = DecodeI256(r)
+		val, err := DecodeI256(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VInt(val), nil
 	case "bool":
-		val, err = DecodeBool(r)
+		val, err := DecodeBool(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VBool(val), nil
 	case "text":
-		val, err = DecodeText(r)
+		val, err := DecodeText(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VText(val), nil
 	case "bytes":
-		val, err = DecodeBytes(r)
+		val, err := DecodeBytes(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VBytes(val), nil
 	case "compact":
-		val, err = DecodeCompact(r)
+		val, err := DecodeCompact(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+		return VInt(val), nil
 	case "empty": // Unit type
-		return nil, nil
+		return VNull(), nil
 	default:
-		return nil, NewErrorSpan(fmt.Sprintf("unknown primitive type: %s", refType))
+		return Value{}, NewErrorSpan(fmt.Sprintf("unknown primitive type: %s", refType))
 	}
-
-	if err != nil {
-		return nil, NewErrorSpan(err.Error())
-	}
-
-	return val, nil
 }
 
-func decodeStruct(r *Reader, s *Struct) (map[string]any, *ErrorSpan) {
-	result := make(map[string]any)
+func decodeStruct(r *Reader, s *Struct) (Value, *ErrorSpan) {
+	result := make(map[string]Value)
 	for _, field := range s.Fields {
 		value, err := DecodeWithSchema(r, field.Type)
 		if err != nil {
-			return nil, err.WithPath(field.Name)
+			return Value{}, err.WithPath(field.Name)
 		}
 		result[field.Name] = value
 	}
-	return result, nil
+	return VStruct(result), nil
 }
 
-func decodeTuple(r *Reader, t *Tuple) ([]any, *ErrorSpan) {
-	result := make([]any, len(t.Fields))
+func decodeTuple(r *Reader, t *Tuple) (Value, *ErrorSpan) {
+	result := make([]Value, len(t.Fields))
 	for i, fieldType := range t.Fields {
 		value, err := DecodeWithSchema(r, &fieldType)
 		if err != nil {
-			return nil, err.WithPathInt(i)
+			return Value{}, err.WithPathInt(i)
 		}
 		result[i] = value
 	}
-	return result, nil
+	return VList(result), nil
 }
 
-func decodeEnumSimple(r *Reader, e *EnumSimple) (string, *ErrorSpan) {
+func decodeEnumSimple(r *Reader, e *EnumSimple) (Value, *ErrorSpan) {
 	index, err := DecodeU8(r)
 	if err != nil {
-		return "", NewErrorSpan(err.Error()).WithPath("index")
+		return Value{}, NewErrorSpan(err.Error()).WithPath("index")
 	}
 	if int(index) >= len(e.Variants) {
-		return "", NewErrorSpan(fmt.Sprintf("enum index %d out of bounds (max %d)", index, len(e.Variants)-1)).WithPath("index")
+		return Value{}, NewErrorSpan(fmt.Sprintf("enum index %d out of bounds (max %d)", index, len(e.Variants)-1)).WithPath("index")
 	}
-	return e.Variants[index], nil
+	return VText(e.Variants[index]), nil
 }
 
-func decodeEnumComplex(r *Reader, e *EnumComplex) (map[string]any, *ErrorSpan) {
+func decodeEnumComplex(r *Reader, e *EnumComplex) (Value, *ErrorSpan) {
 	index, err := DecodeU8(r)
 	if err != nil {
-		return nil, NewErrorSpan(err.Error()).WithPath("index")
+		return Value{}, NewErrorSpan(err.Error()).WithPath("index")
 	}
 	if int(index) >= len(e.Variants) {
-		return nil, NewErrorSpan(fmt.Sprintf("enum index %d out of bounds (max %d)", index, len(e.Variants)-1)).WithPath("index")
+		return Value{}, NewErrorSpan(fmt.Sprintf("enum index %d out of bounds (max %d)", index, len(e.Variants)-1)).WithPath("index")
 	}
 
 	variant := e.Variants[index]
 	value, err2 := DecodeWithSchema(r, variant.Type)
 	if err2 != nil {
-		return nil, err2.WithPath(variant.Name)
+		return Value{}, err2.WithPath(variant.Name)
 	}
 
-	return map[string]any{variant.Name: value}, nil
+	result := make(map[string]Value)
+	result[variant.Name] = value
+	return VStruct(result), nil
 }
 
-func decodeVec(r *Reader, v *Vec) (any, *ErrorSpan) {
+func decodeVec(r *Reader, v *Vec) (Value, *ErrorSpan) {
 	// Optimization for Vec<u8>
 	if v.Type.Kind == KindRef && v.Type.Ref != nil && *v.Type.Ref == "u8" {
 		bytes, err := DecodeBytes(r)
 		if err != nil {
-			return nil, NewErrorSpan(err.Error())
+			return Value{}, NewErrorSpan(err.Error())
 		}
-		return bytes, nil
+		return VBytes(bytes), nil
 	}
 
 	length, err := DecodeCompact(r)
 	if err != nil {
-		return nil, NewErrorSpan(err.Error()).WithPath("length")
+		return Value{}, NewErrorSpan(err.Error()).WithPath("length")
 	}
 
-	result := make([]any, length.Int64())
+	result := make([]Value, length.Int64())
 	for i := range length.Int64() {
 		value, err2 := DecodeWithSchema(r, v.Type)
 		if err2 != nil {
-			return nil, err2.WithPathInt(int(i))
+			return Value{}, err2.WithPathInt(int(i))
 		}
 		result[i] = value
 	}
-	return result, nil
+	return VList(result), nil
 }
 
-func decodeOption(r *Reader, o *Option) (any, *ErrorSpan) {
+func decodeOption(r *Reader, o *Option) (Value, *ErrorSpan) {
 	hasValue, err := DecodeBool(r)
 	if err != nil {
-		return nil, NewErrorSpan(err.Error()).WithPath("flag")
+		return Value{}, NewErrorSpan(err.Error()).WithPath("flag")
 	}
 
 	if !hasValue {
-		return nil, nil
+		return VStruct(make(map[string]Value)), nil // Empty struct for None
 	}
 
 	return DecodeWithSchema(r, o.Type)
 }
 
-func decodeArray(r *Reader, a *Array) (any, *ErrorSpan) {
+func decodeArray(r *Reader, a *Array) (Value, *ErrorSpan) {
 	// Optimization for [u8; N]
 	if a.Type.Kind == KindRef && a.Type.Ref != nil && *a.Type.Ref == "u8" {
 		bytes, err := r.ReadBytes(a.Len)
 		if err != nil {
-			return nil, NewErrorSpan(err.Error())
+			return Value{}, NewErrorSpan(err.Error())
 		}
-		return bytes, nil
+		return VBytes(bytes), nil
 	}
 
-	result := make([]any, a.Len)
+	result := make([]Value, a.Len)
 	for i := 0; i < a.Len; i++ {
 		value, err := DecodeWithSchema(r, a.Type)
 		if err != nil {
-			return nil, err.WithPathInt(i)
+			return Value{}, err.WithPathInt(i)
 		}
 		result[i] = value
 	}
-	return result, nil
+	return VList(result), nil
 }

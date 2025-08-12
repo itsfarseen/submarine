@@ -97,10 +97,6 @@ func SanitizeRustType(rust_type RustType) RustType {
 				return Base([]string{fixed}, base.Generics)
 			}
 
-			if rust_type.String() == "Vec<u8>" {
-				return Base([]string{"bytes"}, nil)
-			}
-
 			if rust_type.String() == "String" {
 				return Base([]string{"text"}, nil)
 			}

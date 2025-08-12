@@ -1,8 +1,8 @@
-package decoder
+package scale_test
 
 import (
 	"reflect"
-	"submarine/scale"
+	. "submarine/scale"
 	s "submarine/scale/schema"
 	"testing"
 )
@@ -220,7 +220,7 @@ func TestDecodeWithSchema(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := scale.NewReader(tt.data)
+			r := NewReader(tt.data)
 			result, err := DecodeWithSchema(r, tt.schema)
 
 			if tt.wantErr {
@@ -258,7 +258,7 @@ func TestDecodeWithSchema_PrimitiveTypes(t *testing.T) {
 
 	for _, tt := range primitiveTests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := scale.NewReader(tt.data)
+			r := NewReader(tt.data)
 			schema := ref(tt.refType)
 			result, err := DecodeWithSchema(r, schema)
 			if err != nil {

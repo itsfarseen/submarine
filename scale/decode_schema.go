@@ -1,13 +1,12 @@
-package decoder
+package scale
 
 import (
 	"fmt"
 	. "submarine/errorspan"
-	"submarine/scale"
 	s "submarine/scale/schema"
 )
 
-func DecodeWithSchema(r *scale.Reader, schema *s.Type) (any, *ErrorSpan) {
+func DecodeWithSchema(r *Reader, schema *s.Type) (any, *ErrorSpan) {
 	switch schema.Kind {
 	case s.KindStruct:
 		return decodeStruct(r, schema.Struct)
@@ -32,43 +31,43 @@ func DecodeWithSchema(r *scale.Reader, schema *s.Type) (any, *ErrorSpan) {
 	}
 }
 
-func decodeRef(r *scale.Reader, refType string) (any, *ErrorSpan) {
+func decodeRef(r *Reader, refType string) (any, *ErrorSpan) {
 	var val any
 	var err error
 
 	switch refType {
 	case "u8":
-		val, err = scale.DecodeU8(r)
+		val, err = DecodeU8(r)
 	case "u16":
-		val, err = scale.DecodeU16(r)
+		val, err = DecodeU16(r)
 	case "u32":
-		val, err = scale.DecodeU32(r)
+		val, err = DecodeU32(r)
 	case "u64":
-		val, err = scale.DecodeU64(r)
+		val, err = DecodeU64(r)
 	case "u128":
-		val, err = scale.DecodeU128(r)
+		val, err = DecodeU128(r)
 	case "u256":
-		val, err = scale.DecodeU256(r)
+		val, err = DecodeU256(r)
 	case "i8":
-		val, err = scale.DecodeI8(r)
+		val, err = DecodeI8(r)
 	case "i16":
-		val, err = scale.DecodeI16(r)
+		val, err = DecodeI16(r)
 	case "i32":
-		val, err = scale.DecodeI32(r)
+		val, err = DecodeI32(r)
 	case "i64":
-		val, err = scale.DecodeI64(r)
+		val, err = DecodeI64(r)
 	case "i128":
-		val, err = scale.DecodeI128(r)
+		val, err = DecodeI128(r)
 	case "i256":
-		val, err = scale.DecodeI256(r)
+		val, err = DecodeI256(r)
 	case "bool":
-		val, err = scale.DecodeBool(r)
+		val, err = DecodeBool(r)
 	case "text":
-		val, err = scale.DecodeText(r)
+		val, err = DecodeText(r)
 	case "bytes":
-		val, err = scale.DecodeBytes(r)
+		val, err = DecodeBytes(r)
 	case "compact":
-		val, err = scale.DecodeCompact(r)
+		val, err = DecodeCompact(r)
 	case "empty": // Unit type
 		return nil, nil
 	default:
@@ -82,7 +81,7 @@ func decodeRef(r *scale.Reader, refType string) (any, *ErrorSpan) {
 	return val, nil
 }
 
-func decodeStruct(r *scale.Reader, s *s.Struct) (map[string]any, *ErrorSpan) {
+func decodeStruct(r *Reader, s *s.Struct) (map[string]any, *ErrorSpan) {
 	result := make(map[string]any)
 	for _, field := range s.Fields {
 		value, err := DecodeWithSchema(r, field.Type)
@@ -94,7 +93,7 @@ func decodeStruct(r *scale.Reader, s *s.Struct) (map[string]any, *ErrorSpan) {
 	return result, nil
 }
 
-func decodeTuple(r *scale.Reader, t *s.Tuple) ([]any, *ErrorSpan) {
+func decodeTuple(r *Reader, t *s.Tuple) ([]any, *ErrorSpan) {
 	result := make([]any, len(t.Fields))
 	for i, fieldType := range t.Fields {
 		value, err := DecodeWithSchema(r, &fieldType)
@@ -106,8 +105,8 @@ func decodeTuple(r *scale.Reader, t *s.Tuple) ([]any, *ErrorSpan) {
 	return result, nil
 }
 
-func decodeEnumSimple(r *scale.Reader, e *s.EnumSimple) (string, *ErrorSpan) {
-	index, err := scale.DecodeU8(r)
+func decodeEnumSimple(r *Reader, e *s.EnumSimple) (string, *ErrorSpan) {
+	index, err := DecodeU8(r)
 	if err != nil {
 		return "", NewErrorSpan(err.Error()).WithPath("index")
 	}
@@ -117,8 +116,8 @@ func decodeEnumSimple(r *scale.Reader, e *s.EnumSimple) (string, *ErrorSpan) {
 	return e.Variants[index], nil
 }
 
-func decodeEnumComplex(r *scale.Reader, e *s.EnumComplex) (map[string]any, *ErrorSpan) {
-	index, err := scale.DecodeU8(r)
+func decodeEnumComplex(r *Reader, e *s.EnumComplex) (map[string]any, *ErrorSpan) {
+	index, err := DecodeU8(r)
 	if err != nil {
 		return nil, NewErrorSpan(err.Error()).WithPath("index")
 	}
@@ -135,17 +134,17 @@ func decodeEnumComplex(r *scale.Reader, e *s.EnumComplex) (map[string]any, *Erro
 	return map[string]any{variant.Name: value}, nil
 }
 
-func decodeVec(r *scale.Reader, v *s.Vec) (any, *ErrorSpan) {
+func decodeVec(r *Reader, v *s.Vec) (any, *ErrorSpan) {
 	// Optimization for Vec<u8>
 	if v.Type.Kind == s.KindRef && v.Type.Ref != nil && *v.Type.Ref == "u8" {
-		bytes, err := scale.DecodeBytes(r)
+		bytes, err := DecodeBytes(r)
 		if err != nil {
 			return nil, NewErrorSpan(err.Error())
 		}
 		return bytes, nil
 	}
 
-	length, err := scale.DecodeCompact(r)
+	length, err := DecodeCompact(r)
 	if err != nil {
 		return nil, NewErrorSpan(err.Error()).WithPath("length")
 	}
@@ -161,8 +160,8 @@ func decodeVec(r *scale.Reader, v *s.Vec) (any, *ErrorSpan) {
 	return result, nil
 }
 
-func decodeOption(r *scale.Reader, o *s.Option) (any, *ErrorSpan) {
-	hasValue, err := scale.DecodeBool(r)
+func decodeOption(r *Reader, o *s.Option) (any, *ErrorSpan) {
+	hasValue, err := DecodeBool(r)
 	if err != nil {
 		return nil, NewErrorSpan(err.Error()).WithPath("flag")
 	}
@@ -174,7 +173,7 @@ func decodeOption(r *scale.Reader, o *s.Option) (any, *ErrorSpan) {
 	return DecodeWithSchema(r, o.Type)
 }
 
-func decodeArray(r *scale.Reader, a *s.Array) (any, *ErrorSpan) {
+func decodeArray(r *Reader, a *s.Array) (any, *ErrorSpan) {
 	// Optimization for [u8; N]
 	if a.Type.Kind == s.KindRef && a.Type.Ref != nil && *a.Type.Ref == "u8" {
 		bytes, err := r.ReadBytes(a.Len)

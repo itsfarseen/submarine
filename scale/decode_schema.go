@@ -24,6 +24,8 @@ func DecodeWithSchema(r *Reader, schema *Type) (Value, *ErrorSpan) {
 		return decodeArray(r, schema.Array)
 	case KindRef:
 		return decodeRef(r, *schema.Ref)
+	case KindBitFlags:
+		return decodeBitFlags(r, schema.BitFlags)
 	case KindImport:
 		return Value{}, NewErrorSpan(fmt.Sprintf("import types not supported: module: %s item: %s", schema.Import.Module, schema.Import.Item))
 	default:
@@ -249,4 +251,59 @@ func decodeArray(r *Reader, a *Array) (Value, *ErrorSpan) {
 		result[i] = value
 	}
 	return VList(result), nil
+}
+
+func decodeBitFlags(r *Reader, bf *BitFlags) (Value, *ErrorSpan) {
+	// Determine the appropriate integer type based on bit length
+	var rawValue *big.Int
+	var err error
+
+	switch {
+	case bf.BitLength <= 8:
+		val, decodeErr := DecodeU8(r)
+		if decodeErr != nil {
+			return Value{}, NewErrorSpan(decodeErr.Error())
+		}
+		rawValue = big.NewInt(int64(val))
+	case bf.BitLength <= 16:
+		val, decodeErr := DecodeU16(r)
+		if decodeErr != nil {
+			return Value{}, NewErrorSpan(decodeErr.Error())
+		}
+		rawValue = big.NewInt(int64(val))
+	case bf.BitLength <= 32:
+		val, decodeErr := DecodeU32(r)
+		if decodeErr != nil {
+			return Value{}, NewErrorSpan(decodeErr.Error())
+		}
+		rawValue = big.NewInt(int64(val))
+	case bf.BitLength <= 64:
+		val, decodeErr := DecodeU64(r)
+		if decodeErr != nil {
+			return Value{}, NewErrorSpan(decodeErr.Error())
+		}
+		rawValue = new(big.Int).SetUint64(val)
+	case bf.BitLength <= 128:
+		rawValue, err = DecodeU128(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+	case bf.BitLength <= 256:
+		rawValue, err = DecodeU256(r)
+		if err != nil {
+			return Value{}, NewErrorSpan(err.Error())
+		}
+	default:
+		return Value{}, NewErrorSpan(fmt.Sprintf("unsupported bit length: %d", bf.BitLength))
+	}
+
+	// Create a struct with boolean fields for each flag
+	result := make(map[string]Value)
+	for _, flag := range bf.Flags {
+		flagBig := new(big.Int).SetUint64(flag.Value)
+		isSet := new(big.Int).And(rawValue, flagBig).Cmp(big.NewInt(0)) != 0
+		result[flag.Name] = VBool(isSet)
+	}
+
+	return VStruct(result), nil
 }

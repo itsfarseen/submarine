@@ -216,6 +216,74 @@ func TestDecodeWithSchema(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "bit flags - u8",
+			data: []byte{0x95}, // binary: 10010101 = 149
+			schema: &Type{
+				Kind: KindBitFlags,
+				BitFlags: &BitFlags{
+					BitLength: 8,
+					Flags: []BitFlag{
+						{Name: "Display", Value: 1},         // bit 0: set
+						{Name: "Legal", Value: 2},           // bit 1: not set
+						{Name: "Web", Value: 4},             // bit 2: set
+						{Name: "Riot", Value: 8},            // bit 3: not set
+						{Name: "Email", Value: 16},          // bit 4: set
+						{Name: "PgpFingerprint", Value: 32}, // bit 5: not set
+						{Name: "Image", Value: 64},          // bit 6: not set
+						{Name: "Twitter", Value: 128},       // bit 7: set
+					},
+				},
+			},
+			expected: VStruct(map[string]Value{
+				"Display":        VBool(true),
+				"Legal":          VBool(false),
+				"Web":            VBool(true),
+				"Riot":           VBool(false),
+				"Email":          VBool(true),
+				"PgpFingerprint": VBool(false),
+				"Image":          VBool(false),
+				"Twitter":        VBool(true),
+			}),
+		},
+		{
+			name: "bit flags - u64",
+			data: []byte{0x91, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // 145 in little-endian
+			schema: &Type{
+				Kind: KindBitFlags,
+				BitFlags: &BitFlags{
+					BitLength: 64,
+					Flags: []BitFlag{
+						{Name: "Display", Value: 1},   // bit 0: set
+						{Name: "Email", Value: 16},    // bit 4: set
+						{Name: "Twitter", Value: 128}, // bit 7: set
+					},
+				},
+			},
+			expected: VStruct(map[string]Value{
+				"Display": VBool(true),
+				"Email":   VBool(true),
+				"Twitter": VBool(true),
+			}),
+		},
+		{
+			name: "bit flags - all false",
+			data: []byte{0x00},
+			schema: &Type{
+				Kind: KindBitFlags,
+				BitFlags: &BitFlags{
+					BitLength: 8,
+					Flags: []BitFlag{
+						{Name: "Flag1", Value: 1},
+						{Name: "Flag2", Value: 2},
+					},
+				},
+			},
+			expected: VStruct(map[string]Value{
+				"Flag1": VBool(false),
+				"Flag2": VBool(false),
+			}),
+		},
+		{
 			name: "import type error",
 			data: []byte{},
 			schema: &Type{

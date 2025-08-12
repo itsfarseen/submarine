@@ -12,6 +12,7 @@ const (
 	KindOption      TypeKind = "option"
 	KindArray       TypeKind = "array"
 	KindRef         TypeKind = "ref"
+	KindBitFlags    TypeKind = "bit_flags"
 )
 
 type Type struct {
@@ -25,6 +26,7 @@ type Type struct {
 	Option      *Option
 	Array       *Array
 	Ref         *string
+	BitFlags    *BitFlags
 }
 
 type Struct struct {
@@ -64,4 +66,14 @@ type Option struct {
 type Array struct {
 	Type *Type
 	Len  int
+}
+
+type BitFlags struct {
+	BitLength int
+	Flags     []BitFlag
+}
+
+type BitFlag struct {
+	Name  string
+	Value uint64
 }

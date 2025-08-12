@@ -7,39 +7,39 @@ import (
 )
 
 // DecodeCompact decodes a SCALE compact-encoded integer.
-func DecodeCompact(r *Reader) (big.Int, error) {
+func DecodeCompact(r *Reader) (*big.Int, error) {
 	firstByte, err := r.ReadByte()
 	if err != nil {
-		return big.Int{}, err
+		return nil, err
 	}
 	mode := firstByte & 0b11
 	switch mode {
 	case 0:
-		return *big.NewInt(int64(firstByte >> 2)), nil
+		return big.NewInt(int64(firstByte >> 2)), nil
 	case 1:
 		secondByte, err := r.ReadByte()
 		if err != nil {
-			return big.Int{}, fmt.Errorf("compact[1]: %w", err)
+			return nil, fmt.Errorf("compact[1]: %w", err)
 		}
 		val := uint16(firstByte>>2) | uint16(secondByte)<<6
-		return *big.NewInt(int64(val)), nil
+		return big.NewInt(int64(val)), nil
 	case 2:
 		bytes, err := r.ReadBytes(3)
 		if err != nil {
-			return big.Int{}, fmt.Errorf("compact[2]: %w", err)
+			return nil, fmt.Errorf("compact[2]: %w", err)
 		}
 		val := uint32(firstByte>>2) | uint32(bytes[0])<<6 | uint32(bytes[1])<<14 | uint32(bytes[2])<<22
-		return *big.NewInt(int64(val)), nil
+		return big.NewInt(int64(val)), nil
 	case 3:
 		length := int((firstByte >> 2) + 4)
 		bytes, err := r.ReadBytes(length)
 		if err != nil {
-			return big.Int{}, fmt.Errorf("compact[3]: %w", err)
+			return nil, fmt.Errorf("compact[3]: %w", err)
 		}
 		bytesLE := reverseBytes(bytes)
-		return *new(big.Int).SetBytes(bytesLE), nil
+		return new(big.Int).SetBytes(bytesLE), nil
 	default:
-		return big.Int{}, fmt.Errorf("compact[?]: %w", err)
+		return nil, fmt.Errorf("compact[?]: %w", err)
 	}
 }
 

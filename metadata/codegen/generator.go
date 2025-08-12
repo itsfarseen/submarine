@@ -362,7 +362,7 @@ func (c *Codegen) getGoTypeForTypename(moduleName string, typeName string) (stri
 		return "bool", nil
 	case "compact":
 		moduleCodegen.appendImport("math/big")
-		return "big.Int", nil
+		return "*big.Int", nil
 	default:
 		type_, ok := module.Types[typeName]
 		if !ok {

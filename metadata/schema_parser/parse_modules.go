@@ -10,7 +10,6 @@ import (
 	"github.com/goccy/go-yaml"
 	. "submarine/errorspan"
 	. "submarine/scale"
-	. "submarine/scale/schema"
 )
 
 type AllModules struct {

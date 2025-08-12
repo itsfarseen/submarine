@@ -112,7 +112,7 @@ func DecodeSi1Field(reader *scale.Reader) (Si1Field, error) {
 	return t, nil
 }
 
-type Si1LookupTypeId = big.Int
+type Si1LookupTypeId = *big.Int
 
 func DecodeSi1LookupTypeId(reader *scale.Reader) (Si1LookupTypeId, error) {
 	return scale.DecodeCompact(reader)

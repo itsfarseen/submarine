@@ -289,6 +289,18 @@ func DecodeArg(metadata *v14.Metadata, r *Reader, typeID scaleInfo.Si1LookupType
 			return DecodeU128(r)
 		case scaleInfo.Si0TypeDefPrimitiveU256: // U256
 			return DecodeU256(r)
+		case scaleInfo.Si0TypeDefPrimitiveI8: // I8
+			return DecodeI8(r)
+		case scaleInfo.Si0TypeDefPrimitiveI16: // I16
+			return DecodeI16(r)
+		case scaleInfo.Si0TypeDefPrimitiveI32: // I32
+			return DecodeI32(r)
+		case scaleInfo.Si0TypeDefPrimitiveI64: // I64
+			return DecodeI64(r)
+		case scaleInfo.Si0TypeDefPrimitiveI128: // I128
+			return DecodeI128(r)
+		case scaleInfo.Si0TypeDefPrimitiveI256: // I256
+			return DecodeI256(r)
 		default:
 			return nil, fmt.Errorf("unsupported primitive type: %d", typ.Def.Primitive)
 		}

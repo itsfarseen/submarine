@@ -1,0 +1,15 @@
+{
+  "name": "scale_schema_extractor",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@polkadot/types": "^16.4.3"
+  }
+}

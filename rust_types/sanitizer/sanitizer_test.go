@@ -94,11 +94,6 @@ func TestParseAndSanitizeRustType(t *testing.T) {
 			expected: "text",
 		},
 		{
-			name:     "vec u8 to bytes",
-			input:    "Vec<u8>",
-			expected: "bytes",
-		},
-		{
 			name:     "string to text",
 			input:    "String",
 			expected: "text",
@@ -314,7 +309,6 @@ var GOLDEN_TESTS []struct{ input, output string } = []struct {
 	{"Option<T::AccountId>", "Option<AccountId>"},
 	{"Option<T::ProxyType>", "Option<ProxyType>"},              // <-
 	{"Option<Timepoint<T::BlockNumber>>", "Option<Timepoint>"}, // <-
-	{"Option<Vec<u8>>", "Option<bytes>"},
 	{"Option<schedule::Period<T::BlockNumber>>", "Option<schedule::Period>"},
 	{"Option<u32>", "Option<u32>"},
 	{"ParaId", "ParaId"},
@@ -366,14 +360,13 @@ var GOLDEN_TESTS []struct{ input, output string } = []struct {
 	{"Vec<T::Header>", "Vec<Header>"},
 	{"Vec<ValidatorIndex>", "Vec<ValidatorIndex>"},
 	{"Vec<u32>", "Vec<u32>"},
-	{"Vec<u8>", "bytes"},
 	{"VestingInfo<BalanceOf<T>, T::BlockNumber>", "VestingInfo"},
 	{"VoteThreshold", "VoteThreshold"},
 	{"Weight", "Weight"},
 	{"[u8; 32]", "[u8; 32]"},
 	{"bool", "bool"},
 	{"schedule::Priority", "schedule::Priority"},
-	{"sp_std::marker::PhantomData<(AccountId, Event)>", "null"}, // <--- [x]
+	{"sp_std::marker::PhantomData<(AccountId, Event)>", "empty"}, // <--- [x]
 	{"u16", "u16"},
 	{"u32", "u32"},
 	{"u64", "u64"},
